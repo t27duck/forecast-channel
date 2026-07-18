@@ -1,0 +1,23 @@
+<%#
+  A forecast panel: the green header + blue body that slides. The shared silver
+  chrome bars live outside the sliding track (see locations/show). Used as a
+  partial layout:
+    render layout: "locations/panels/frame", locals: {...} do ... body ... end
+  Locals: key, title, location.
+%>
+<section class="wii-panel" data-panel="<%= key %>" data-title="<%= title %>" data-forecast-target="panel">
+  <div class="wii-header">
+    <div class="wii-header__title"><%= title %></div>
+    <div class="wii-header__location"><%= location.name %></div>
+  </div>
+
+  <div class="wii-body">
+    <div class="wii-body__content"><%= yield %></div>
+    <div class="wii-footerline">
+      <span class="wii-credit">supported by Open-Meteo</span>
+      <% if (stamp = as_of(location.weather_refreshed_at, location.timezone)) %>
+        <span class="wii-asof"><%= stamp %></span>
+      <% end %>
+    </div>
+  </div>
+</section>

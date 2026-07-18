@@ -87,7 +87,20 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   (`symbol-sort-key`). The controller rasterizes the SVG glyphs in
   `app/javascript/lib/weather_icons.js` via `map.addImage`; each feature's
   `icon` (from `WeatherCode.icon_group`) picks one, with the name as a
-  halo'd `text-field` to its right.
+  halo'd `text-field` to its right. Clicking a marker opens that location's
+  detail view.
+- **Location detail** (`LocationsController#show` at `/locations/:id`): a
+  Wii Forecast Channel-style paneled view. Five full-screen panels — UV Index,
+  Current, Today, Tomorrow, 5-Day (default Current) — slide vertically
+  (non-looping) via the `forecast` Stimulus controller (arrow buttons + Up/Down
+  keys). Panels are partials under `app/views/locations/panels/` wrapped in the
+  shared `_frame` chrome; styling is the `.wii-*` block in
+  `application.tailwind.css`; the app nav is hidden via `content_for
+  :hide_app_nav`. Detailed glossy weather icons come from `WeatherIconsHelper`
+  (`weather_icon`, `uv_icon`); `ForecastsHelper` formats temperatures (Wii
+  degree style), wind (`compass_direction`/`wind_display`, mph), the "As of"
+  timestamp, and weekday abbreviations. Reachable from a globe marker or the
+  locations list. Not yet built: the 6-hour breakdown overlay.
 
 ## Design
 
@@ -95,11 +108,12 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - Globe view with locations/cities current forecast icons.
 - Globe uses a satilite map preferably using higher contract blues and greens if possible.
 - Globe and be zoomed out to show the whole planet with stars in space.
-- Later feature: Detail view of a location's forecast.
+- Detail view: Wii-style paneled forecast per location (built; see Domain Concepts).
 
 ## Weather data stored
 - Location name and latitude/longitude
-- Current conditions: Temperature, condition name, condition icon/image
+- Current conditions: Temperature, condition name, condition icon/image, wind (speed + direction)
+- Today's and tomorrow's forecast also include wind (max speed + dominant direction)
 - Today's forcast: Temperature, condition name, condition icon/image
 - Tommorrow's forcast: Temperature, condition name, condition icon/image
 - A breakdown of the today's and tomorrow's forecast for 6 hour windows (overnight, morning, afternoon, and evening hours)

@@ -22,6 +22,8 @@ module OpenMeteo
         current_temperature: round(current["temperature_2m"], 1),
         current_condition_code: current_code,
         current_condition_label: WeatherCode.label_for(current_code),
+        current_wind_speed: round(current["wind_speed_10m"], 1),
+        current_wind_direction: current["wind_direction_10m"]&.round,
         uv_index: round(current["uv_index"], 1),
         uv_label: UvIndex.label_for(current["uv_index"]),
         today_forecast: daily_forecast(0),
@@ -61,7 +63,9 @@ module OpenMeteo
         "high" => round(daily["temperature_2m_max"]&.dig(index)),
         "low" => round(daily["temperature_2m_min"]&.dig(index)),
         "condition_code" => code,
-        "condition_label" => WeatherCode.label_for(code)
+        "condition_label" => WeatherCode.label_for(code),
+        "wind_speed" => round(daily["wind_speed_10m_max"]&.dig(index), 1),
+        "wind_direction" => daily["wind_direction_10m_dominant"]&.dig(index)&.round
       }
     end
 

@@ -1,8 +1,12 @@
 class LocationsController < ApplicationController
-  before_action :set_location, only: %i[edit update destroy refresh]
+  before_action :set_location, only: %i[show edit update destroy refresh]
 
   def index
     @locations = Location.by_name
+  end
+
+  # The Wii-style paneled forecast for a single location.
+  def show
   end
 
   # Prefilled from params when a geocoding search result is picked so the

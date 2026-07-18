@@ -35,14 +35,19 @@ module ActiveSupport
       end
 
       {
-        "current" => { "temperature_2m" => 21.4, "weather_code" => 3, "uv_index" => 5.2 },
+        "current" => {
+          "temperature_2m" => 21.4, "weather_code" => 3, "uv_index" => 5.2,
+          "wind_speed_10m" => 18.3, "wind_direction_10m" => 160
+        },
         "hourly" => { "time" => times, "temperature_2m" => temps, "weather_code" => codes },
         "daily" => {
           "time" => [ today, tomorrow, "2026-07-20", "2026-07-21", "2026-07-22" ],
           "temperature_2m_max" => [ 25.0, 26.0, 24.0, 23.0, 22.0 ],
           "temperature_2m_min" => [ 14.0, 15.0, 13.0, 12.0, 11.0 ],
           "weather_code" => [ 3, 61, 2, 0, 80 ],
-          "uv_index_max" => [ 6.0, 7.0, 5.0, 4.0, 8.0 ]
+          "uv_index_max" => [ 6.0, 7.0, 5.0, 4.0, 8.0 ],
+          "wind_speed_10m_max" => [ 24.0, 20.5, 15.0, 12.0, 30.0 ],
+          "wind_direction_10m_dominant" => [ 135, 200, 90, 270, 315 ]
         }
       }
     end

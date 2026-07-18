@@ -12,9 +12,12 @@ module OpenMeteo
     FORECAST_DAYS = 5
     TEMPERATURE_UNIT = "celsius".freeze
 
-    CURRENT_VARIABLES = %w[temperature_2m weather_code uv_index].freeze
+    CURRENT_VARIABLES = %w[temperature_2m weather_code uv_index wind_speed_10m wind_direction_10m].freeze
     HOURLY_VARIABLES = %w[temperature_2m weather_code].freeze
-    DAILY_VARIABLES = %w[temperature_2m_max temperature_2m_min weather_code uv_index_max].freeze
+    DAILY_VARIABLES = %w[
+      temperature_2m_max temperature_2m_min weather_code uv_index_max
+      wind_speed_10m_max wind_direction_10m_dominant
+    ].freeze
 
     def self.fetch(latitude:, longitude:)
       new.fetch(latitude: latitude, longitude: longitude)

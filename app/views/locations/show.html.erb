@@ -1,0 +1,40 @@
+<% content_for :title, @location.name %>
+<% content_for :hide_app_nav, true %>
+
+<div class="wii" data-controller="forecast" data-forecast-default-value="current">
+  <%# Fixed silver top bar — its ▲ label updates to the panel above. %>
+  <div class="wii-top">
+    <div class="wii-bar__slot"></div>
+    <div class="wii-bar__slot wii-bar__slot--center">
+      <button type="button" class="wii-arrow" data-action="forecast#prev" data-forecast-target="prevControl" hidden>
+        <span class="wii-arrow__glyph">&#9650;</span>
+        <span class="wii-arrow__label" data-forecast-target="prevLabel"></span>
+      </button>
+    </div>
+    <div class="wii-bar__slot wii-bar__slot--right">
+      <span class="wii-chrome-link wii-chrome-link--muted" title="Settings (coming soon)">Settings</span>
+    </div>
+  </div>
+
+  <div class="wii-viewport">
+    <div class="wii__track" data-forecast-target="track">
+      <%= render "locations/panels/uv", location: @location %>
+      <%= render "locations/panels/current", location: @location %>
+      <%= render "locations/panels/today", location: @location %>
+      <%= render "locations/panels/tomorrow", location: @location %>
+      <%= render "locations/panels/five_day", location: @location %>
+    </div>
+  </div>
+
+  <%# Fixed silver bottom bar — its ▼ label updates to the panel below. %>
+  <div class="wii-bottom">
+    <div class="wii-bar__slot"><%= link_to "Locations", locations_path, class: "wii-chrome-link" %></div>
+    <div class="wii-bar__slot wii-bar__slot--center">
+      <button type="button" class="wii-arrow" data-action="forecast#next" data-forecast-target="nextControl" hidden>
+        <span class="wii-arrow__label" data-forecast-target="nextLabel"></span>
+        <span class="wii-arrow__glyph">&#9660;</span>
+      </button>
+    </div>
+    <div class="wii-bar__slot wii-bar__slot--right"><%= link_to "Globe", root_path, class: "wii-chrome-link" %></div>
+  </div>
+</div>

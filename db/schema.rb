@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_18_194617) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_18_210905) do
   create_table "locations", force: :cascade do |t|
     t.string "admin1"
     t.string "country"
@@ -19,6 +19,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_18_194617) do
     t.integer "current_condition_code"
     t.string "current_condition_label"
     t.decimal "current_temperature", precision: 5, scale: 2
+    t.integer "current_wind_direction"
+    t.decimal "current_wind_speed", precision: 5, scale: 1
     t.decimal "elevation", precision: 8, scale: 2
     t.json "five_day_forecast", default: [], null: false
     t.json "hourly_windows", default: [], null: false

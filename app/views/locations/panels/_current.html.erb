@@ -1,0 +1,13 @@
+<%= render layout: "locations/panels/frame",
+  locals: { key: "current", title: "Current", location: location } do %>
+  <div class="wii-conditions">
+    <div class="wii-conditions__text">
+      <div class="wii-temp wii-temp--white"><%= forecast_temperature(location.current_temperature) %></div>
+      <div class="wii-condition"><%= location.current_condition_name %></div>
+    </div>
+    <div class="wii-conditions__icon"><%= weather_icon(location.current_condition_code, size: 160) %></div>
+  </div>
+  <% if (wind = wind_display(location.current_wind_speed, location.current_wind_direction)) %>
+    <div class="wii-wind"><%= wind %></div>
+  <% end %>
+<% end %>

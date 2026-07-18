@@ -14,6 +14,15 @@ class OpenMeteo::WeatherMapperTest < ActiveSupport::TestCase
     assert_not_nil @attributes[:weather_refreshed_at]
   end
 
+  test "maps current and daily wind" do
+    assert_in_delta 18.3, @attributes[:current_wind_speed]
+    assert_equal 160, @attributes[:current_wind_direction]
+    assert_in_delta 24.0, @attributes[:today_forecast]["wind_speed"]
+    assert_equal 135, @attributes[:today_forecast]["wind_direction"]
+    assert_in_delta 20.5, @attributes[:tomorrow_forecast]["wind_speed"]
+    assert_equal 200, @attributes[:tomorrow_forecast]["wind_direction"]
+  end
+
   test "maps today and tomorrow highs, lows and conditions" do
     today = @attributes[:today_forecast]
     assert_equal "2026-07-18", today["date"]

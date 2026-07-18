@@ -71,8 +71,22 @@ export default class extends Controller {
 
     await this.#registerIcons()
     this.#addMarkersLayer()
+    this.#enableNavigation()
 
     this.element.dataset.mapReady = "true"
+  }
+
+  // Clicking a marker opens that location's detail view.
+  #enableNavigation() {
+    const map = this.map
+
+    map.on("click", LAYER_ID, (event) => {
+      const id = event.features?.[0]?.properties?.id
+      if (id) window.location.assign(`/locations/${id}`)
+    })
+
+    map.on("mouseenter", LAYER_ID, () => { map.getCanvas().style.cursor = "pointer" })
+    map.on("mouseleave", LAYER_ID, () => { map.getCanvas().style.cursor = "" })
   }
 
   // Rasterize each weather SVG and register it as a named map image.

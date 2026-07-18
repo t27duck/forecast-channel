@@ -18,6 +18,7 @@ class LocationGeojson
         coordinates: [ location.longitude.to_f, location.latitude.to_f ]
       },
       properties: {
+        id: location.id,
         name: location.name,
         icon: WeatherCode.icon_group(location.current_condition_code),
         population: location.population || 0

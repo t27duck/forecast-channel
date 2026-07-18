@@ -1,0 +1,14 @@
+<% forecast = location.tomorrow_forecast %>
+<%= render layout: "locations/panels/frame",
+  locals: { key: "tomorrow", title: "Tomorrow", location: location } do %>
+  <div class="wii-conditions">
+    <div class="wii-conditions__text">
+      <div class="wii-temp wii-temp--yellow"><%= forecast_temperature(forecast["high"]) %></div>
+      <div class="wii-condition"><%= forecast["condition_label"].presence || "Not available" %></div>
+    </div>
+    <div class="wii-conditions__icon"><%= weather_icon(forecast["condition_code"], size: 160) %></div>
+  </div>
+  <% if (wind = wind_display(forecast["wind_speed"], forecast["wind_direction"])) %>
+    <div class="wii-wind"><%= wind %></div>
+  <% end %>
+<% end %>

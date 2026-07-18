@@ -16,6 +16,20 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "show renders the five forecast panels without the app nav" do
+    get location_url(@location)
+    assert_response :success
+    assert_select "nav", false, "detail view should hide the app nav"
+    assert_select "[data-controller=forecast]"
+    assert_select "[data-panel]", 5
+    assert_select ".wii-header__location", text: @location.name
+  end
+
+  test "index links each location to its detail view" do
+    get locations_url
+    assert_select "a[href=?]", location_path(@location), text: @location.name
+  end
+
   test "new prefills the form from picked search params" do
     get new_location_url(location: { name: "Paris", latitude: "48.85", longitude: "2.35" })
     assert_response :success

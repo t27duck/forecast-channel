@@ -9,3 +9,6 @@ application.register("hello", HelloController)
 
 import GlobeController from "./globe_controller"
 application.register("globe", GlobeController)
+
+import ForecastController from "./forecast_controller"
+application.register("forecast", ForecastController)

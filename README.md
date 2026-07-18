@@ -16,7 +16,10 @@ bin/dev            # starts the server plus JS/CSS watchers
 The root page (`/`) is a Mapbox satellite globe (stars, atmosphere) that plots
 an SVG weather icon and name for each location. Markers are drawn as a symbol
 layer, so overlapping ones declutter automatically when zoomed out and reappear
-as you zoom in. It needs a `mapbox_token` in the Rails credentials:
+as you zoom in. Click a marker (or a location in the list) to open its detail
+view — a Wii Forecast Channel-style set of panels (UV, Current, Today,
+Tomorrow, 5-Day) that slide vertically. It needs a `mapbox_token` in the Rails
+credentials:
 
 ```bash
 bin/rails credentials:edit   # add: mapbox_token: pk....

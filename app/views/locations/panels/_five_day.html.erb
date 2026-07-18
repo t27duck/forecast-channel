@@ -1,0 +1,17 @@
+<%= render layout: "locations/panels/frame",
+  locals: { key: "five_day", title: "5-Day Forecast", location: location } do %>
+  <% if location.five_day_forecast.present? %>
+    <div class="wii-fiveday">
+      <% location.five_day_forecast.each do |day| %>
+        <div class="wii-day">
+          <div class="wii-day__name"><%= weekday_abbr(day["date"]) %></div>
+          <div class="wii-day__icon"><%= weather_icon(day["condition_code"], size: 88) %></div>
+          <div class="wii-day__high"><%= forecast_temperature(day["high"], degree: false) %></div>
+          <div class="wii-day__low"><%= forecast_temperature(day["low"], degree: false) %></div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="wii-empty">5-day forecast not available yet.</div>
+  <% end %>
+<% end %>
