@@ -1,0 +1,76 @@
+## Overview
+
+Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
+
+## Technology Stack
+
+- Ruby: 4.0
+- Rails: 8.1
+- Database: SQLite
+- Asset Pipeline: Propshaft
+- Backgorund Jobs: Solid Queue
+- Caching: Solid Cache
+- WebSockets: Solid Cable
+- Deployment: Kamal
+- Javascript: esbuild and Node 24 with Stimulus controllers
+- CSS: Tailwind CSS
+- File uploads: Active Storage
+- Authentication: Rails auth generator with bcrypt
+- Maps: Mapbox (Documentation: https://docs.mapbox.com/mapbox-gl-js/api/)
+- Weather source: Open-Meteo (Documentation: https://open-meteo.com/en/docs and https://open-meteo.com/en/docs/geocoding-api)
+
+## Build Commands
+
+- Start development server: `bin/dev` (uses Foreman with Procfile.dev)
+- Start Rails only: `bin/rails server`
+- Install dependencies: `bundle install` and `npm install`
+- Build CSS: `npm run build:css`
+- Build Javascript: `npm run build`
+- Run background worker: `bin/jobs`
+
+## Test Commands
+
+- Headless Chrome via selenium is available running in a separate container on port 45678 under the docker hostname selenium.
+- Run all tests: `bin/rails test`
+- Run system tests: `bin/rails test:system`
+- Run specific test file: `bin/rails test test/path/to/test_file.rb`
+- Run specific test method: `bin/rails test test/path/to/test_file.rb:LINE_NUMBER`
+
+## Design
+
+- Weather data cached in the database and refreshed periodically.
+- Globe view with locations/cities current forecast icons.
+- Globe uses a satilite map preferably using higher contract blues and greens if possible.
+- Globe and be zoomed out to show the whole planet with stars in space.
+- Later feature: Detail view of a location's forecast.
+
+## Weather data stored
+- Location name and latitude/longitude
+- Current conditions: Temperature, condition name, condition icon/image
+- Today's forcast: Temperature, condition name, condition icon/image
+- Tommorrow's forcast: Temperature, condition name, condition icon/image
+- A breakdown of the today's and tomorrow's forecast for 6 hour windows (overnight, morning, afternoon, and evening hours)
+- 5-day forecasts: High temperature, low temperature, and condition icon/image
+- Current UV index: Numeric value and label (low, moderate, high, etc.)
+
+## Instructions
+
+- Write code in the "Rails Way" and take advantage of the functionality of the Rails framework and best practice design patterns.
+- Always read entire files. Otherwise, you don't know what you don't know, and will end up making mistakes, duplicating code that already exists, or misunderstanding the architecture.
+- Organise code into separate files wherever appropriate, and follow general coding best practices about variable naming, modularity, function complexity, file sizes, commenting, etc.
+- Code is read more often than it is written, optimize code for readability.
+- Do not carry out large refactors unless explicitly instructed to do so.
+- When doing UI & UX work, make sure designs are easy to use and follow UI / UX best practices. Pay attention to interaction patterns, micro-interactions, and are proactive about creating smooth, engaging user interfaces that delight users.
+
+## Documentation Maintenance
+
+Keep `CLAUDE.md` and `README.md` updated as the project evolves. Update these files when:
+
+- Adding or removing significant dependencies (gems, JS libraries)
+- Changing the technology stack or infrastructure
+- Adding new domain concepts or models
+- Restructuring directories or namespaces
+- Adding new build, test, or deployment commands
+- Changing authentication, authorization, or API patterns
+
+When making such changes, include documentation updates in the same commit or PR.

@@ -1,0 +1,6 @@
+@import "tailwindcss" source(none);
+@source "../../../app";
+@source "../../../lib";
+@source "../../../vendor";
+
+@import 'mapbox-gl/dist/mapbox-gl.css';
