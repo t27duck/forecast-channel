@@ -46,4 +46,21 @@ module WeatherCode
 
     LABELS.fetch(code.to_i, UNKNOWN_LABEL)
   end
+
+  # Coarse group used to pick a weather icon on the globe. Names match the keys
+  # in app/javascript/lib/weather_icons.js.
+  def self.icon_group(code)
+    return "unknown" if code.nil?
+
+    case code.to_i
+    when 0, 1 then "clear"
+    when 2 then "partly"
+    when 3 then "overcast"
+    when 45, 48 then "fog"
+    when 51..67, 80..82 then "rain"
+    when 71..77, 85, 86 then "snow"
+    when 95.. then "thunder"
+    else "unknown"
+    end
+  end
 end

@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import mapboxgl from "mapbox-gl"
-import { weatherIcon } from "../lib/weather_icons"
+import { WEATHER_ICONS } from "../lib/weather_icons"
 
 // Standard basemap config properties we switch off (roads, transit, labels).
 const HIDDEN_BASEMAP_FEATURES = [
@@ -13,10 +13,19 @@ const HIDDEN_BASEMAP_FEATURES = [
   "showAdminBoundaries"
 ]
 
-// Renders the satellite globe and plots a weather marker for each location.
-// Expects a Mapbox token and the locations payload via Stimulus values.
+const SOURCE_ID = "locations"
+const LAYER_ID = "location-markers"
+
+// Icons display at ICON_SIZE px, rasterized at 2x (pixelRatio) for crispness.
+const ICON_SIZE = 34
+const ICON_PIXEL_RATIO = 2
+
+// Renders the satellite globe and plots each location as a symbol in a single
+// GeoJSON layer. Mapbox's built-in collision (icon/text "allow-overlap: false")
+// declutters overlapping markers when zoomed out and reveals more on zoom-in;
+// population is used as the priority so larger cities win a collision.
 export default class extends Controller {
-  static values = { token: String, locations: Array }
+  static values = { token: String, markersUrl: String }
 
   connect() {
     if (!this.tokenValue) {
@@ -35,46 +44,93 @@ export default class extends Controller {
       attributionControl: false
     })
 
-    this.map.on("style.load", () => {
-      this.map.setFog({
-        "color": "#20519f",
-        "high-color": "#1a3374",
-        "space-color": "#030a1b",
-        "star-intensity": 0.6,
-        "horizon-blend": 0.03
-      })
-
-      // Strip roads, transit and labels from the Standard basemap for a clean
-      // globe that foregrounds the weather markers.
-      HIDDEN_BASEMAP_FEATURES.forEach((feature) => {
-        this.map.setConfigProperty("basemap", feature, false)
-      })
-    })
-
-    this.markers = this.locationsValue.map((location) => this.#addMarker(location))
+    this.element.__map = this.map // handle for system tests
+    this.map.on("style.load", () => this.#setupScene())
   }
 
   disconnect() {
-    this.markers?.forEach((marker) => marker.remove())
     this.map?.remove()
   }
 
-  #addMarker(location) {
-    const element = document.createElement("div")
-    element.className = "weather-marker"
+  async #setupScene() {
+    const map = this.map
 
-    const icon = document.createElement("div")
-    icon.className = "weather-marker__icon"
-    icon.innerHTML = weatherIcon(location.condition_code)
+    map.setFog({
+      "color": "#20519f",
+      "high-color": "#1a3374",
+      "space-color": "#030a1b",
+      "star-intensity": 0.6,
+      "horizon-blend": 0.03
+    })
 
-    const label = document.createElement("div")
-    label.className = "weather-marker__label"
-    label.textContent = location.name // set as text so names can't inject markup
+    // Strip roads, transit and labels from the Standard basemap for a clean
+    // globe that foregrounds the weather markers.
+    HIDDEN_BASEMAP_FEATURES.forEach((feature) => {
+      map.setConfigProperty("basemap", feature, false)
+    })
 
-    element.append(icon, label)
+    await this.#registerIcons()
+    this.#addMarkersLayer()
 
-    return new mapboxgl.Marker({ element, anchor: "left" })
-      .setLngLat([location.longitude, location.latitude])
-      .addTo(this.map)
+    this.element.dataset.mapReady = "true"
+  }
+
+  // Rasterize each weather SVG and register it as a named map image.
+  #registerIcons() {
+    return Promise.all(
+      Object.entries(WEATHER_ICONS).map(([name, svg]) => this.#registerIcon(name, svg))
+    )
+  }
+
+  #registerIcon(name, svg) {
+    if (this.map.hasImage(name)) return Promise.resolve()
+
+    return new Promise((resolve) => {
+      const size = ICON_SIZE * ICON_PIXEL_RATIO
+      const image = new Image(size, size)
+      image.onload = () => {
+        if (!this.map.hasImage(name)) {
+          this.map.addImage(name, image, { pixelRatio: ICON_PIXEL_RATIO })
+        }
+        resolve()
+      }
+      image.onerror = () => resolve()
+      image.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg)
+    })
+  }
+
+  #addMarkersLayer() {
+    const map = this.map
+
+    if (!map.getSource(SOURCE_ID)) {
+      map.addSource(SOURCE_ID, { type: "geojson", data: this.markersUrlValue })
+    }
+
+    if (map.getLayer(LAYER_ID)) return
+
+    map.addLayer({
+      id: LAYER_ID,
+      type: "symbol",
+      source: SOURCE_ID,
+      layout: {
+        "icon-image": ["get", "icon"],
+        "icon-allow-overlap": false,
+        // Larger population -> smaller sort key -> placed first -> wins collision.
+        "symbol-sort-key": ["-", ["to-number", ["get", "population"], 0]],
+        "text-field": ["get", "name"],
+        "text-font": ["DIN Pro Medium", "Arial Unicode MS Regular"],
+        "text-size": 12,
+        "text-anchor": "left",
+        "text-offset": [1.4, 0],
+        "text-allow-overlap": false,
+        "text-optional": true // keep the icon even if its label can't be placed
+      },
+      paint: {
+        "text-color": "#ffffff",
+        "text-halo-color": "#030a1b",
+        "text-halo-width": 1.4,
+        "text-halo-blur": 0.5
+      }
+    })
   }
 }

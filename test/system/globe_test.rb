@@ -1,13 +1,19 @@
 require "application_system_test_case"
 
 class GlobeTest < ApplicationSystemTestCase
-  test "plots a weather marker for each location on the globe" do
+  test "renders the globe and adds the location markers layer" do
     visit root_path
 
-    # Mapbox renders each marker element with the .mapboxgl-marker class. We
-    # count with visible: :all because markers on the far side of the globe are
-    # occluded (hidden) by design.
-    assert_selector ".mapboxgl-marker", count: Location.count, visible: :all, wait: 10
-    assert_selector ".weather-marker__icon svg", minimum: 1, visible: :all
+    # The globe controller sets data-map-ready once the style has loaded and the
+    # symbol layer (which renders markers in WebGL, not the DOM) has been added.
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    layer_present = evaluate_script(<<~JS)
+      (() => {
+        const el = document.querySelector('[data-controller=globe]')
+        return !!(el && el.__map && el.__map.getLayer('location-markers'))
+      })()
+    JS
+    assert layer_present, "expected the location-markers symbol layer to exist"
   end
 end

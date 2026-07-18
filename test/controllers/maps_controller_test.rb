@@ -1,24 +1,24 @@
 require "test_helper"
 
 class MapsControllerTest < ActionDispatch::IntegrationTest
-  test "renders the globe with a marker payload for each location" do
+  test "renders the globe container pointing at the markers feed" do
     get root_url
     assert_response :success
-
-    assert_select "[data-controller=globe]" do |elements|
-      payload = JSON.parse(elements.first["data-globe-locations-value"])
-      assert_equal Location.count, payload.size
-      assert_includes payload.map { |l| l["name"] }, locations(:berlin).name
-    end
+    assert_select "[data-controller=globe][data-globe-markers-url-value=?]", map_markers_path
   end
 
-  test "marker payload carries coordinates and condition code" do
-    get root_url
+  test "markers feed returns a GeoJSON feature per location" do
+    get map_markers_url
+    assert_response :success
 
-    payload = JSON.parse(css_select("[data-controller=globe]").first["data-globe-locations-value"])
-    berlin = payload.find { |l| l["name"] == locations(:berlin).name }
+    json = JSON.parse(response.body)
+    assert_equal "FeatureCollection", json["type"]
+    assert_equal Location.count, json["features"].size
 
-    assert_in_delta locations(:berlin).latitude, berlin["latitude"]
-    assert_equal locations(:berlin).current_condition_code, berlin["condition_code"]
+    berlin = json["features"].find { |f| f.dig("properties", "name") == locations(:berlin).name }
+    assert_equal [ locations(:berlin).longitude.to_f, locations(:berlin).latitude.to_f ],
+      berlin["geometry"]["coordinates"]
+    assert_equal "overcast", berlin["properties"]["icon"] # berlin fixture: code 3
+    assert_equal locations(:berlin).population, berlin["properties"]["population"]
   end
 end
