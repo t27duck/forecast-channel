@@ -16,6 +16,12 @@
     </div>
   </div>
 
+  <%# Fixed green header — the title updates to the active panel; location stays. %>
+  <div class="wii-header">
+    <div class="wii-header__title" data-forecast-target="title">Current</div>
+    <div class="wii-header__location"><%= @location.name %></div>
+  </div>
+
   <div class="wii-viewport">
     <div class="wii__track" data-forecast-target="track">
       <%= render "locations/panels/uv", location: @location %>
@@ -24,6 +30,14 @@
       <%= render "locations/panels/tomorrow", location: @location %>
       <%= render "locations/panels/five_day", location: @location %>
     </div>
+  </div>
+
+  <%# Fixed footer credit + timestamp. %>
+  <div class="wii-footerline">
+    <span class="wii-credit">supported by Open-Meteo</span>
+    <% if (stamp = as_of(@location.weather_refreshed_at, @location.timezone)) %>
+      <span class="wii-asof"><%= stamp %></span>
+    <% end %>
   </div>
 
   <%# Fixed silver bottom bar — its ▼ label updates to the panel below. %>

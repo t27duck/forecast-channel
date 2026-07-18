@@ -15,40 +15,43 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: #05122e;
+  background: radial-gradient(130% 90% at 32% 32%, #2f74d6 0%, #103a86 55%, #0a2360 100%);
   color: #fff;
   font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
   user-select: none;
 }
 
-/* The sliding window between the fixed silver bars. */
+/* Everything but the panel bodies is fixed; only the bodies slide. */
+.wii-top,
+.wii-header,
+.wii-footerline,
+.wii-bottom { flex: none; }
+
+/* The sliding window between the fixed chrome. */
 .wii-viewport {
   position: relative;
   flex: 1;
   overflow: hidden;
 }
-
 .wii__track {
   height: 100%;
   /* transform is set inline by the forecast Stimulus controller */
   transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-.wii-panel {
+.wii-panel-body {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+  min-height: 0;
+  padding: clamp(14px, 3vh, 34px) clamp(16px, 3.5vw, 44px) clamp(4px, 1vh, 12px);
 }
 
-.wii-top,
-.wii-bottom { flex: none; }
-
-/* Gray chrome bars (top / bottom) --------------------------------------- */
+/* Silver chrome bars (top / bottom) ------------------------------------ */
 .wii-top,
 .wii-bottom {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  /* Fixed-width centre segment so the ▲/▼ button never shifts the layout. */
+  grid-template-columns: 1fr clamp(220px, 26vw, 360px) 1fr;
   align-items: center;
   height: var(--chrome);
   background: linear-gradient(#f6f6f6, #d7d7d7);
@@ -125,38 +128,21 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Blue body ------------------------------------------------------------ */
-.wii-body {
-  position: relative;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: clamp(14px, 3vh, 34px) clamp(16px, 3.5vw, 44px) 0;
-  background: radial-gradient(130% 105% at 32% 26%, #2f74d6 0%, #103a86 55%, #0a2360 100%);
-}
-.wii-body__content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
+/* Footer credit / timestamp (fixed) ------------------------------------ */
 .wii-footerline {
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: clamp(22px, 3.6vh, 30px);
-  margin: 0 clamp(-16px, -3.5vw, -44px);
-  padding: 0 clamp(16px, 3.5vw, 44px);
 }
 .wii-credit {
+  padding-left: clamp(6px, 1.2vw, 14px);
   font-size: clamp(11px, 1.6vh, 14px);
   font-weight: 600;
   color: rgba(255, 255, 255, 0.85);
 }
 .wii-asof {
   padding: 3px clamp(12px, 2vw, 22px);
-  margin-right: clamp(-16px, -3.5vw, -44px);
   border-top-left-radius: 6px;
   border-bottom-left-radius: 6px;
   background: linear-gradient(90deg, #6b1020, #a01528);
@@ -303,17 +289,6 @@
   min-height: 0;
   cursor: pointer;
 }
-
-.wii-sixhour__hint {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  font-size: clamp(11px, 1.6vh, 14px);
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
-}
-.wii-sixhour-zone.is-open .wii-sixhour__hint { display: none; }
 
 .wii-sixhour {
   position: absolute;

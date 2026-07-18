@@ -7,8 +7,8 @@ export default class extends Controller {
   static values = { day: String }
 
   connect() {
-    this.title = this.element.closest(".wii-panel")?.querySelector(".wii-header__title")
-    this.originalTitle = this.title?.textContent
+    // The green title is shared, fixed chrome (see locations/show).
+    this.title = this.element.closest(".wii")?.querySelector(".wii-header__title")
     this.onKeydown = (event) => { if (event.key === "Escape") this.close() }
   }
 
@@ -21,14 +21,17 @@ export default class extends Controller {
   }
 
   open() {
+    if (this.title && this.dayValue) {
+      this.savedTitle = this.title.textContent // e.g. "Today"
+      this.title.textContent = this.dayValue // e.g. "THURSDAY"
+    }
     this.element.classList.add("is-open")
-    if (this.title && this.dayValue) this.title.textContent = this.dayValue
     window.addEventListener("keydown", this.onKeydown)
   }
 
   close() {
     this.element.classList.remove("is-open")
-    if (this.title && this.originalTitle) this.title.textContent = this.originalTitle
+    if (this.title && this.savedTitle) this.title.textContent = this.savedTitle
     window.removeEventListener("keydown", this.onKeydown)
   }
 }

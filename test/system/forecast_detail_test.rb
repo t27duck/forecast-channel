@@ -49,15 +49,14 @@ class ForecastDetailTest < ApplicationSystemTestCase
 
     find("body").send_keys(:down)
     assert_selector ".wii[data-active-panel=today]"
-    today = ".wii-panel[data-panel=today]"
 
-    find("#{today} .wii-sixhour-zone").click
+    find(".wii-panel-body[data-panel=today] .wii-sixhour-zone").click
     assert_selector ".wii-sixhour-zone.is-open"
-    assert_selector "#{today} .wii-header__title", text: "THURSDAY" # title swaps to the weekday
+    assert_selector ".wii-header__title", text: "THURSDAY" # shared title swaps to the weekday
     assert_selector ".wii-sixhour__heading", text: "6-Hour Weather"
 
     find("body").send_keys(:escape)
     assert_no_selector ".wii-sixhour-zone.is-open"
-    assert_selector "#{today} .wii-header__title", text: "TODAY" # restored
+    assert_selector ".wii-header__title", text: "TODAY" # restored
   end
 end

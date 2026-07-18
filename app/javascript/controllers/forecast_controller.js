@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // the viewport, non-looping. The bars' ▲/▼ labels update to the neighbouring
 // panels. Also responds to the Up/Down arrow keys.
 export default class extends Controller {
-  static targets = ["track", "panel", "prevControl", "prevLabel", "nextControl", "nextLabel"]
+  static targets = ["track", "panel", "title", "prevControl", "prevLabel", "nextControl", "nextLabel"]
   static values = { default: String }
 
   connect() {
@@ -38,8 +38,10 @@ export default class extends Controller {
   }
 
   #render() {
+    const active = this.panelTargets[this.index]
     this.trackTarget.style.transform = `translateY(-${this.index * 100}%)`
-    this.element.dataset.activePanel = this.panelTargets[this.index]?.dataset.panel
+    this.element.dataset.activePanel = active?.dataset.panel
+    this.titleTarget.textContent = active?.dataset.title
 
     this.#updateControl(this.prevControlTarget, this.prevLabelTarget, this.panelTargets[this.index - 1])
     this.#updateControl(this.nextControlTarget, this.nextLabelTarget, this.panelTargets[this.index + 1])
