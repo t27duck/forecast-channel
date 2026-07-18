@@ -65,11 +65,17 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - **Jobs**: `RefreshLocationWeatherJob` refreshes one location;
   `RefreshAllWeatherJob` fans out per-location jobs and is scheduled hourly in
   `config/recurring.yml`. Run the worker with `bin/jobs`.
+- **Setting** (`app/models/setting.rb`): a singleton row (`Setting.current`)
+  holding app-wide preferences — currently `temperature_unit` (celsius or
+  fahrenheit). Weather is always stored in Celsius (canonical); the unit is a
+  display preference, converted at render time via the `display_temperature`
+  helper (`app/helpers/temperatures_helper.rb`), so switching never re-fetches.
 - **Locations management UI** (`LocationsController`, `/locations`): CRUD for
   locations. The "New location" page searches by name (Turbo Frame proxy to the
   geocoding client) and pre-fills the form with a picked result's coordinates.
   Rows have a "Refresh" button (synchronous) and the page has "Refresh all"
-  (enqueues the bulk job). Currently unauthenticated.
+  (enqueues the bulk job) plus a °C/°F unit toggle (`SettingsController#update`).
+  Currently unauthenticated.
 
 ## Design
 

@@ -11,6 +11,8 @@ Rails.application.routes.draw do
 
   resource :map, only: [ :show ]
 
+  resource :settings, only: [ :update ]
+
   resources :locations do
     get :search, on: :collection
     post :refresh_all, on: :collection

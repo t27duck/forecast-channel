@@ -10,7 +10,7 @@
   <td class="px-4 py-3 text-slate-600">
     <% if location.current_temperature.present? %>
       <div>
-        <%= number_with_precision(location.current_temperature, precision: 0) %>° ·
+        <%= display_temperature(location.current_temperature) %> ·
         <%= location.current_condition_name %>
       </div>
       <% if location.uv_index.present? %>

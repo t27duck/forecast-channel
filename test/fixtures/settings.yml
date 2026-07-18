@@ -1,0 +1,2 @@
+default:
+  temperature_unit: celsius

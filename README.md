@@ -32,6 +32,9 @@ Cached weather is fetched from Open-Meteo and refreshed periodically:
   `config/recurring.yml`. Run the Solid Queue worker with `bin/jobs` to process
   enqueued and recurring jobs.
 
+Temperatures are stored in Celsius and displayed in the unit chosen by the °C/°F
+toggle on `/locations` (a global preference; no re-fetch needed to switch).
+
 ## Testing
 
 ```bash

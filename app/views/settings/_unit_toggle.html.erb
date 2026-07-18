@@ -1,0 +1,13 @@
+<div class="inline-flex overflow-hidden rounded-md border border-slate-300">
+  <% Setting.temperature_units.each_key do |unit| %>
+    <%= button_to settings_path, method: :patch, params: { temperature_unit: unit },
+      form: { class: "contents" },
+      class: class_names(
+        "px-3 py-2 text-sm font-medium",
+        "bg-sky-600 text-white" => current_setting.temperature_unit == unit,
+        "bg-white text-slate-700 hover:bg-slate-50" => current_setting.temperature_unit != unit
+      ) do %>
+      <%= unit == "celsius" ? "°C" : "°F" %>
+    <% end %>
+  <% end %>
+</div>
