@@ -100,7 +100,12 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   (`weather_icon`, `uv_icon`); `ForecastsHelper` formats temperatures (Wii
   degree style), wind (`compass_direction`/`wind_display`, mph), the "As of"
   timestamp, and weekday abbreviations. Reachable from a globe marker or the
-  locations list. Not yet built: the 6-hour breakdown overlay.
+  locations list.
+  - **6-hour overlay:** clicking the Today/Tomorrow panel opens a breakdown of
+    the day's four 6-hour windows (overnight/morning/afternoon/evening, from
+    `hourly_windows`) over the dimmed forecast, swapping the header title to the
+    weekday; Escape or another click closes it (`sixhour` Stimulus controller,
+    `six_hour_windows`/`weekday_name` helpers, `_six_hour` partial).
 
 ## Design
 

@@ -18,7 +18,8 @@ an SVG weather icon and name for each location. Markers are drawn as a symbol
 layer, so overlapping ones declutter automatically when zoomed out and reappear
 as you zoom in. Click a marker (or a location in the list) to open its detail
 view — a Wii Forecast Channel-style set of panels (UV, Current, Today,
-Tomorrow, 5-Day) that slide vertically. It needs a `mapbox_token` in the Rails
+Tomorrow, 5-Day) that slide vertically. Clicking the Today or Tomorrow panel
+reveals its 6-hour breakdown. It needs a `mapbox_token` in the Rails
 credentials:
 
 ```bash

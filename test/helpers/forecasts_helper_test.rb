@@ -34,4 +34,22 @@ class ForecastsHelperTest < ActionView::TestCase
     assert_equal "SAT", weekday_abbr("2026-07-18")
     assert_nil weekday_abbr(nil)
   end
+
+  test "weekday_name returns the full uppercase weekday" do
+    assert_equal "THURSDAY", weekday_name("2026-07-16")
+    assert_nil weekday_name(nil)
+  end
+
+  test "six_hour_windows returns four ordered windows with data looked up by key" do
+    location = Location.new(hourly_windows: [
+      { "day" => "today", "window" => "morning", "condition_code" => 2 },
+      { "day" => "tomorrow", "window" => "evening", "condition_code" => 3 }
+    ])
+
+    windows = six_hour_windows(location, "today")
+    assert_equal %w[overnight morning afternoon evening], windows.map { |w| w[:key] }
+    assert_equal "12:00 a.m.", windows.first[:from]
+    assert_nil windows.first[:data] # overnight has no stored data
+    assert_equal 2, windows.find { |w| w[:key] == "morning" }[:data]["condition_code"]
+  end
 end

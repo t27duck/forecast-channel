@@ -1,0 +1,21 @@
+<%# 6-hour breakdown overlay for a day. Locals: location, day ("today"/"tomorrow"). %>
+<div class="wii-sixhour" data-sixhour-target="overlay">
+  <div class="wii-sixhour__heading">6-Hour Weather</div>
+  <div class="wii-sixhour__grid">
+    <% six_hour_windows(location, day).each do |window| %>
+      <div class="wii-sixhour__cell">
+        <div class="wii-sixhour__icon">
+          <% if window[:data] %>
+            <%= weather_icon(window[:data]["condition_code"], size: 92) %>
+          <% else %>
+            <span class="wii-sixhour__nodata">&mdash;&mdash;</span>
+          <% end %>
+        </div>
+        <div class="wii-sixhour__range">
+          <span><%= window[:from] %></span>
+          <span><%= window[:to] %></span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

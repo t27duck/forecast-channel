@@ -293,3 +293,78 @@
   font-size: clamp(16px, 2.6vh, 24px);
   color: rgba(255, 255, 255, 0.8);
 }
+
+/* 6-hour breakdown overlay (Today / Tomorrow) -------------------------- */
+.wii-sixhour-zone {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  cursor: pointer;
+}
+
+.wii-sixhour__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  font-size: clamp(11px, 1.6vh, 14px);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+.wii-sixhour-zone.is-open .wii-sixhour__hint { display: none; }
+
+.wii-sixhour {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  gap: clamp(8px, 1.8vh, 20px);
+  padding: clamp(6px, 1.4vh, 14px) 0;
+  background: rgba(9, 30, 74, 0.8);
+}
+.wii-sixhour-zone.is-open .wii-sixhour { display: flex; }
+
+.wii-sixhour__heading {
+  font-weight: 700;
+  font-size: clamp(18px, 2.8vh, 28px);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+
+.wii-sixhour__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.wii-sixhour__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.wii-sixhour__icon {
+  width: 100%;
+  height: clamp(96px, 24vh, 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(120, 165, 225, 0.28);
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+.wii-sixhour__cell:last-child .wii-sixhour__icon { border-right: 0; }
+.wii-sixhour__nodata {
+  font-weight: 800;
+  font-size: clamp(28px, 5vh, 44px);
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.85);
+}
+.wii-sixhour__range {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: clamp(6px, 1.4vh, 14px);
+  font-weight: 600;
+  font-size: clamp(14px, 2.2vh, 22px);
+  line-height: 1.25;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}

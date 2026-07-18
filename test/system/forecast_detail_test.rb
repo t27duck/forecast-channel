@@ -36,4 +36,28 @@ class ForecastDetailTest < ApplicationSystemTestCase
     assert_selector ".wii-header__title", text: "CURRENT" # css uppercases the title
     assert_selector ".wii-header__location", text: "Testville"
   end
+
+  test "the Today panel reveals the 6-hour breakdown and restores on close" do
+    location = Location.create!(
+      name: "Overlaytown", latitude: 35, longitude: -78, timezone: "UTC",
+      weather_refreshed_at: Time.utc(2026, 7, 16, 12),
+      today_forecast: { "date" => "2026-07-16", "high" => 20, "condition_code" => 2 },
+      hourly_windows: [ { "day" => "today", "window" => "morning", "condition_code" => 2 } ]
+    )
+    visit location_path(location)
+    assert_selector ".wii[data-active-panel=current]", wait: 10
+
+    find("body").send_keys(:down)
+    assert_selector ".wii[data-active-panel=today]"
+    today = ".wii-panel[data-panel=today]"
+
+    find("#{today} .wii-sixhour-zone").click
+    assert_selector ".wii-sixhour-zone.is-open"
+    assert_selector "#{today} .wii-header__title", text: "THURSDAY" # title swaps to the weekday
+    assert_selector ".wii-sixhour__heading", text: "6-Hour Weather"
+
+    find("body").send_keys(:escape)
+    assert_no_selector ".wii-sixhour-zone.is-open"
+    assert_selector "#{today} .wii-header__title", text: "TODAY" # restored
+  end
 end

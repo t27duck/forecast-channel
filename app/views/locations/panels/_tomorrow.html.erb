@@ -1,14 +1,19 @@
 <% forecast = location.tomorrow_forecast %>
 <%= render layout: "locations/panels/frame",
   locals: { key: "tomorrow", title: "Tomorrow", location: location } do %>
-  <div class="wii-conditions">
-    <div class="wii-conditions__text">
-      <div class="wii-temp wii-temp--yellow"><%= forecast_temperature(forecast["high"]) %></div>
-      <div class="wii-condition"><%= forecast["condition_label"].presence || "Not available" %></div>
+  <div class="wii-sixhour-zone" data-controller="sixhour" data-action="click->sixhour#toggle"
+    data-sixhour-day-value="<%= weekday_name(forecast["date"]) %>">
+    <div class="wii-conditions">
+      <div class="wii-conditions__text">
+        <div class="wii-temp wii-temp--yellow"><%= forecast_temperature(forecast["high"]) %></div>
+        <div class="wii-condition"><%= forecast["condition_label"].presence || "Not available" %></div>
+      </div>
+      <div class="wii-conditions__icon"><%= weather_icon(forecast["condition_code"], size: 160) %></div>
     </div>
-    <div class="wii-conditions__icon"><%= weather_icon(forecast["condition_code"], size: 160) %></div>
+    <% if (wind = wind_display(forecast["wind_speed"], forecast["wind_direction"])) %>
+      <div class="wii-wind"><%= wind %></div>
+    <% end %>
+    <div class="wii-sixhour__hint">Click for the 6-hour breakdown</div>
+    <%= render "locations/panels/six_hour", location: location, day: "tomorrow" %>
   </div>
-  <% if (wind = wind_display(forecast["wind_speed"], forecast["wind_direction"])) %>
-    <div class="wii-wind"><%= wind %></div>
-  <% end %>
 <% end %>

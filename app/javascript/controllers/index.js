@@ -12,3 +12,6 @@ application.register("globe", GlobeController)
 
 import ForecastController from "./forecast_controller"
 application.register("forecast", ForecastController)
+
+import SixhourController from "./sixhour_controller"
+application.register("sixhour", SixhourController)

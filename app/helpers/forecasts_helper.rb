@@ -2,6 +2,31 @@ module ForecastsHelper
   KMH_TO_MPH = 0.621371
   COMPASS = %w[N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW].freeze
 
+  # The four 6-hour windows of a day, with their display time ranges. Order is
+  # fixed so the overlay always shows overnight → morning → afternoon → evening.
+  SIX_HOUR_WINDOWS = [
+    { key: "overnight", from: "12:00 a.m.", to: "6:00 a.m." },
+    { key: "morning",   from: "6:00 a.m.",  to: "12:00 p.m." },
+    { key: "afternoon", from: "12:00 p.m.", to: "6:00 p.m." },
+    { key: "evening",   from: "6:00 p.m.",  to: "12:00 a.m." }
+  ].freeze
+
+  # The four windows for a day ("today"/"tomorrow"), each with its time labels
+  # and the stored data (nil when that window has no forecast yet).
+  def six_hour_windows(location, day)
+    stored = location.hourly_windows.select { |w| w["day"] == day }.index_by { |w| w["window"] }
+    SIX_HOUR_WINDOWS.map { |window| window.merge(data: stored[window[:key]]) }
+  end
+
+  # Full uppercase weekday name for an ISO date string, e.g. "THURSDAY".
+  def weekday_name(date_string)
+    return nil if date_string.blank?
+
+    Date.parse(date_string).strftime("%A").upcase
+  rescue Date::Error
+    nil
+  end
+
   # Wii-style temperature: the value in the viewer's unit, with a degree sign
   # (e.g. "89°") unless +degree: false+ (the 5-day panel shows bare numbers).
   # No unit letter, mirroring the Wii. Returns +fallback+ when missing.
