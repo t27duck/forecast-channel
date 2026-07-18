@@ -2,7 +2,7 @@ require "application_system_test_case"
 
 class GlobeTest < ApplicationSystemTestCase
   test "renders the globe and adds the location markers layer" do
-    visit root_path
+    visit map_path
 
     # The globe controller sets data-map-ready once the style has loaded and the
     # symbol layer (which renders markers in WebGL, not the DOM) has been added.

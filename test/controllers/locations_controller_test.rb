@@ -25,6 +25,19 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".wii-header__location", text: @location.name
   end
 
+  test "root shows the first location's forecast by default" do
+    get root_url
+    assert_response :success
+    assert_select "[data-controller=forecast]"
+    assert_select ".wii-header__location", text: Location.by_name.first.name
+  end
+
+  test "root redirects to add a location when none exist" do
+    Location.delete_all
+    get root_url
+    assert_redirected_to new_location_path
+  end
+
   test "index links each location to its detail view" do
     get locations_url
     assert_select "a[href=?]", location_path(@location), text: @location.name

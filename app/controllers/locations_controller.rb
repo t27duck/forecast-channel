@@ -1,12 +1,15 @@
 class LocationsController < ApplicationController
-  before_action :set_location, only: %i[show edit update destroy refresh]
+  before_action :set_location, only: %i[edit update destroy refresh]
 
   def index
     @locations = Location.by_name
   end
 
-  # The Wii-style paneled forecast for a single location.
+  # The Wii-style paneled forecast. Reached at /locations/:id (a specific
+  # location) or at the root path (the current location).
   def show
+    @location = params[:id] ? Location.find(params[:id]) : current_location
+    return redirect_to new_location_path, notice: "Add a location to see its forecast." unless @location
   end
 
   # Prefilled from params when a geocoding search result is picked so the
@@ -66,6 +69,12 @@ class LocationsController < ApplicationController
 
   def set_location
     @location = Location.find(params[:id])
+  end
+
+  # The location shown at the root path. Eventually a cookie will track the
+  # user's chosen location; until then it falls back to the first location.
+  def current_location
+    Location.find_by(id: cookies[:current_location_id]) || Location.by_name.first
   end
 
   def location_params

@@ -20,6 +20,6 @@ Rails.application.routes.draw do
     post :refresh, on: :member
   end
 
-  # Defines the root path route ("/")
-  root "maps#show"
+  # Root shows the current location's forecast; the globe lives at /map.
+  root "locations#show"
 end

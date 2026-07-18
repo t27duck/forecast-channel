@@ -76,7 +76,7 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   Rows have a "Refresh" button (synchronous) and the page has "Refresh all"
   (enqueues the bulk job) plus a °C/°F unit toggle (`SettingsController#update`).
   Currently unauthenticated.
-- **Globe** (`MapsController#show` at root `/`): a full-bleed Mapbox globe
+- **Globe** (`MapsController#show` at `/map`): a full-bleed Mapbox globe
   (`standard-satellite` style, `projection: globe`, custom fog + star field)
   driven by the `globe` Stimulus controller (`app/javascript/controllers/
   globe_controller.js`). Locations are served as GeoJSON from
@@ -89,8 +89,11 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   `icon` (from `WeatherCode.icon_group`) picks one, with the name as a
   halo'd `text-field` to its right. Clicking a marker opens that location's
   detail view.
-- **Location detail** (`LocationsController#show` at `/locations/:id`): a
-  Wii Forecast Channel-style paneled view. Five full-screen panels — UV Index,
+- **Location detail** (`LocationsController#show`): the Wii Forecast
+  Channel-style paneled view. Served at the root path `/` for the current
+  location (a `current_location_id` cookie later; the first location for now)
+  and at `/locations/:id` for a specific one; redirects to add a location when
+  none exist. The "Globe" button and the app nav link to `/map`. Five full-screen panels — UV Index,
   Current, Today, Tomorrow, 5-Day (default Current) — slide vertically
   (non-looping) via the `forecast` Stimulus controller (arrow buttons + Up/Down
   keys). Panels are partials under `app/views/locations/panels/` wrapped in the

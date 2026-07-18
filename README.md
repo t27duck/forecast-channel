@@ -11,16 +11,19 @@ bin/rails db:migrate
 bin/dev            # starts the server plus JS/CSS watchers
 ```
 
-## Globe
+## Forecast & globe
 
-The root page (`/`) is a Mapbox satellite globe (stars, atmosphere) that plots
-an SVG weather icon and name for each location. Markers are drawn as a symbol
-layer, so overlapping ones declutter automatically when zoomed out and reappear
-as you zoom in. Click a marker (or a location in the list) to open its detail
-view — a Wii Forecast Channel-style set of panels (UV, Current, Today,
-Tomorrow, 5-Day) that slide vertically. Clicking the Today or Tomorrow panel
-reveals its 6-hour breakdown. It needs a `mapbox_token` in the Rails
-credentials:
+The root page (`/`) shows the current location's forecast — a Wii Forecast
+Channel-style set of panels (UV, Current, Today, Tomorrow, 5-Day) that slide
+vertically; clicking the Today or Tomorrow panel reveals its 6-hour breakdown.
+(The current location comes from a cookie eventually; for now it's the first
+location.)
+
+The globe lives at `/map`: a Mapbox satellite globe (stars, atmosphere) that
+plots an SVG weather icon and name for each location. Markers are drawn as a
+symbol layer, so overlapping ones declutter automatically when zoomed out and
+reappear as you zoom in. Click a marker (or a location in the list) to open its
+detail view. The globe needs a `mapbox_token` in the Rails credentials:
 
 ```bash
 bin/rails credentials:edit   # add: mapbox_token: pk....

@@ -2,7 +2,7 @@ require "test_helper"
 
 class MapsControllerTest < ActionDispatch::IntegrationTest
   test "renders the globe container pointing at the markers feed" do
-    get root_url
+    get map_url
     assert_response :success
     assert_select "[data-controller=globe][data-globe-markers-url-value=?]", map_markers_path
   end
