@@ -131,6 +131,18 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
     weekday; Escape or another click closes it (`sixhour` Stimulus controller,
     `six_hour_windows`/`weekday_name` helpers, `_six_hour` partial).
 
+- **Background music** (`jukebox` Stimulus controller): a `data-turbo-permanent`
+  player in the layout keeps music going across Turbo navigations. It picks a
+  track from the zone (`<body data-music-zone>` — "globe" on the map, "current"
+  elsewhere, set via `content_for :music_zone`) and the time of day (day
+  7am–7pm, night otherwise), flipping at those boundaries. Autoplay starts on
+  the first user gesture (tracks use `preload="none"` so the large files only
+  download when playback starts). A mute button in the detail view's top-bar
+  left slot (`mute` Stimulus controller, connected to the jukebox via an outlet)
+  toggles the audio and remembers the choice in `localStorage`. MP3s live in
+  `public/audio/`: `current-day.mp3`, `current-night.mp3`, `globe-day.mp3`,
+  `globe-night.mp3` (missing files just 404 — no music until added).
+
 ## Design
 
 - Weather data cached in the database and refreshed periodically.

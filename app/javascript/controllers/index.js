@@ -21,3 +21,9 @@ application.register("scroller", ScrollerController)
 
 import GeolocateController from "./geolocate_controller"
 application.register("geolocate", GeolocateController)
+
+import JukeboxController from "./jukebox_controller"
+application.register("jukebox", JukeboxController)
+
+import MuteController from "./mute_controller"
+application.register("mute", MuteController)

@@ -66,3 +66,14 @@ a quick °C/°F toggle on the `/locations` list.
 bin/rails test          # unit + controller + service tests
 bin/rails test:system   # system tests (headless Chrome via Selenium)
 ```
+
+## Background music
+
+Drop the four Wii Forecast Channel tracks into `public/audio/` named:
+
+- `current-day.mp3` / `current-night.mp3` — the forecast screens
+- `globe-day.mp3` / `globe-night.mp3` — the globe
+
+The player switches by zone (globe vs forecast) and time of day (day 7am–7pm,
+night otherwise), persists across navigations, and starts on the first click.
+Until the files are present, the app runs fine with no music.

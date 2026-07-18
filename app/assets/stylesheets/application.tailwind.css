@@ -94,6 +94,26 @@
 .wii-chrome-link:hover { color: #000; }
 .wii-chrome-link--muted { color: #8a8a8a; cursor: default; }
 
+.wii-mute {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2a2a2a;
+  cursor: pointer;
+}
+.wii-mute:hover { color: #000; }
+.wii-mute__icon {
+  display: block;
+  width: clamp(20px, 3.2vh, 28px);
+  height: clamp(20px, 3.2vh, 28px);
+}
+.wii-mute__slash { display: none; }
+.wii-mute.is-muted .wii-mute__waves { display: none; }
+.wii-mute.is-muted .wii-mute__slash { display: block; }
+
 /* Green header --------------------------------------------------------- */
 .wii-header {
   display: flex;

@@ -7,6 +7,12 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller=globe][data-globe-markers-url-value=?]", map_markers_path
   end
 
+  test "the globe selects the globe music zone" do
+    get map_url
+    assert_select "body[data-music-zone=?]", "globe"
+    assert_select "#jukebox[data-controller=jukebox]"
+  end
+
   test "markers feed returns a GeoJSON feature per location" do
     get map_markers_url
     assert_response :success

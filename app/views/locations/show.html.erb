@@ -12,7 +12,20 @@
 <div class="wii" data-controller="forecast" data-forecast-default-value="current">
   <%# Fixed silver top bar — its ▲ label updates to the panel above. %>
   <div class="wii-top">
-    <div class="wii-bar__slot"></div>
+    <div class="wii-bar__slot">
+      <button type="button" class="wii-mute" aria-label="Mute or unmute the music"
+        data-controller="mute" data-mute-jukebox-outlet="#jukebox" data-action="mute#toggle">
+        <svg class="wii-mute__icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
+          <g class="wii-mute__waves" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M16 9.5a3.5 3.5 0 0 1 0 5"/>
+            <path d="M18.5 7a7 7 0 0 1 0 10"/>
+          </g>
+          <line class="wii-mute__slash" x1="16" y1="7.5" x2="21.5" y2="16.5"
+            stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
     <div class="wii-bar__slot wii-bar__slot--center">
       <button type="button" class="wii-arrow" data-action="forecast#prev" data-forecast-target="prevControl" hidden>
         <span class="wii-arrow__glyph">&#9650;</span>

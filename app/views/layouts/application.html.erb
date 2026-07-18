@@ -27,7 +27,15 @@
     <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   </head>
 
-  <body class="min-h-screen bg-slate-100 text-slate-900">
+  <body class="min-h-screen bg-slate-100 text-slate-900" data-music-zone="<%= content_for(:music_zone).presence || "current" %>">
+    <%# Background music — persists across Turbo navigations (see jukebox_controller.js). %>
+    <div id="jukebox" data-turbo-permanent
+      data-controller="jukebox"
+      data-jukebox-current-day-value="/audio/current-day.mp3"
+      data-jukebox-current-night-value="/audio/current-night.mp3"
+      data-jukebox-globe-day-value="/audio/globe-day.mp3"
+      data-jukebox-globe-night-value="/audio/globe-night.mp3"></div>
+
     <% unless content_for?(:hide_app_nav) %>
       <nav class="border-b border-slate-200 bg-white">
         <div class="mx-auto flex max-w-5xl items-center gap-6 px-4 py-3">

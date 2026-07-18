@@ -30,6 +30,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-controller=forecast]"
     assert_select ".wii-header__location", text: Location.by_name.first.name
+    assert_select "body[data-music-zone=?]", "current" # forecast music, not globe
   end
 
   test "root auto-locates only when no location cookie is set" do
