@@ -76,6 +76,14 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   Rows have a "Refresh" button (synchronous) and the page has "Refresh all"
   (enqueues the bulk job) plus a °C/°F unit toggle (`SettingsController#update`).
   Currently unauthenticated.
+- **Globe** (`MapsController#show` at root `/`): a full-bleed Mapbox globe
+  (`standard-satellite` style, `projection: globe`, custom fog + star field)
+  driven by the `globe` Stimulus controller (`app/javascript/controllers/
+  globe_controller.js`). `MapsHelper#location_markers_json` serializes each
+  location (coords, condition code, display temperature); the controller plots
+  an inline-SVG weather marker per location. Icons are chosen front-end from the
+  WMO code via `app/javascript/lib/weather_icons.js` (groups mirror
+  `WeatherCode`). Marker styles live in `application.tailwind.css`.
 
 ## Design
 

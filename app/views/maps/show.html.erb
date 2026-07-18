@@ -1,0 +1,18 @@
+<% content_for :title, "Globe" %>
+
+<div class="relative">
+  <div
+    data-controller="globe"
+    data-globe-token-value="<%= mapbox_token %>"
+    data-globe-locations-value="<%= location_markers_json(@locations) %>"
+    class="h-[calc(100vh-3.25rem)] w-full bg-[#030a1b]"
+  ></div>
+
+  <% if @locations.none? %>
+    <div class="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
+      <p class="rounded-md bg-black/50 px-4 py-2 text-center text-sm text-white">
+        No locations yet — <%= link_to "add some", new_location_path, class: "pointer-events-auto underline" %> to see them on the globe.
+      </p>
+    </div>
+  <% end %>
+</div>

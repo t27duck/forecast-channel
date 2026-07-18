@@ -11,6 +11,16 @@ bin/rails db:migrate
 bin/dev            # starts the server plus JS/CSS watchers
 ```
 
+## Globe
+
+The root page (`/`) is a Mapbox satellite globe (stars, atmosphere) that plots
+an SVG weather icon and current temperature for each location. It needs a
+`mapbox_token` in the Rails credentials:
+
+```bash
+bin/rails credentials:edit   # add: mapbox_token: pk....
+```
+
 ## Locations
 
 Locations are the places plotted on the globe. Manage them at `/locations`:
