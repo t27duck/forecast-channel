@@ -30,4 +30,9 @@ class Location < ApplicationRecord
   def weather_stale?
     weather_refreshed_at.nil? || weather_refreshed_at < WEATHER_TTL.ago
   end
+
+  # Fetch fresh weather from Open-Meteo and store it. Returns true on success.
+  def refresh_weather!
+    WeatherRefresher.call(self)
+  end
 end

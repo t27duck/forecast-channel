@@ -19,9 +19,18 @@ Locations are the places plotted on the globe. Manage them at `/locations`:
   geocoding API — no API key required), captures the latitude/longitude and
   location metadata, and lets you review before saving.
 - Each location also stores cached weather (current conditions, UV, today/
-  tomorrow forecasts, 6-hour windows, and a 5-day forecast). Fetching live
-  weather is handled by a separate, upcoming task; the fields are populated
-  then.
+  tomorrow forecasts, 6-hour windows, and a 5-day forecast), fetched from the
+  free Open-Meteo forecast API.
+
+## Weather refresh
+
+Cached weather is fetched from Open-Meteo and refreshed periodically:
+
+- **Manually**: on `/locations`, use a row's "Refresh" button (immediate) or
+  "Refresh all" (enqueues a background job).
+- **Automatically**: `RefreshAllWeatherJob` is scheduled hourly via
+  `config/recurring.yml`. Run the Solid Queue worker with `bin/jobs` to process
+  enqueued and recurring jobs.
 
 ## Testing
 

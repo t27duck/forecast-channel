@@ -42,18 +42,34 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   geocoding data (name, latitude/longitude, country, admin1/region, timezone,
   elevation) plus cached weather. Current conditions and UV are flat columns;
   the today/tomorrow forecasts, 6-hour windows, and 5-day forecast are JSON
-  columns populated by the (future) weather-refresh task. `weather_stale?`
-  gates that refresh.
-- **WeatherCode** (`app/models/concerns/weather_code.rb`): the single source of
-  truth mapping Open-Meteo WMO weather codes to human labels.
-- **OpenMeteo::GeocodingClient** (`app/services/open_meteo/geocoding_client.rb`):
-  looks up places by name via the Open-Meteo geocoding API
-  (`https://geocoding-api.open-meteo.com/v1/search`, no API key) using
-  `Net::HTTP`. Failure-tolerant — returns `[]` on blank queries and errors.
+  columns. `weather_stale?` gates refresh (1-hour TTL); `refresh_weather!`
+  fetches and stores fresh data.
+- **WeatherCode** (`app/models/concerns/weather_code.rb`) and **UvIndex**
+  (`app/models/concerns/uv_index.rb`): the single sources of truth mapping
+  Open-Meteo WMO weather codes and UV values to human labels.
+- **OpenMeteo::Request** (`app/services/open_meteo/request.rb`): shared
+  `Net::HTTP` JSON GET helper for the Open-Meteo APIs. Failure-tolerant —
+  returns `nil` on non-success status or any network/parse error.
+- **OpenMeteo::GeocodingClient**: looks up places by name via the geocoding API
+  (`https://geocoding-api.open-meteo.com/v1/search`, no API key); returns `[]`
+  on blank queries and errors.
+- **OpenMeteo::ForecastClient** + **OpenMeteo::WeatherMapper**: the client
+  fetches current/hourly/daily data from the forecast API
+  (`https://api.open-meteo.com/v1/forecast`, `timezone=auto`, Celsius); the
+  mapper (pure, side-effect free) shapes the payload into Location attributes,
+  bucketing hourly data into the four 6-hour windows (overnight/morning/
+  afternoon/evening) for today and tomorrow.
+- **WeatherRefresher** (`app/services/weather_refresher.rb`): orchestrates
+  fetch → map → `update!` for a Location. Returns false (leaving the record
+  untouched) when the fetch fails.
+- **Jobs**: `RefreshLocationWeatherJob` refreshes one location;
+  `RefreshAllWeatherJob` fans out per-location jobs and is scheduled hourly in
+  `config/recurring.yml`. Run the worker with `bin/jobs`.
 - **Locations management UI** (`LocationsController`, `/locations`): CRUD for
   locations. The "New location" page searches by name (Turbo Frame proxy to the
   geocoding client) and pre-fills the form with a picked result's coordinates.
-  Currently unauthenticated.
+  Rows have a "Refresh" button (synchronous) and the page has "Refresh all"
+  (enqueues the bulk job). Currently unauthenticated.
 
 ## Design
 

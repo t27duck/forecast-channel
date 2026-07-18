@@ -13,6 +13,8 @@ Rails.application.routes.draw do
 
   resources :locations do
     get :search, on: :collection
+    post :refresh_all, on: :collection
+    post :refresh, on: :member
   end
 
   # Defines the root path route ("/")

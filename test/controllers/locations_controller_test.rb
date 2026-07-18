@@ -74,4 +74,30 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "p", /No matches/
   end
+
+  test "refresh updates a location's weather" do
+    payload = open_meteo_forecast_payload
+    stub_singleton(OpenMeteo::ForecastClient, :fetch, ->(**) { payload }) do
+      post refresh_location_url(@location)
+    end
+
+    assert_redirected_to locations_url
+    assert_not_nil @location.reload.weather_refreshed_at
+  end
+
+  test "refresh reports when the weather service is unreachable" do
+    stub_singleton(OpenMeteo::ForecastClient, :fetch, ->(**) { nil }) do
+      post refresh_location_url(@location)
+    end
+
+    assert_redirected_to locations_url
+    assert_equal "Couldn't reach the weather service for #{@location.name}.", flash[:alert]
+  end
+
+  test "refresh_all enqueues the bulk refresh job" do
+    assert_enqueued_with(job: RefreshAllWeatherJob) do
+      post refresh_all_locations_url
+    end
+    assert_redirected_to locations_url
+  end
 end

@@ -6,8 +6,14 @@
       <h1 class="text-2xl font-semibold text-slate-900">Locations</h1>
       <p class="text-sm text-slate-500">Places tracked on the Forecast globe.</p>
     </div>
-    <%= link_to "New location", new_location_path,
-      class: "inline-flex items-center rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700" %>
+    <div class="flex items-center gap-2">
+      <% if @locations.any? %>
+        <%= button_to "Refresh all", refresh_all_locations_path,
+          class: "inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% end %>
+      <%= link_to "New location", new_location_path,
+        class: "inline-flex items-center rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700" %>
+    </div>
   </div>
 
   <% if @locations.any? %>

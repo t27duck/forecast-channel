@@ -9,8 +9,13 @@
   </td>
   <td class="px-4 py-3 text-slate-600">
     <% if location.current_temperature.present? %>
-      <%= number_with_precision(location.current_temperature, precision: 0) %>° ·
-      <%= location.current_condition_name %>
+      <div>
+        <%= number_with_precision(location.current_temperature, precision: 0) %>° ·
+        <%= location.current_condition_name %>
+      </div>
+      <% if location.uv_index.present? %>
+        <div class="text-xs text-slate-500">UV <%= number_with_precision(location.uv_index, precision: 1) %> (<%= location.uv_label %>)</div>
+      <% end %>
     <% else %>
       <span class="text-slate-400">—</span>
     <% end %>
@@ -19,7 +24,9 @@
     <%= location.weather_refreshed_at ? time_ago_in_words(location.weather_refreshed_at) + " ago" : "never" %>
   </td>
   <td class="px-4 py-3 text-right whitespace-nowrap">
-    <%= link_to "Edit", edit_location_path(location), class: "text-sky-600 hover:text-sky-700" %>
+    <%= button_to "Refresh", refresh_location_path(location),
+      class: "text-slate-600 hover:text-slate-900", form: { class: "inline" } %>
+    <%= link_to "Edit", edit_location_path(location), class: "ml-3 text-sky-600 hover:text-sky-700" %>
     <%= button_to "Delete", location, method: :delete,
       class: "ml-3 text-red-600 hover:text-red-700",
       form: { class: "inline", data: { turbo_confirm: "Remove #{location.name}?" } } %>

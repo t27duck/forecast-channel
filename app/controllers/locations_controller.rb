@@ -1,5 +1,5 @@
 class LocationsController < ApplicationController
-  before_action :set_location, only: %i[edit update destroy]
+  before_action :set_location, only: %i[edit update destroy refresh]
 
   def index
     @locations = Location.by_name
@@ -41,6 +41,21 @@ class LocationsController < ApplicationController
   def search
     @query = params[:query].to_s
     @results = OpenMeteo::GeocodingClient.search(@query)
+  end
+
+  # Refresh a single location's weather now (synchronous for immediate feedback).
+  def refresh
+    if @location.refresh_weather!
+      redirect_to locations_path, notice: "#{@location.name}'s weather was refreshed."
+    else
+      redirect_to locations_path, alert: "Couldn't reach the weather service for #{@location.name}."
+    end
+  end
+
+  # Enqueue a background refresh for every location.
+  def refresh_all
+    RefreshAllWeatherJob.perform_later
+    redirect_to locations_path, notice: "Refreshing weather for all locations…"
   end
 
   private
