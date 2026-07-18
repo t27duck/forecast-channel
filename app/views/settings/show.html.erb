@@ -1,0 +1,46 @@
+<% content_for :title, "Change Settings" %>
+<% content_for :hide_app_nav, true %>
+
+<div class="settings">
+  <div class="settings__header">Change Settings</div>
+
+  <div class="settings__rows">
+    <div class="settings__row">
+      <div class="settings__info">
+        <div class="settings__label">Closest Location</div>
+        <div class="settings__value"><%= @current_location&.name || "None yet" %></div>
+      </div>
+      <div class="settings__control">
+        <%= link_to "Change", settings_location_path, class: "settings__button" %>
+      </div>
+    </div>
+
+    <div class="settings__row">
+      <div class="settings__info">
+        <div class="settings__label">Temperature Display</div>
+        <div class="settings__value"><%= @setting.fahrenheit? ? "Fahrenheit" : "Celsius" %></div>
+      </div>
+      <div class="settings__control">
+        <%= button_to "Change", settings_path, method: :patch,
+          params: { temperature_unit: @setting.fahrenheit? ? "celsius" : "fahrenheit" },
+          class: "settings__button" %>
+      </div>
+    </div>
+
+    <div class="settings__row">
+      <div class="settings__info">
+        <div class="settings__label">Wind Display</div>
+        <div class="settings__value"><%= @setting.wind_unit %></div>
+      </div>
+      <div class="settings__control">
+        <%= button_to "Change", settings_path, method: :patch,
+          params: { wind_unit: @setting.mph? ? "kph" : "mph" },
+          class: "settings__button" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings__footer">
+    <%= link_to "Back", root_path, class: "wii-chrome-link" %>
+  </div>
+</div>

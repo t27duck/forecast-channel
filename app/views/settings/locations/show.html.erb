@@ -1,0 +1,43 @@
+<% content_for :title, "Choose Location" %>
+<% content_for :hide_app_nav, true %>
+
+<div class="picker" data-controller="scroller">
+  <div class="picker__prompt">
+    <%= @country ? "Choose the location closest to where you live." : "Choose the country closest to where you live." %>
+  </div>
+
+  <div class="picker__list" data-scroller-target="list">
+    <% if @country %>
+      <% @locations.each do |location| %>
+        <%= button_to location.name, settings_location_path, method: :patch,
+          params: { current_location_id: location.id },
+          class: "picker__row", form: { class: "picker__form" } %>
+      <% end %>
+      <% if @locations.empty? %>
+        <div class="picker__empty">No locations in <%= @country %> yet.</div>
+      <% end %>
+    <% else %>
+      <% @countries.each do |country| %>
+        <%= link_to country, settings_location_path(country: country), class: "picker__row" %>
+      <% end %>
+      <% if @countries.empty? %>
+        <div class="picker__empty">No locations yet — add some first.</div>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="picker__bar">
+    <div class="picker__bar-slot">
+      <%= link_to "Back", (@country ? settings_location_path : settings_path), class: "wii-chrome-link" %>
+    </div>
+    <div class="picker__bar-slot picker__bar-slot--center">
+      <button type="button" class="wii-arrow" data-action="scroller#up" aria-label="Scroll up">
+        <span class="wii-arrow__glyph">&#9650;</span>
+      </button>
+      <button type="button" class="wii-arrow" data-action="scroller#down" aria-label="Scroll down">
+        <span class="wii-arrow__glyph">&#9660;</span>
+      </button>
+    </div>
+    <div class="picker__bar-slot"></div>
+  </div>
+</div>

@@ -50,8 +50,14 @@ Cached weather is fetched from Open-Meteo and refreshed periodically:
   `config/recurring.yml`. Run the Solid Queue worker with `bin/jobs` to process
   enqueued and recurring jobs.
 
-Temperatures are stored in Celsius and displayed in the unit chosen by the °C/°F
-toggle on `/locations` (a global preference; no re-fetch needed to switch).
+## Settings
+
+The `/settings` page (reached from the forecast's "Settings" link) chooses the
+closest location (a Wii-style country-then-location picker), the temperature
+unit (°C/°F), and the wind unit (mph/kph).
+Units are global display preferences — weather is stored canonically (Celsius,
+km/h) and converted at render time, so switching never re-fetches. There's also
+a quick °C/°F toggle on the `/locations` list.
 
 ## Testing
 

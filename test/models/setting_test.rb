@@ -6,8 +6,9 @@ class SettingTest < ActiveSupport::TestCase
     assert_no_difference("Setting.count") { Setting.current }
   end
 
-  test "defaults to celsius" do
+  test "defaults to celsius and mph" do
     assert_predicate Setting.new, :celsius?
+    assert_predicate Setting.new, :mph?
   end
 
   test "convert_temperature keeps celsius and formats the symbol" do

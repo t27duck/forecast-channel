@@ -12,7 +12,11 @@ Rails.application.routes.draw do
   resource :map, only: [ :show ]
   get "map/markers", to: "maps#markers", as: :map_markers
 
-  resource :settings, only: [ :update ]
+  resource :settings, only: [ :show, :update ]
+  namespace :settings do
+    # Choose the closest location: pick a country, then a location in it.
+    resource :location, only: [ :show, :update ]
+  end
 
   resources :locations do
     get :search, on: :collection

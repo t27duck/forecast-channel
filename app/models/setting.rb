@@ -6,6 +6,7 @@
 # requires re-fetching.
 class Setting < ApplicationRecord
   enum :temperature_unit, { celsius: "celsius", fahrenheit: "fahrenheit" }, default: :celsius
+  enum :wind_unit, { mph: "mph", kph: "kph" }, default: :mph
 
   # The single settings row, created on first access.
   def self.current

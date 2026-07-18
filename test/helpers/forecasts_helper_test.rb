@@ -19,9 +19,12 @@ class ForecastsHelperTest < ActionView::TestCase
     assert_nil compass_direction(nil)
   end
 
-  test "wind_display combines direction and mph" do
+  test "wind_display combines direction and speed in the chosen unit" do
     assert_equal "SSE 16 mph", wind_display(26, 160) # 26 km/h ~ 16 mph
     assert_nil wind_display(nil, 160)
+
+    Setting.current.kph!
+    assert_equal "SSE 26 kph", wind_display(26, 160)
   end
 
   test "as_of formats the local time" do

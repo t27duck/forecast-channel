@@ -66,10 +66,23 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   `RefreshAllWeatherJob` fans out per-location jobs and is scheduled hourly in
   `config/recurring.yml`. Run the worker with `bin/jobs`.
 - **Setting** (`app/models/setting.rb`): a singleton row (`Setting.current`)
-  holding app-wide preferences — currently `temperature_unit` (celsius or
-  fahrenheit). Weather is always stored in Celsius (canonical); the unit is a
-  display preference, converted at render time via the `display_temperature`
-  helper (`app/helpers/temperatures_helper.rb`), so switching never re-fetches.
+  holding app-wide display preferences — `temperature_unit` (celsius/fahrenheit)
+  and `wind_unit` (mph/kph). Weather is stored canonically (Celsius, km/h) and
+  converted at render time (`display_temperature`, `wind_display`), so switching
+  never re-fetches. The "closest location" is separate — a
+  `current_location_id` cookie read by `ApplicationController#current_location`.
+- **Settings screen** (`SettingsController#show` at `/settings`): a Wii-style
+  "Change Settings" page with Closest Location, Temperature Display, and Wind
+  Display rows (each a "Change" control). Temp/wind are toggles handled by
+  `#update` (which also backs the °C/°F toggle on the locations index); Closest
+  Location's "Change" opens the picker. Reached from the detail view's top-right
+  "Settings" link.
+- **Location picker** (`Settings::LocationsController#show` at
+  `/settings/location`): the Wii two-step "choose closest location" screen —
+  pick a country, then a location in it (`?country=` toggles the step); striped
+  rows on a blue background with a prompt bubble and a scrollable list (`scroller`
+  Stimulus controller drives the ▲/▼ bar buttons). `#update` writes the
+  `current_location_id` cookie and returns to settings.
 - **Locations management UI** (`LocationsController`, `/locations`): CRUD for
   locations. The "New location" page searches by name (Turbo Frame proxy to the
   geocoding client) and pre-fills the form with a picked result's coordinates.

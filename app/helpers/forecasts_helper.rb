@@ -44,12 +44,17 @@ module ForecastsHelper
     COMPASS[((degrees.to_f / 22.5) + 0.5).floor % 16]
   end
 
-  # Wind readout like "SSE 16 mph" (speed stored in km/h). Nil when no speed.
+  # Wind readout like "SSE 16 mph" in the preferred unit (speed stored in
+  # km/h). Nil when no speed.
   def wind_display(speed_kmh, degrees)
     return nil if speed_kmh.nil?
 
-    mph = (speed_kmh.to_f * KMH_TO_MPH).round
-    [ compass_direction(degrees), "#{mph} mph" ].compact.join(" ")
+    if Setting.current.kph?
+      speed = "#{speed_kmh.to_f.round} kph"
+    else
+      speed = "#{(speed_kmh.to_f * KMH_TO_MPH).round} mph"
+    end
+    [ compass_direction(degrees), speed ].compact.join(" ")
   end
 
   # "As of 3:00 p.m., 05/12" in the location's local time.

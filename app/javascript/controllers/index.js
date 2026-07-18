@@ -15,3 +15,6 @@ application.register("forecast", ForecastController)
 
 import SixhourController from "./sixhour_controller"
 application.register("sixhour", SixhourController)
+
+import ScrollerController from "./scroller_controller"
+application.register("scroller", ScrollerController)

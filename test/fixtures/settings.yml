@@ -1,2 +1,3 @@
 default:
   temperature_unit: celsius
+  wind_unit: mph
