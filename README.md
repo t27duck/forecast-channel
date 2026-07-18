@@ -16,8 +16,9 @@ bin/dev            # starts the server plus JS/CSS watchers
 The root page (`/`) shows the current location's forecast — a Wii Forecast
 Channel-style set of panels (UV, Current, Today, Tomorrow, 5-Day) that slide
 vertically; clicking the Today or Tomorrow panel reveals its 6-hour breakdown.
-(The current location comes from a cookie eventually; for now it's the first
-location.)
+On a first visit the app asks the browser for your location and opens the
+nearest one (needs HTTPS or localhost); otherwise it falls back to the first
+location. You can also set it explicitly in Settings.
 
 The globe lives at `/map`: a Mapbox satellite globe (stars, atmosphere) that
 plots an SVG weather icon and name for each location. Markers are drawn as a

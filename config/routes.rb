@@ -18,6 +18,9 @@ Rails.application.routes.draw do
     resource :location, only: [ :show, :update ]
   end
 
+  # Sets the closest location from the browser's geolocation, then shows it.
+  resource :current_location, only: [ :create ]
+
   resources :locations do
     get :search, on: :collection
     post :refresh_all, on: :collection

@@ -9,7 +9,13 @@ class LocationsController < ApplicationController
   # location) or at the root path (the current location).
   def show
     @location = params[:id] ? Location.find(params[:id]) : current_location
-    redirect_to new_location_path, notice: "Add a location to see its forecast." if @location.nil?
+
+    if @location.nil?
+      redirect_to new_location_path, notice: "Add a location to see its forecast."
+    else
+      # On the root path with no chosen location yet, ask the browser to locate.
+      @auto_locate = params[:id].nil? && cookies[:current_location_id].blank?
+    end
   end
 
   # Prefilled from params when a geocoding search result is picked so the

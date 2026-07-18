@@ -1,6 +1,14 @@
 <% content_for :title, @location.name %>
 <% content_for :hide_app_nav, true %>
 
+<% if @auto_locate %>
+  <%= form_with url: current_location_path, method: :post,
+    data: { controller: "geolocate" }, class: "hidden" do %>
+    <%= hidden_field_tag :latitude, nil, data: { geolocate_target: "latitude" } %>
+    <%= hidden_field_tag :longitude, nil, data: { geolocate_target: "longitude" } %>
+  <% end %>
+<% end %>
+
 <div class="wii" data-controller="forecast" data-forecast-default-value="current">
   <%# Fixed silver top bar — its ▲ label updates to the panel above. %>
   <div class="wii-top">

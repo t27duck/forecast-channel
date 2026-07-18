@@ -5,6 +5,23 @@ class LocationTest < ActiveSupport::TestCase
     assert locations(:berlin).valid?
   end
 
+  test "nearest_to returns the closest location" do
+    # Warsaw is far closer to Berlin than to Tokyo.
+    assert_equal locations(:berlin), Location.nearest_to(52.23, 21.01)
+    # A point near Japan resolves to Tokyo.
+    assert_equal locations(:tokyo), Location.nearest_to(34.69, 135.50)
+  end
+
+  test "nearest_to returns nil without coordinates or locations" do
+    assert_nil Location.nearest_to(nil, nil)
+    assert_nil Location.none.nearest_to(1, 2)
+  end
+
+  test "distance_km measures the great-circle distance" do
+    # Berlin (52.52, 13.41) to Warsaw (52.23, 21.01) is ~520 km.
+    assert_in_delta 520, locations(:berlin).distance_km(52.23, 21.01), 30
+  end
+
   test "requires a name" do
     location = Location.new(latitude: 10, longitude: 20)
     assert_not location.valid?

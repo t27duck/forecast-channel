@@ -77,6 +77,14 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   `#update` (which also backs the °C/°F toggle on the locations index); Closest
   Location's "Change" opens the picker. Reached from the detail view's top-right
   "Settings" link.
+- **Geolocation** (`CurrentLocationsController#create` at `/current_location`):
+  on the root path with no location cookie set, `LocationsController#show` marks
+  the page `@auto_locate` and renders a hidden form driven by the `geolocate`
+  Stimulus controller, which asks the browser for coordinates on load and posts
+  them. The controller picks the nearest stored location (`Location.nearest_to`,
+  Haversine) into the cookie and redirects to its forecast. Denied/unavailable
+  geolocation silently keeps the default. Needs a secure origin
+  (HTTPS/localhost) — the browser blocks geolocation otherwise.
 - **Location picker** (`Settings::LocationsController#show` at
   `/settings/location`): the Wii two-step "choose closest location" screen —
   pick a country, then a location in it (`?country=` toggles the step); striped

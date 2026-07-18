@@ -32,6 +32,15 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".wii-header__location", text: Location.by_name.first.name
   end
 
+  test "root auto-locates only when no location cookie is set" do
+    get root_url
+    assert_select "[data-controller=geolocate]", true, "should ask the browser to locate on first visit"
+
+    cookies[:current_location_id] = locations(:tokyo).id
+    get root_url
+    assert_select "[data-controller=geolocate]", false, "should not auto-locate once a location is chosen"
+  end
+
   test "root redirects to add a location when none exist" do
     Location.delete_all
     get root_url
