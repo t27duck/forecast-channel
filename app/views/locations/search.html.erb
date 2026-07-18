@@ -1,0 +1,34 @@
+<%= turbo_frame_tag "location_search_results" do %>
+  <% if @results.any? %>
+    <ul class="divide-y divide-slate-100 rounded-md border border-slate-200">
+      <% @results.each do |result| %>
+        <li>
+          <%= link_to new_location_path(location: {
+                name: result.name,
+                latitude: result.latitude,
+                longitude: result.longitude,
+                country: result.country,
+                country_code: result.country_code,
+                admin1: result.admin1,
+                timezone: result.timezone,
+                elevation: result.elevation,
+                population: result.population,
+                open_meteo_id: result.open_meteo_id
+              }),
+              data: { turbo_frame: "_top" },
+              class: "flex items-center justify-between px-4 py-3 hover:bg-sky-50" do %>
+            <span>
+              <span class="font-medium text-slate-900"><%= result.display_name %></span>
+            </span>
+            <span class="tabular-nums text-xs text-slate-500">
+              <%= number_with_precision(result.latitude, precision: 3) %>,
+              <%= number_with_precision(result.longitude, precision: 3) %>
+            </span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% elsif @query.present? %>
+    <p class="text-sm text-slate-500">No matches for “<%= @query %>”. Try a different spelling.</p>
+  <% end %>
+<% end %>

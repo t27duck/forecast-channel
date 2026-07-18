@@ -1,0 +1,27 @@
+<tr id="<%= dom_id(location) %>" class="hover:bg-slate-50">
+  <td class="px-4 py-3">
+    <div class="font-medium text-slate-900"><%= location.name %></div>
+    <div class="text-xs text-slate-500"><%= [ location.admin1, location.country ].compact_blank.join(", ") %></div>
+  </td>
+  <td class="px-4 py-3 tabular-nums text-slate-600">
+    <%= number_with_precision(location.latitude, precision: 4) %>,
+    <%= number_with_precision(location.longitude, precision: 4) %>
+  </td>
+  <td class="px-4 py-3 text-slate-600">
+    <% if location.current_temperature.present? %>
+      <%= number_with_precision(location.current_temperature, precision: 0) %>° ·
+      <%= location.current_condition_name %>
+    <% else %>
+      <span class="text-slate-400">—</span>
+    <% end %>
+  </td>
+  <td class="px-4 py-3 text-slate-500">
+    <%= location.weather_refreshed_at ? time_ago_in_words(location.weather_refreshed_at) + " ago" : "never" %>
+  </td>
+  <td class="px-4 py-3 text-right whitespace-nowrap">
+    <%= link_to "Edit", edit_location_path(location), class: "text-sky-600 hover:text-sky-700" %>
+    <%= button_to "Delete", location, method: :delete,
+      class: "ml-3 text-red-600 hover:text-red-700",
+      form: { class: "inline", data: { turbo_confirm: "Remove #{location.name}?" } } %>
+  </td>
+</tr>

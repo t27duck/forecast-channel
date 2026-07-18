@@ -1,0 +1,27 @@
+berlin:
+  name: Berlin
+  latitude: 52.52437
+  longitude: 13.41053
+  country: Germany
+  country_code: DE
+  admin1: Berlin
+  timezone: Europe/Berlin
+  elevation: 74.0
+  population: 3426354
+  current_temperature: 18.5
+  current_condition_code: 3
+  current_condition_label: Overcast
+  uv_index: 2.0
+  uv_label: Low
+  weather_refreshed_at: <%= 30.minutes.ago.to_fs(:db) %>
+
+tokyo:
+  name: Tokyo
+  latitude: 35.6895
+  longitude: 139.69171
+  country: Japan
+  country_code: JP
+  admin1: Tokyo
+  timezone: Asia/Tokyo
+  elevation: 40.0
+  population: 8336599

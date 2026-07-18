@@ -1,0 +1,66 @@
+class LocationsController < ApplicationController
+  before_action :set_location, only: %i[edit update destroy]
+
+  def index
+    @locations = Location.by_name
+  end
+
+  # Prefilled from params when a geocoding search result is picked so the
+  # operator can review the captured coordinates before saving.
+  def new
+    @location = Location.new(prefill_params)
+  end
+
+  def create
+    @location = Location.new(location_params)
+
+    if @location.save
+      redirect_to locations_path, notice: "#{@location.name} was added."
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def edit
+  end
+
+  def update
+    if @location.update(location_params)
+      redirect_to locations_path, notice: "#{@location.name} was updated."
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    @location.destroy
+    redirect_to locations_path, notice: "#{@location.name} was removed."
+  end
+
+  # Geocoding proxy: renders the search-results Turbo Frame for the new form.
+  def search
+    @query = params[:query].to_s
+    @results = OpenMeteo::GeocodingClient.search(@query)
+  end
+
+  private
+
+  def set_location
+    @location = Location.find(params[:id])
+  end
+
+  def location_params
+    params.require(:location).permit(
+      :name, :latitude, :longitude, :country, :country_code,
+      :admin1, :timezone, :elevation, :population, :open_meteo_id
+    )
+  end
+
+  # Same permitted attributes, but tolerant of an absent :location key so the
+  # blank new form still renders.
+  def prefill_params
+    return {} unless params[:location]
+
+    location_params
+  end
+end

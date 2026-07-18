@@ -11,6 +11,10 @@ Rails.application.routes.draw do
 
   resource :map, only: [ :show ]
 
+  resources :locations do
+    get :search, on: :collection
+  end
+
   # Defines the root path route ("/")
   root "maps#show"
 end

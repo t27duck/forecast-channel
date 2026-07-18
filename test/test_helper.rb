@@ -10,6 +10,16 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Add more helper methods to be used by all tests here...
+    # Temporarily replace a class/singleton method with +replacement+ for the
+    # duration of the block, restoring the original afterwards. Minitest 6
+    # dropped the built-in +stub+, so we provide a minimal equivalent.
+    def stub_singleton(klass, name, replacement)
+      singleton = klass.singleton_class
+      original = singleton.instance_method(name)
+      singleton.define_method(name, &replacement)
+      yield
+    ensure
+      singleton.define_method(name, original)
+    end
   end
 end

@@ -36,6 +36,25 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - Run specific test file: `bin/rails test test/path/to/test_file.rb`
 - Run specific test method: `bin/rails test test/path/to/test_file.rb:LINE_NUMBER`
 
+## Domain Concepts
+
+- **Location** (`app/models/location.rb`): a place tracked on the globe. Holds
+  geocoding data (name, latitude/longitude, country, admin1/region, timezone,
+  elevation) plus cached weather. Current conditions and UV are flat columns;
+  the today/tomorrow forecasts, 6-hour windows, and 5-day forecast are JSON
+  columns populated by the (future) weather-refresh task. `weather_stale?`
+  gates that refresh.
+- **WeatherCode** (`app/models/concerns/weather_code.rb`): the single source of
+  truth mapping Open-Meteo WMO weather codes to human labels.
+- **OpenMeteo::GeocodingClient** (`app/services/open_meteo/geocoding_client.rb`):
+  looks up places by name via the Open-Meteo geocoding API
+  (`https://geocoding-api.open-meteo.com/v1/search`, no API key) using
+  `Net::HTTP`. Failure-tolerant — returns `[]` on blank queries and errors.
+- **Locations management UI** (`LocationsController`, `/locations`): CRUD for
+  locations. The "New location" page searches by name (Turbo Frame proxy to the
+  geocoding client) and pre-fills the form with a picked result's coordinates.
+  Currently unauthenticated.
+
 ## Design
 
 - Weather data cached in the database and refreshed periodically.
