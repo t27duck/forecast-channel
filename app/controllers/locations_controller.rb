@@ -13,6 +13,9 @@ class LocationsController < ApplicationController
     if @location.nil?
       redirect_to new_location_path, notice: "Add a location to see its forecast."
     else
+      # Viewing your own location plays the "current" music and sends the Globe
+      # button home; viewing any other location keeps the "map" music playing.
+      @is_current_location = @location.id == current_location&.id
       # On the root path with no chosen location yet, ask the browser to locate.
       @auto_locate = params[:id].nil? && cookies[:current_location_id].blank?
     end

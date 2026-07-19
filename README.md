@@ -81,4 +81,7 @@ Drop the four Wii Forecast Channel tracks into `public/audio/` named:
 
 The player switches by zone (globe vs forecast) and time of day (day 7am–7pm,
 night otherwise), persists across navigations, and starts on the first click.
-Until the files are present, the app runs fine with no music.
+The globe track plays on the map and while exploring any location other than
+your own, so it keeps playing uninterrupted as you move between them; only your
+own location's forecast (including the map's "End" button) plays the forecast
+track. Until the files are present, the app runs fine with no music.

@@ -127,15 +127,21 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   blanking at the pitch limits like the zoom buttons), and "Restore"
   (`globe#resetPitch` back to `DEFAULT_PITCH`). Both bars are faint (20%
   opacity) and rise to 80% on hover. `MapsController#show` accepts a
-  `?location=<id>` param (the detail view's "Globe" button passes the viewed
-  location) and, when present, exposes `data-globe-center-value` so the globe
-  opens centred on that location.
+  `?location=<id>` param and, when present, exposes `data-globe-center-value`
+  so the globe opens centred on that location. The globe otherwise resumes the
+  view it was last left at: the controller saves center/zoom/pitch/bearing to
+  `sessionStorage` (`globeCamera`) on `moveend` and restores it on connect when
+  no focus param is given. So arriving from your own location centres on it,
+  while arriving from another location (whose "Globe" button omits the param)
+  resumes where you left the map.
 - **Location detail** (`LocationsController#show`): the Wii Forecast
   Channel-style paneled view. Served at the root path `/` for the current
   location (a `current_location_id` cookie later; the first location for now)
   and at `/locations/:id` for a specific one; redirects to add a location when
-  none exist. The "Globe" button links to `/map?location=<id>` so the globe
-  opens centred on the viewed location. Five full-screen panels — UV Index,
+  none exist. The "Globe" button links to `/map?location=<id>` from your own
+  location (centres the globe on it) or plain `/map` from any other location
+  (resumes the saved globe view); the music zone follows the same distinction.
+  Five full-screen panels — UV Index,
   Current, Today, Tomorrow, 5-Day (default Current) — slide vertically
   (non-looping) via the `forecast` Stimulus controller (arrow buttons + Up/Down
   keys). Panels are partials under `app/views/locations/panels/` wrapped in the
@@ -154,9 +160,15 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 
 - **Background music** (`jukebox` Stimulus controller): a `data-turbo-permanent`
   player in the layout keeps music going across Turbo navigations. It picks a
-  track from the zone (`<body data-music-zone>` — "globe" on the map, "current"
-  elsewhere, set via `content_for :music_zone`) and the time of day (day
-  7am–7pm, night otherwise), flipping at those boundaries. Autoplay starts on
+  track from the zone (`<body data-music-zone>`, set via `content_for
+  :music_zone`) and the time of day (day 7am–7pm, night otherwise), flipping at
+  those boundaries; because it only reloads the source when that source
+  changes, staying in one zone across navigations never interrupts playback.
+  The zone is "globe" on the map, "current" on your own location's forecast,
+  and "globe" on any *other* location's forecast — so exploring cities off the
+  globe keeps the map track playing, and only returning to your location (e.g.
+  the map's "End" button → root) switches back to the "current" track
+  (`LocationsController#show` sets `@is_current_location`). Autoplay starts on
   the first user gesture (tracks use `preload="none"` so the large files only
   download when playback starts). A mute button in the detail view's top-bar
   left slot (`mute` Stimulus controller, connected to the jukebox via an outlet)

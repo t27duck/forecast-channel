@@ -57,6 +57,32 @@ class GlobeTest < ApplicationSystemTestCase
     assert_equal true, wait_until { pitch.call.zero? }, "expected Restore to reset the tilt"
   end
 
+  test "the map saves its camera view when it is moved" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
+
+    find(".map-bar [aria-label='Zoom in']").click
+    sleep 0.8 # let the zoom animation settle and moveend save the view
+
+    saved = evaluate_script("JSON.parse(window.sessionStorage.getItem('globeCamera') || 'null')")
+    refute_nil saved, "expected the view to be saved on move"
+    assert_operator saved["zoom"], :>, 7.5
+  end
+
+  test "the map resumes the camera view it was last left at" do
+    # Stand in for having left the map zoomed to a particular spot.
+    visit root_path # same origin, no WebGL — just to reach sessionStorage
+    execute_script(
+      "window.sessionStorage.setItem('globeCamera', " \
+      "JSON.stringify({ center: [12, 48], zoom: 5.5, pitch: 0, bearing: 0 }))"
+    )
+
+    visit map_path # no ?location focus, so it resumes the saved view
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
+    restored = evaluate_script("document.querySelector('[data-controller=globe]').__map.getZoom()")
+    assert_in_delta 5.5, restored, 0.05
+  end
+
   private
 
   # Polls the block until it returns truthy or Capybara's default wait elapses.

@@ -1,5 +1,7 @@
 <% content_for :title, @location.name %>
 <% content_for :hide_app_nav, true %>
+<%# Your own location plays the "current" track; exploring others keeps the "map" track. %>
+<% content_for :music_zone, @is_current_location ? "current" : "globe" %>
 
 <% if @auto_locate %>
   <%= form_with url: current_location_path, method: :post,
@@ -70,6 +72,9 @@
         <span class="wii-arrow__glyph">&#9660;</span>
       </button>
     </div>
-    <div class="wii-bar__slot wii-bar__slot--right"><%= link_to "Globe", map_path(location: @location.id), class: "wii-chrome-link" %></div>
+    <div class="wii-bar__slot wii-bar__slot--right">
+      <%# From your own location, centre the globe on it; from elsewhere, resume where you left the map. %>
+      <%= link_to "Globe", (@is_current_location ? map_path(location: @location.id) : map_path), class: "wii-chrome-link" %>
+    </div>
   </div>
 </div>

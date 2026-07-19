@@ -29,6 +29,13 @@ const WEATHER_MODES = [
 const PITCH_STEP = 15
 const DEFAULT_PITCH = 0
 
+const DEFAULT_ZOOM = 7
+const DEFAULT_CENTER = [0, 20]
+
+// The map remembers where it was left (per browser tab) so returning to it from
+// another location's forecast resumes the same view.
+const CAMERA_KEY = "globeCamera"
+
 // Icons display at ICON_SIZE px, rasterized at 2x (pixelRatio) for crispness.
 const ICON_SIZE = 34
 const ICON_PIXEL_RATIO = 2
@@ -52,13 +59,16 @@ export default class extends Controller {
 
     mapboxgl.accessToken = this.tokenValue
 
+    const camera = this.#initialCamera()
+
     this.map = new mapboxgl.Map({
       container: this.mapTarget,
       style: "mapbox://styles/mapbox/standard-satellite",
       projection: "globe",
-      // Centre on the location we came from, else a default world view.
-      center: this.hasCenterValue && this.centerValue.length === 2 ? this.centerValue : [0, 20],
-      zoom: 7,
+      center: camera.center,
+      zoom: camera.zoom,
+      pitch: camera.pitch,
+      bearing: camera.bearing,
       attributionControl: false,
       minZoom: 2, // min 0 (fully zoomed out)
       maxZoom: 9 // max 22 (fully zoomed in)
@@ -127,6 +137,45 @@ export default class extends Controller {
     }
   }
 
+  // Where the globe opens: centred on the location we came from (fresh), else
+  // the view it was left at (resumed), else a default world view.
+  #initialCamera() {
+    if (this.hasCenterValue && this.centerValue.length === 2) {
+      return { center: this.centerValue, zoom: DEFAULT_ZOOM, pitch: DEFAULT_PITCH, bearing: 0 }
+    }
+
+    const saved = this.#loadCamera()
+    if (saved) return saved
+
+    return { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, pitch: DEFAULT_PITCH, bearing: 0 }
+  }
+
+  #saveCamera() {
+    if (!this.map) return
+    const center = this.map.getCenter()
+    const state = {
+      center: [center.lng, center.lat],
+      zoom: this.map.getZoom(),
+      pitch: this.map.getPitch(),
+      bearing: this.map.getBearing()
+    }
+    try {
+      window.sessionStorage.setItem(CAMERA_KEY, JSON.stringify(state))
+    } catch {
+      // sessionStorage unavailable (private mode / disabled) — non-fatal.
+    }
+  }
+
+  #loadCamera() {
+    try {
+      const state = JSON.parse(window.sessionStorage.getItem(CAMERA_KEY))
+      if (Array.isArray(state?.center) && state.center.length === 2) return state
+    } catch {
+      // Ignore missing or malformed state.
+    }
+    return null
+  }
+
   async #setupScene() {
     const map = this.map
 
@@ -157,6 +206,9 @@ export default class extends Controller {
     map.on("pitch", () => this.#syncPitchButtons())
     this.#syncPitchButtons()
 
+    // Remember the view so returning to the map resumes where it was left.
+    map.on("moveend", () => this.#saveCamera())
+
     this.element.dataset.mapReady = "true"
   }
 
@@ -179,7 +231,13 @@ export default class extends Controller {
 
     map.on("click", LAYER_ID, (event) => {
       const id = event.features?.[0]?.properties?.id
-      if (id) window.location.assign(`/locations/${id}`)
+      if (!id) return
+
+      // Navigate through Turbo so the persistent music player survives (a full
+      // reload would restart the track).
+      const url = `/locations/${id}`
+      if (window.Turbo) window.Turbo.visit(url)
+      else window.location.assign(url)
     })
 
     map.on("mouseenter", LAYER_ID, () => { map.getCanvas().style.cursor = "pointer" })
