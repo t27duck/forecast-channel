@@ -24,7 +24,11 @@ The globe lives at `/map`: a Mapbox satellite globe (stars, atmosphere) that
 plots an SVG weather icon and name for each location. Markers are drawn as a
 symbol layer, so overlapping ones declutter automatically when zoomed out and
 reappear as you zoom in. Click a marker (or a location in the list) to open its
-detail view. The globe needs a `mapbox_token` in the Rails credentials:
+detail view. A Wii-style bar overlaid on the top of the globe holds "Zoom" (out),
+"Next", and "Zoom" (in) buttons, and a green banner names what the markers show —
+"Next" cycles the icons through Current, Today's, and Tomorrow's weather. The bar
+stays faint until you hover it. The globe needs a `mapbox_token` in the Rails
+credentials:
 
 ```bash
 bin/rails credentials:edit   # add: mapbox_token: pk....

@@ -16,6 +16,14 @@ const HIDDEN_BASEMAP_FEATURES = [
 const SOURCE_ID = "locations"
 const LAYER_ID = "location-markers"
 
+// The "Next" button cycles the marker icons through these views; the green
+// banner shows which one is on screen. `icon` names a GeoJSON feature property.
+const WEATHER_MODES = [
+  { icon: "icon", title: "Current Weather" },
+  { icon: "icon_today", title: "Today's Weather" },
+  { icon: "icon_tomorrow", title: "Tomorrow's Weather" }
+]
+
 // Icons display at ICON_SIZE px, rasterized at 2x (pixelRatio) for crispness.
 const ICON_SIZE = 34
 const ICON_PIXEL_RATIO = 2
@@ -26,6 +34,7 @@ const ICON_PIXEL_RATIO = 2
 // population is used as the priority so larger cities win a collision.
 export default class extends Controller {
   static values = { token: String, markersUrl: String }
+  static targets = ["map", "zoomIn", "zoomOut", "banner"]
 
   connect() {
     if (!this.tokenValue) {
@@ -33,10 +42,13 @@ export default class extends Controller {
       return
     }
 
+    this.modeIndex = 0
+    if (this.hasBannerTarget) this.bannerTarget.textContent = WEATHER_MODES[0].title
+
     mapboxgl.accessToken = this.tokenValue
 
     this.map = new mapboxgl.Map({
-      container: this.element,
+      container: this.mapTarget,
       style: "mapbox://styles/mapbox/standard-satellite",
       projection: "globe",
       center: [0, 20],
@@ -50,6 +62,29 @@ export default class extends Controller {
 
   disconnect() {
     this.map?.remove()
+  }
+
+  // The overlaid zoom bar buttons — one Mapbox zoom unit per press.
+  zoomIn() {
+    this.map?.zoomIn()
+  }
+
+  zoomOut() {
+    this.map?.zoomOut()
+  }
+
+  // Cycle the marker icons: Current -> Today -> Tomorrow -> Current.
+  next() {
+    this.modeIndex = (this.modeIndex + 1) % WEATHER_MODES.length
+    this.#applyMode()
+  }
+
+  #applyMode() {
+    const mode = WEATHER_MODES[this.modeIndex]
+    if (this.hasBannerTarget) this.bannerTarget.textContent = mode.title
+    if (this.map?.getLayer(LAYER_ID)) {
+      this.map.setLayoutProperty(LAYER_ID, "icon-image", ["get", mode.icon])
+    }
   }
 
   async #setupScene() {
@@ -72,8 +107,26 @@ export default class extends Controller {
     await this.#registerIcons()
     this.#addMarkersLayer()
     this.#enableNavigation()
+    this.#applyMode() // sync icons/banner with the current view
+
+    // Disable the +/- buttons at the zoom limits (and keep them in sync).
+    map.on("zoom", () => this.#syncZoomButtons())
+    this.#syncZoomButtons()
 
     this.element.dataset.mapReady = "true"
+  }
+
+  // Blank + disable the zoom-in/out button once its limit is reached.
+  #syncZoomButtons() {
+    if (!this.map) return
+    const zoom = this.map.getZoom()
+
+    if (this.hasZoomInTarget) {
+      this.zoomInTarget.disabled = zoom >= this.map.getMaxZoom() - 1e-3
+    }
+    if (this.hasZoomOutTarget) {
+      this.zoomOutTarget.disabled = zoom <= this.map.getMinZoom() + 1e-3
+    }
   }
 
   // Clicking a marker opens that location's detail view.

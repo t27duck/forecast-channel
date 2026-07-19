@@ -224,6 +224,60 @@
   display: block;
 }
 
+/* Map control bar ------------------------------------------------------ */
+/* The globe overlays have no .wii ancestor, so define here the custom props
+   the reused .wii-top bar expects. */
+.map-view {
+  --chrome: clamp(40px, 7vh, 56px);
+  --panel-bg: #0a1a3a; /* dark recess behind a pressed button, over space */
+}
+
+/* Reuses the silver .wii-top bar (Zoom / Next / Zoom) as a faint overlay. */
+.map-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+  opacity: 0.2;
+  transition: opacity 0.25s ease;
+}
+
+.map-bar:hover {
+  opacity: 0.8;
+}
+
+/* At a zoom limit the button greys out (via :disabled) and goes blank. */
+.map-bar .wii-arrow:disabled > * {
+  visibility: hidden;
+}
+
+.wii-zoom__icon {
+  display: block;
+  width: clamp(20px, 3.2vh, 28px);
+  height: clamp(20px, 3.2vh, 28px);
+}
+
+/* Green banner (below the bar, right-aligned) naming the marker icons' view. */
+.map-banner {
+  position: absolute;
+  top: var(--chrome);
+  right: 0;
+  z-index: 10;
+  padding: clamp(3px, 0.8vh, 7px) clamp(16px, 3vw, 34px);
+  background: linear-gradient(90deg, #12630c, #1f7d12);
+  box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3);
+  border-bottom-left-radius: 6px;
+  color: #fff;
+  font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(15px, 2.4vh, 24px);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
 /* Green header --------------------------------------------------------- */
 .wii-header {
   display: flex;

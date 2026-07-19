@@ -109,7 +109,19 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   `app/javascript/lib/weather_icons.js` via `map.addImage`; each feature's
   `icon` (from `WeatherCode.icon_group`) picks one, with the name as a
   halo'd `text-field` to its right. Clicking a marker opens that location's
-  detail view.
+  detail view. The page hides the app nav (`content_for :hide_app_nav`) and
+  the globe fills the viewport; a Wii-style top bar (`.wii-top.map-bar`,
+  reusing the detail-view bar styling + `press` animation) is overlaid on the
+  globe with three buttons — "Zoom" (circle-minus, out), "Next" (▶, center)
+  and "Zoom" (circle-plus, in) — wired to the globe controller's
+  `zoomOut`/`next`/`zoomIn` actions. Zoom moves one Mapbox unit and each zoom
+  button disables + blanks at its limit (`#syncZoomButtons` on the `zoom`
+  event). "Next" cycles the marker icons Current → Today → Tomorrow → Current
+  (`WEATHER_MODES`, `#applyMode` swaps the symbol layer's `icon-image` between
+  the `icon`/`icon_today`/`icon_tomorrow` feature properties from
+  `LocationGeojson`, which fall back to the current icon when that day isn't
+  fetched). A green banner below the bar (`.map-banner`, `banner` target) names
+  the active view. The bar is faint (20% opacity) and rises to 80% on hover.
 - **Location detail** (`LocationsController#show`): the Wii Forecast
   Channel-style paneled view. Served at the root path `/` for the current
   location (a `current_location_id` cookie later; the first location for now)

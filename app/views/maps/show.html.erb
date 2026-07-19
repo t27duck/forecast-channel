@@ -1,13 +1,49 @@
 <% content_for :title, "Globe" %>
 <% content_for :music_zone, "globe" %>
+<% content_for :hide_app_nav, true %>
 
-<div class="relative">
-  <div
-    data-controller="globe"
-    data-globe-token-value="<%= mapbox_token %>"
-    data-globe-markers-url-value="<%= map_markers_path %>"
-    class="h-[calc(100vh-3.25rem)] w-full bg-[#030a1b]"
-  ></div>
+<div
+  class="relative map-view"
+  data-controller="globe"
+  data-globe-token-value="<%= mapbox_token %>"
+  data-globe-markers-url-value="<%= map_markers_path %>"
+>
+  <div data-globe-target="map" class="h-screen w-full bg-[#030a1b]"></div>
+
+  <%# Wii-style control bar overlaid on the globe; faint until hovered. %>
+  <div class="wii-top map-bar" data-controller="press">
+    <div class="wii-bar__slot">
+      <button type="button" class="wii-arrow" aria-label="Zoom out"
+        data-action="globe#zoomOut" data-globe-target="zoomOut">
+        <svg class="wii-zoom__icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span class="wii-arrow__label">Zoom</span>
+      </button>
+    </div>
+    <div class="wii-bar__slot wii-bar__slot--center">
+      <button type="button" class="wii-arrow" aria-label="Next weather view"
+        data-action="globe#next">
+        <span class="wii-arrow__label">Next</span>
+        <span class="wii-arrow__glyph">&#9654;</span>
+      </button>
+    </div>
+    <div class="wii-bar__slot">
+      <button type="button" class="wii-arrow" aria-label="Zoom in"
+        data-action="globe#zoomIn" data-globe-target="zoomIn">
+        <span class="wii-arrow__label">Zoom</span>
+        <svg class="wii-zoom__icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <%# Green banner naming what the marker icons currently represent. %>
+  <div class="map-banner" data-globe-target="banner">Current Weather</div>
 
   <% if @locations.none? %>
     <div class="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
