@@ -38,7 +38,7 @@ const ICON_PIXEL_RATIO = 2
 // declutters overlapping markers when zoomed out and reveals more on zoom-in;
 // population is used as the priority so larger cities win a collision.
 export default class extends Controller {
-  static values = { token: String, markersUrl: String }
+  static values = { token: String, markersUrl: String, center: Array }
   static targets = ["map", "zoomIn", "zoomOut", "banner", "pitchUp", "pitchDown"]
 
   connect() {
@@ -56,7 +56,8 @@ export default class extends Controller {
       container: this.mapTarget,
       style: "mapbox://styles/mapbox/standard-satellite",
       projection: "globe",
-      center: [0, 20],
+      // Centre on the location we came from, else a default world view.
+      center: this.hasCenterValue && this.centerValue.length === 2 ? this.centerValue : [0, 20],
       zoom: 7,
       attributionControl: false,
       minZoom: 2, // min 0 (fully zoomed out)

@@ -7,6 +7,7 @@
   data-controller="globe"
   data-globe-token-value="<%= mapbox_token %>"
   data-globe-markers-url-value="<%= map_markers_path %>"
+  <% if @focus %>data-globe-center-value="<%= [ @focus.longitude.to_f, @focus.latitude.to_f ].to_json %>"<% end %>
 >
   <div data-globe-target="map" class="h-screen w-full bg-[#030a1b]"></div>
 

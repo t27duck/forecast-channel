@@ -26,6 +26,17 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".map-bar--bottom [data-action=?]", "globe#resetPitch", text: "Restore"
   end
 
+  test "centres the globe on the location passed from its forecast" do
+    get map_url(location: locations(:berlin).id)
+    expected = [ locations(:berlin).longitude.to_f, locations(:berlin).latitude.to_f ].to_json
+    assert_select "[data-controller=globe][data-globe-center-value=?]", expected
+  end
+
+  test "omits the centre value when no location is given" do
+    get map_url
+    assert_select "[data-globe-center-value]", false
+  end
+
   test "the globe selects the globe music zone" do
     get map_url
     assert_select "body[data-music-zone=?]", "globe"

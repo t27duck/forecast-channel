@@ -126,12 +126,16 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   (`globe#pitchUp`/`globe#pitchDown`, ±`PITCH_STEP`° via `easeTo`, disabling +
   blanking at the pitch limits like the zoom buttons), and "Restore"
   (`globe#resetPitch` back to `DEFAULT_PITCH`). Both bars are faint (20%
-  opacity) and rise to 80% on hover.
+  opacity) and rise to 80% on hover. `MapsController#show` accepts a
+  `?location=<id>` param (the detail view's "Globe" button passes the viewed
+  location) and, when present, exposes `data-globe-center-value` so the globe
+  opens centred on that location.
 - **Location detail** (`LocationsController#show`): the Wii Forecast
   Channel-style paneled view. Served at the root path `/` for the current
   location (a `current_location_id` cookie later; the first location for now)
   and at `/locations/:id` for a specific one; redirects to add a location when
-  none exist. The "Globe" button and the app nav link to `/map`. Five full-screen panels — UV Index,
+  none exist. The "Globe" button links to `/map?location=<id>` so the globe
+  opens centred on the viewed location. Five full-screen panels — UV Index,
   Current, Today, Tomorrow, 5-Day (default Current) — slide vertically
   (non-looping) via the `forecast` Stimulus controller (arrow buttons + Up/Down
   keys). Panels are partials under `app/views/locations/panels/` wrapped in the

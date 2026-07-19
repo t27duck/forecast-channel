@@ -70,6 +70,6 @@
         <span class="wii-arrow__glyph">&#9660;</span>
       </button>
     </div>
-    <div class="wii-bar__slot wii-bar__slot--right"><%= link_to "Globe", map_path, class: "wii-chrome-link" %></div>
+    <div class="wii-bar__slot wii-bar__slot--right"><%= link_to "Globe", map_path(location: @location.id), class: "wii-chrome-link" %></div>
   </div>
 </div>
