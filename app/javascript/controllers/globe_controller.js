@@ -57,8 +57,10 @@ export default class extends Controller {
       style: "mapbox://styles/mapbox/standard-satellite",
       projection: "globe",
       center: [0, 20],
-      zoom: 1.4,
-      attributionControl: false
+      zoom: 7,
+      attributionControl: false,
+      minZoom: 2, // min 0 (fully zoomed out)
+      maxZoom: 9 // max 22 (fully zoomed in)
     })
 
     this.element.__map = this.map // handle for system tests
