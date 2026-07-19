@@ -25,7 +25,9 @@
 .wii-top,
 .wii-header,
 .wii-footerline,
-.wii-bottom { flex: none; }
+.wii-bottom {
+  flex: none;
+}
 
 /* The sliding window between the fixed chrome. */
 .wii-viewport {
@@ -33,11 +35,13 @@
   flex: 1;
   overflow: hidden;
 }
+
 .wii__track {
   height: 100%;
   /* transform is set inline by the forecast Stimulus controller */
   transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .wii-panel-body {
   height: 100%;
   display: flex;
@@ -50,69 +54,113 @@
 .wii-top,
 .wii-bottom {
   display: grid;
-  /* Fixed-width centre segment so the ▲/▼ button never shifts the layout. */
-  grid-template-columns: 1fr clamp(220px, 26vw, 360px) 1fr;
-  align-items: center;
+  /* Three equal columns so every button is the same width and the centre
+     ▲/▼ button never shifts the layout when its label changes. */
+  grid-template-columns: repeat(3, 1fr);
   height: var(--chrome);
   background: linear-gradient(#f6f6f6, #d7d7d7);
   color: #2a2a2a;
   font-weight: 600;
   font-size: clamp(13px, 1.8vh, 17px);
 }
-.wii-top { border-bottom: 1px solid #b4b4b4; }
-.wii-bottom { border-top: 1px solid #b4b4b4; }
 
+.wii-top {
+  border-bottom: 1px solid #b4b4b4;
+}
+
+.wii-bottom {
+  border-top: 1px solid #b4b4b4;
+}
+
+/* Each slot is filled edge-to-edge by its button/link, so the hover
+   highlight is full-bleed. The label hugs the panel edge (bottom on the top
+   bar, top on the bottom bar) and is horizontally centred. */
 .wii-bar__slot {
   display: flex;
-  align-items: center;
   height: 100%;
-  padding: 0 clamp(10px, 2vw, 22px);
 }
-.wii-bar__slot--center { justify-content: center; border-inline: 1px solid #bcbcbc; }
-.wii-bar__slot--right { justify-content: flex-end; }
 
-.wii-arrow {
-  display: inline-flex;
-  align-items: center;
+.wii-bar__slot--center {
+  border-inline: 1px solid #bcbcbc;
+}
+
+.wii-arrow,
+.wii-chrome-link,
+.wii-mute {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
   gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: clamp(4px, 1vh, 9px) clamp(10px, 2vw, 22px);
   background: none;
   border: 0;
   cursor: pointer;
   color: #2a2a2a;
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
+  text-decoration: none;
   white-space: nowrap;
 }
-.wii-arrow__glyph { color: #333; font-size: 0.9em; line-height: 1; }
-.wii-arrow:hover { color: #000; }
 
-.wii-chrome-link {
-  color: #2a2a2a;
-  text-decoration: none;
-  font-weight: 600;
+.wii-bottom .wii-arrow,
+.wii-bottom .wii-chrome-link,
+.wii-bottom .wii-mute {
+  align-items: flex-start;
 }
-.wii-chrome-link:hover { color: #000; }
-.wii-chrome-link--muted { color: #8a8a8a; cursor: default; }
 
-.wii-mute {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
+.wii-arrow {
+  font-weight: 700;
+}
+
+.wii-arrow__glyph {
+  color: #333;
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+
+/* Wii-style hover: the whole cell turns blue with white text. */
+.wii-arrow:hover,
+.wii-chrome-link:hover,
+.wii-mute:hover {
+  background: linear-gradient(#a6d6f7, #6fb7ef);
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.wii-arrow:hover .wii-arrow__glyph {
+  color: #fff;
+}
+
+.wii-chrome-link--muted {
+  color: #8a8a8a;
+  cursor: default;
+}
+
+.wii-chrome-link--muted:hover {
   background: none;
-  color: #2a2a2a;
-  cursor: pointer;
+  color: #8a8a8a;
+  text-shadow: none;
 }
-.wii-mute:hover { color: #000; }
+
 .wii-mute__icon {
   display: block;
   width: clamp(20px, 3.2vh, 28px);
   height: clamp(20px, 3.2vh, 28px);
 }
-.wii-mute__slash { display: none; }
-.wii-mute.is-muted .wii-mute__waves { display: none; }
-.wii-mute.is-muted .wii-mute__slash { display: block; }
+
+.wii-mute__slash {
+  display: none;
+}
+
+.wii-mute.is-muted .wii-mute__waves {
+  display: none;
+}
+
+.wii-mute.is-muted .wii-mute__slash {
+  display: block;
+}
 
 /* Green header --------------------------------------------------------- */
 .wii-header {
@@ -124,6 +172,7 @@
   background: linear-gradient(#1f7d12, #12630c);
   box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.25);
 }
+
 .wii-header__title {
   color: #fff;
   font-weight: 800;
@@ -132,6 +181,7 @@
   text-shadow: 0 2px 2px rgba(0, 0, 0, 0.35);
   white-space: nowrap;
 }
+
 .wii-header__location {
   flex: 1;
   display: flex;
@@ -155,12 +205,14 @@
   justify-content: space-between;
   height: clamp(22px, 3.6vh, 30px);
 }
+
 .wii-credit {
   padding-left: clamp(6px, 1.2vw, 14px);
   font-size: clamp(11px, 1.6vh, 14px);
   font-weight: 600;
   color: rgba(255, 255, 255, 0.85);
 }
+
 .wii-asof {
   padding: 3px clamp(12px, 2vw, 22px);
   border-top-left-radius: 6px;
@@ -180,14 +232,24 @@
   gap: clamp(12px, 3vw, 40px);
   min-height: 0;
 }
+
 .wii-temp {
   font-weight: 800;
   font-size: clamp(64px, 15vh, 128px);
   line-height: 0.95;
   letter-spacing: -0.02em;
 }
-.wii-temp--white { color: #fff; text-shadow: 0 3px 4px rgba(0, 0, 0, 0.3); }
-.wii-temp--yellow { color: #ffd21e; text-shadow: 0 3px 4px rgba(0, 0, 0, 0.35); }
+
+.wii-temp--white {
+  color: #fff;
+  text-shadow: 0 3px 4px rgba(0, 0, 0, 0.3);
+}
+
+.wii-temp--yellow {
+  color: #ffd21e;
+  text-shadow: 0 3px 4px rgba(0, 0, 0, 0.35);
+}
+
 .wii-condition {
   margin-top: clamp(4px, 1vh, 10px);
   font-weight: 600;
@@ -195,6 +257,7 @@
   max-width: 12em;
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
 }
+
 .wii-conditions__icon {
   flex: none;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
@@ -216,13 +279,19 @@
   gap: clamp(10px, 2.5vw, 28px);
   min-height: 0;
 }
-.wii-uv__figure { flex: none; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35)); }
+
+.wii-uv__figure {
+  flex: none;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+}
+
 .wii-uv__panel {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: clamp(6px, 1.4vh, 14px);
 }
+
 .wii-uv__heading {
   padding: clamp(4px, 1vh, 10px) clamp(12px, 2vw, 22px);
   border-radius: 6px;
@@ -231,11 +300,13 @@
   font-weight: 700;
   font-size: clamp(16px, 2.6vh, 26px);
 }
+
 .wii-uv__boxes {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: clamp(8px, 1.6vw, 18px);
 }
+
 .wii-uv__value,
 .wii-uv__label {
   display: flex;
@@ -247,8 +318,14 @@
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.25);
   font-weight: 800;
 }
-.wii-uv__value { font-size: clamp(48px, 11vh, 92px); }
-.wii-uv__label { font-size: clamp(28px, 6vh, 56px); }
+
+.wii-uv__value {
+  font-size: clamp(48px, 11vh, 92px);
+}
+
+.wii-uv__label {
+  font-size: clamp(28px, 6vh, 56px);
+}
 
 /* 5-Day forecast ------------------------------------------------------- */
 .wii-fiveday {
@@ -258,6 +335,7 @@
   gap: clamp(6px, 1vw, 14px);
   min-height: 0;
 }
+
 .wii-day {
   display: flex;
   flex-direction: column;
@@ -267,6 +345,7 @@
   background: linear-gradient(#1b3f84, #0e2a63);
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.15);
 }
+
 .wii-day__name {
   width: 100%;
   padding: clamp(4px, 1vh, 10px) 0;
@@ -276,20 +355,30 @@
   font-weight: 800;
   font-size: clamp(16px, 2.8vh, 30px);
 }
+
 .wii-day__icon {
   display: flex;
   align-items: center;
   padding: clamp(10px, 3vh, 32px) 0;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
 }
+
 .wii-day__high,
 .wii-day__low {
   font-weight: 800;
   font-size: clamp(24px, 5vh, 48px);
   line-height: 1.05;
 }
-.wii-day__high { color: #ffd21e; margin-top: auto; }
-.wii-day__low { color: #7fe0ff; padding-bottom: clamp(6px, 1.4vh, 14px); }
+
+.wii-day__high {
+  color: #ffd21e;
+  margin-top: auto;
+}
+
+.wii-day__low {
+  color: #7fe0ff;
+  padding-bottom: clamp(6px, 1.4vh, 14px);
+}
 
 .wii-empty {
   flex: 1;
@@ -319,7 +408,10 @@
   padding: clamp(6px, 1.4vh, 14px) 0;
   background: rgba(9, 30, 74, 0.8);
 }
-.wii-sixhour-zone.is-open .wii-sixhour { display: flex; }
+
+.wii-sixhour-zone.is-open .wii-sixhour {
+  display: flex;
+}
 
 .wii-sixhour__heading {
   font-weight: 700;
@@ -331,12 +423,14 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
 }
+
 .wii-sixhour__cell {
   display: flex;
   flex-direction: column;
   align-items: center;
   min-width: 0;
 }
+
 .wii-sixhour__icon {
   width: 100%;
   height: clamp(96px, 24vh, 160px);
@@ -346,13 +440,18 @@
   background: rgba(120, 165, 225, 0.28);
   border-right: 1px solid rgba(255, 255, 255, 0.18);
 }
-.wii-sixhour__cell:last-child .wii-sixhour__icon { border-right: 0; }
+
+.wii-sixhour__cell:last-child .wii-sixhour__icon {
+  border-right: 0;
+}
+
 .wii-sixhour__nodata {
   font-weight: 800;
   font-size: clamp(28px, 5vh, 44px);
   letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.85);
 }
+
 .wii-sixhour__range {
   display: flex;
   flex-direction: column;
@@ -396,6 +495,7 @@
   flex-direction: column;
   min-height: 0;
 }
+
 .settings__row {
   flex: 1;
   display: grid;
@@ -406,15 +506,18 @@
     repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 9px),
     linear-gradient(90deg, #37a2ea 0%, #0d3f9e 100%);
 }
+
 .settings__info {
   padding: 0 clamp(8px, 2vw, 20px);
   text-align: center;
 }
+
 .settings__label {
   font-weight: 600;
   font-size: clamp(15px, 2.2vh, 22px);
   color: rgba(255, 255, 255, 0.9);
 }
+
 .settings__value {
   margin-top: clamp(2px, 0.8vh, 8px);
   font-weight: 700;
@@ -428,7 +531,10 @@
   justify-content: center;
   padding-right: clamp(10px, 3vw, 40px);
 }
-.settings__control form { display: contents; }
+
+.settings__control form {
+  display: contents;
+}
 
 .settings__button {
   display: inline-block;
@@ -446,7 +552,10 @@
   cursor: pointer;
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25);
 }
-.settings__button:hover { background: linear-gradient(#ffffff, #e4e8ec); }
+
+.settings__button:hover {
+  background: linear-gradient(#ffffff, #e4e8ec);
+}
 
 .settings__footer {
   flex: none;
@@ -493,7 +602,9 @@
   min-height: 0;
 }
 
-.picker__form { display: block; }
+.picker__form {
+  display: block;
+}
 
 .picker__row {
   display: flex;
@@ -516,6 +627,7 @@
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
+
 .picker__row:hover,
 .picker__row:focus-visible {
   background: linear-gradient(90deg, #a9cba3, #86ac80);
@@ -540,12 +652,14 @@
   background: linear-gradient(#f6f6f6, #d7d7d7);
   border-top: 1px solid #b4b4b4;
 }
+
 .picker__bar-slot {
   display: flex;
   align-items: center;
   height: 100%;
   padding: 0 clamp(14px, 3vw, 30px);
 }
+
 .picker__bar-slot--center {
   justify-content: center;
   gap: clamp(24px, 6vw, 60px);
