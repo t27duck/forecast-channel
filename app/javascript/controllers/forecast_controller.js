@@ -47,12 +47,19 @@ export default class extends Controller {
     this.#updateControl(this.nextControlTarget, this.nextLabelTarget, this.panelTargets[this.index + 1])
   }
 
+  // Keep the arrow button in place at the ends — just disable it (greyed,
+  // label cleared) so the whole button never disappears from the bar.
   #updateControl(control, label, neighbour) {
+    control.hidden = false
+    const glyph = control.querySelector("span.wii-arrow__glyph")
     if (neighbour) {
       label.textContent = neighbour.dataset.title
-      control.hidden = false
+      control.disabled = false
+      glyph.classList.remove("hidden")
     } else {
-      control.hidden = true
+      label.textContent = ""
+      control.disabled = true
+      glyph.classList.add("hidden")
     }
   }
 }

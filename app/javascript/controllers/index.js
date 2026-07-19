@@ -4,9 +4,6 @@
 
 import { application } from "./application"
 
-import HelloController from "./hello_controller"
-application.register("hello", HelloController)
-
 import GlobeController from "./globe_controller"
 application.register("globe", GlobeController)
 
@@ -27,3 +24,6 @@ application.register("jukebox", JukeboxController)
 
 import MuteController from "./mute_controller"
 application.register("mute", MuteController)
+
+import PressController from "./press_controller"
+application.register("press", PressController)

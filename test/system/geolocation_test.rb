@@ -11,6 +11,6 @@ class GeolocationTest < ApplicationSystemTestCase
 
     assert_selector "[data-controller=geolocate]", visible: :all # asked to locate
     assert_selector ".wii-header__location", text: locations(:berlin).name # default still renders
-    assert_selector "[data-controller=forecast]"
+    assert_selector "[data-controller~=forecast]"
   end
 end

@@ -20,7 +20,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     get location_url(@location)
     assert_response :success
     assert_select "nav", false, "detail view should hide the app nav"
-    assert_select "[data-controller=forecast]"
+    assert_select "[data-controller~=forecast]"
     assert_select "[data-panel]", 5
     assert_select ".wii-header__location", text: @location.name
   end
@@ -28,7 +28,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   test "root shows the first location's forecast by default" do
     get root_url
     assert_response :success
-    assert_select "[data-controller=forecast]"
+    assert_select "[data-controller~=forecast]"
     assert_select ".wii-header__location", text: Location.by_name.first.name
     assert_select "body[data-music-zone=?]", "current" # forecast music, not globe
   end

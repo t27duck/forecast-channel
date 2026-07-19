@@ -11,11 +11,12 @@
 --------------------------------------------------------------------------- */
 .wii {
   --chrome: clamp(40px, 7vh, 56px);
+  --panel-bg: radial-gradient(130% 90% at 32% 32%, #2f74d6 0%, #103a86 55%, #0a2360 100%);
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: radial-gradient(130% 90% at 32% 32%, #2f74d6 0%, #103a86 55%, #0a2360 100%);
+  background: var(--panel-bg);
   color: #fff;
   font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
   user-select: none;
@@ -58,6 +59,9 @@
      ▲/▼ button never shifts the layout when its label changes. */
   grid-template-columns: repeat(3, 1fr);
   height: var(--chrome);
+  /* Clip the pressed-button dip (and its fill) at the bar edges so the blue
+     never leaks past the bar and the silver never peeks through. */
+  overflow: hidden;
   background: linear-gradient(#f6f6f6, #d7d7d7);
   color: #2a2a2a;
   font-weight: 600;
@@ -65,11 +69,11 @@
 }
 
 .wii-top {
-  border-bottom: 1px solid #b4b4b4;
+  /* border-bottom: 1px solid #b4b4b4; */
 }
 
 .wii-bottom {
-  border-top: 1px solid #b4b4b4;
+  /* border-top: 1px solid #b4b4b4; */
 }
 
 /* Each slot is filled edge-to-edge by its button/link, so the hover
@@ -120,17 +124,75 @@
   line-height: 1.6;
 }
 
-/* Wii-style hover: the whole cell turns blue with white text. */
+/* At the first/last panel the arrow stays put but greys out — no label, no
+   hover/press (a disabled button receives no pointer events). */
+.wii-arrow:disabled,
+.wii-arrow:disabled:hover,
+.wii-arrow:disabled .wii-arrow__glyph {
+  color: #b7b7b7;
+}
+
+.wii-arrow:disabled {
+  cursor: default;
+}
+
+/* Wii-style hover/press: the whole cell turns blue with white text. */
 .wii-arrow:hover,
+.wii-arrow.is-pressed,
 .wii-chrome-link:hover,
-.wii-mute:hover {
+.wii-chrome-link.is-pressed,
+.wii-mute:hover,
+.wii-mute.is-pressed {
   background: linear-gradient(#a6d6f7, #6fb7ef);
   color: #fff;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
-.wii-arrow:hover .wii-arrow__glyph {
+.wii-arrow:hover .wii-arrow__glyph,
+.wii-arrow.is-pressed .wii-arrow__glyph {
   color: #fff;
+}
+
+/* Wii-style press: the button dips toward the nearest screen edge (up on the
+   top bar, down on the bottom bar) and springs back. */
+@keyframes wii-press-up {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes wii-press-down {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+/* While a button is pressed, its slot shows the panel gradient behind it, so
+   the whole (lighter) button visibly slides over the panel it sits on instead
+   of the silver bar showing through. `fixed` aligns that gradient with the
+   real panel; the bar's overflow:hidden clips the button's overshoot. */
+.wii-bar__slot:has(.is-pressed) {
+  background: var(--panel-bg) fixed;
+}
+
+.wii-top .is-pressed {
+  animation: wii-press-up 0.26s ease-out;
+}
+
+.wii-bottom .is-pressed {
+  animation: wii-press-down 0.26s ease-out;
 }
 
 .wii-chrome-link--muted {
@@ -171,6 +233,7 @@
   padding: 0 clamp(12px, 2.5vw, 26px);
   background: linear-gradient(#1f7d12, #12630c);
   box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.25);
+  margin-top: 8px;
 }
 
 .wii-header__title {
@@ -204,22 +267,26 @@
   align-items: center;
   justify-content: space-between;
   height: clamp(22px, 3.6vh, 30px);
+  background: linear-gradient(90deg, rgb(111, 183, 239), 80%, #a01528);
+  margin-bottom: 8px;
 }
 
 .wii-credit {
   padding-left: clamp(6px, 1.2vw, 14px);
   font-size: clamp(11px, 1.6vh, 14px);
   font-weight: 600;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.35);
   color: rgba(255, 255, 255, 0.85);
 }
 
 .wii-asof {
   padding: 3px clamp(12px, 2vw, 22px);
-  border-top-left-radius: 6px;
-  border-bottom-left-radius: 6px;
-  background: linear-gradient(90deg, #6b1020, #a01528);
+  /* border-top-left-radius: 6px; */
+  /* border-bottom-left-radius: 6px; */
+  /* background: linear-gradient(90deg, #6b1020, #a01528); */
   font-size: clamp(12px, 1.8vh, 15px);
   font-weight: 700;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.35);
   color: #fff;
 }
 
