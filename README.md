@@ -8,8 +8,15 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 bundle install
 npm install
 bin/rails db:migrate
-bin/dev            # starts the server plus JS/CSS watchers
+bin/rails db:seed   # populate the globe with ~200 major world cities
+bin/dev             # starts the server plus JS/CSS watchers
 ```
+
+`db:seed` loads a curated set of major world cities (geocoding data baked into
+`db/seeds.rb`, so it needs no network) so the globe is populated on a fresh
+database. It's idempotent, and only sets each city's location/metadata — their
+weather is filled in by the hourly refresh (`bin/jobs`, or "Refresh all" in the
+locations UI).
 
 ## Forecast & globe
 

@@ -24,6 +24,7 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - Start development server: `bin/dev` (uses Foreman with Procfile.dev)
 - Start Rails only: `bin/rails server`
 - Install dependencies: `bundle install` and `npm install`
+- Seed major world cities: `bin/rails db:seed` (idempotent; see `db/seeds.rb`)
 - Build CSS: `npm run build:css`
 - Build Javascript: `npm run build`
 - Run background worker: `bin/jobs`
@@ -97,6 +98,12 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   Rows have a "Refresh" button (synchronous) and the page has "Refresh all"
   (enqueues the bulk job) plus a °C/°F unit toggle (`SettingsController#update`).
   Currently unauthenticated.
+- **Seed data** (`db/seeds.rb`): populates ~200 major world cities so the globe
+  is full on a fresh database. The geocoding data (identity/coordinates only,
+  no weather) was captured once from the Open-Meteo geocoding API and baked in
+  statically, so `bin/rails db:seed` needs no network; it's idempotent (upsert
+  by `open_meteo_id`). Regenerate via the script in the session scratchpad.
+  Weather is filled in afterwards by `RefreshAllWeatherJob`.
 - **Globe** (`MapsController#show` at `/map`): a full-bleed Mapbox globe
   (`standard-satellite` style, `projection: globe`, custom fog + star field)
   driven by the `globe` Stimulus controller (`app/javascript/controllers/
