@@ -23,8 +23,8 @@ location. You can also set it explicitly in Settings.
 The globe lives at `/map`: a Mapbox satellite globe (stars, atmosphere) that
 plots an SVG weather icon and name for each location. Markers are drawn as a
 symbol layer, so overlapping ones declutter automatically when zoomed out and
-reappear as you zoom in. Click a marker (or a location in the list) to open its
-detail view. A Wii-style bar overlaid on the top of the globe holds "Zoom" (out),
+reappear as you zoom in. Point at a marker to preview its weather in a popup, or
+click it (or a location in the list) to open the full detail view. A Wii-style bar overlaid on the top of the globe holds "Zoom" (out),
 "Next", and "Zoom" (in) buttons, and a green banner names what the markers show —
 "Next" cycles the icons through Current, Today's, and Tomorrow's weather. A bottom
 bar holds "End" (back to your forecast), two tilt buttons, and "Restore" (reset the

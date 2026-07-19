@@ -45,7 +45,7 @@ const ICON_PIXEL_RATIO = 2
 // declutters overlapping markers when zoomed out and reveals more on zoom-in;
 // population is used as the priority so larger cities win a collision.
 export default class extends Controller {
-  static values = { token: String, markersUrl: String, center: Array }
+  static values = { token: String, markersUrl: String, center: Array, temperatureUnit: String }
   static targets = ["map", "zoomIn", "zoomOut", "banner", "pitchUp", "pitchDown"]
 
   connect() {
@@ -79,6 +79,7 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this.popup?.remove()
     this.map?.remove()
   }
 
@@ -132,6 +133,7 @@ export default class extends Controller {
   #applyMode() {
     const mode = WEATHER_MODES[this.modeIndex]
     if (this.hasBannerTarget) this.bannerTarget.textContent = mode.title
+    this.popup?.remove() // a stale popup would show the previous view's weather
     if (this.map?.getLayer(LAYER_ID)) {
       this.map.setLayoutProperty(LAYER_ID, "icon-image", ["get", mode.icon])
     }
@@ -225,7 +227,7 @@ export default class extends Controller {
     }
   }
 
-  // Clicking a marker opens that location's detail view.
+  // Pointing at a marker previews its weather; clicking opens its detail view.
   #enableNavigation() {
     const map = this.map
 
@@ -240,8 +242,73 @@ export default class extends Controller {
       else window.location.assign(url)
     })
 
-    map.on("mouseenter", LAYER_ID, () => { map.getCanvas().style.cursor = "pointer" })
-    map.on("mouseleave", LAYER_ID, () => { map.getCanvas().style.cursor = "" })
+    this.popup = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: 16,
+      className: "globe-popup",
+      maxWidth: "230px"
+    })
+
+    map.on("mouseenter", LAYER_ID, (event) => {
+      map.getCanvas().style.cursor = "pointer"
+      this.#showPopup(event.features?.[0])
+    })
+    map.on("mousemove", LAYER_ID, (event) => this.#showPopup(event.features?.[0]))
+    map.on("mouseleave", LAYER_ID, () => {
+      map.getCanvas().style.cursor = ""
+      this.popup.remove()
+    })
+  }
+
+  // Show the hovered marker's weather for the active view (current/today/
+  // tomorrow), anchored to its coordinates.
+  #showPopup(feature) {
+    if (!feature) return
+    this.popup
+      .setLngLat(feature.geometry.coordinates)
+      .setHTML(this.#popupHtml(feature.properties))
+      .addTo(this.map)
+  }
+
+  #popupHtml(props) {
+    const name = this.#escape(props.name)
+
+    if (this.modeIndex === 0) {
+      const temp = this.#formatTemp(props.temp)
+      const hi = this.#formatTemp(props.today_high)
+      const lo = this.#formatTemp(props.today_low)
+      const hilo = hi && lo ? `<div class="gp__hilo">H ${hi} · L ${lo}</div>` : ""
+      return `<div class="gp"><div class="gp__name">${name}</div>` +
+        (temp ? `<div class="gp__temp">${temp}</div>` : `<div class="gp__muted">No reading yet</div>`) +
+        (props.label ? `<div class="gp__cond">${this.#escape(props.label)}</div>` : "") +
+        hilo + "</div>"
+    }
+
+    const prefix = this.modeIndex === 1 ? "today" : "tomorrow"
+    const hi = this.#formatTemp(props[`${prefix}_high`])
+    const lo = this.#formatTemp(props[`${prefix}_low`])
+    const label = props[`${prefix}_label`]
+    const hilo = hi && lo ? `<div class="gp__temp">${hi} <span class="gp__slash">/</span> ${lo}</div>`
+      : `<div class="gp__muted">No forecast yet</div>`
+    return `<div class="gp"><div class="gp__name">${name}</div>` +
+      (label ? `<div class="gp__cond">${this.#escape(label)}</div>` : "") +
+      hilo + "</div>"
+  }
+
+  // Round a Celsius value into the viewer's unit, e.g. "19°". Null when absent.
+  #formatTemp(celsius) {
+    if (celsius === null || celsius === undefined || celsius === "") return null
+    const c = Number(celsius)
+    if (Number.isNaN(c)) return null
+    const value = this.temperatureUnitValue === "fahrenheit" ? c * 9 / 5 + 32 : c
+    return `${Math.round(value)}°`
+  }
+
+  #escape(text) {
+    return String(text ?? "").replace(/[&<>]/g, (ch) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[ch]
+    ))
   }
 
   // Rasterize each weather SVG and register it as a named map image.

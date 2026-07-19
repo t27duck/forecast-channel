@@ -15,6 +15,36 @@ class LocationGeojsonTest < ActiveSupport::TestCase
     assert_equal "snow", props[:icon_tomorrow]
   end
 
+  test "each feature carries the weather shown in the hover popup" do
+    location = Location.new(
+      name: "Testville", latitude: 1.0, longitude: 2.0,
+      current_temperature: 18.5, current_condition_label: "Overcast",
+      today_forecast: { "high" => 21, "low" => 12, "condition_label" => "Light rain" },
+      tomorrow_forecast: { "high" => 8, "low" => 1, "condition_label" => "Snow" }
+    )
+
+    props = LocationGeojson.feature(location)[:properties]
+    assert_equal 19, props[:temp] # 18.5°C rounded; the client converts the unit
+    assert_equal "Overcast", props[:label]
+    assert_equal 21, props[:today_high]
+    assert_equal 12, props[:today_low]
+    assert_equal "Light rain", props[:today_label]
+    assert_equal 8, props[:tomorrow_high]
+    assert_equal "Snow", props[:tomorrow_label]
+  end
+
+  test "weather popup fields are nil when the forecast is missing" do
+    location = Location.new(
+      name: "Testville", latitude: 1.0, longitude: 2.0,
+      today_forecast: {}, tomorrow_forecast: nil
+    )
+
+    props = LocationGeojson.feature(location)[:properties]
+    assert_nil props[:temp]
+    assert_nil props[:today_high]
+    assert_nil props[:tomorrow_label]
+  end
+
   test "a missing daily forecast falls back to the current icon" do
     location = Location.new(
       name: "Testville", latitude: 1.0, longitude: 2.0,

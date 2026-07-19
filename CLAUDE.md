@@ -108,7 +108,12 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   (`symbol-sort-key`). The controller rasterizes the SVG glyphs in
   `app/javascript/lib/weather_icons.js` via `map.addImage`; each feature's
   `icon` (from `WeatherCode.icon_group`) picks one, with the name as a
-  halo'd `text-field` to its right. Clicking a marker opens that location's
+  halo'd `text-field` to its right. Pointing at a marker shows a hover popup
+  (`.globe-popup`, dark Wii card) with that location's weather for the active
+  view — temperature/condition + high/low for Current, or high/low + condition
+  for Today/Tomorrow — built from extra `LocationGeojson` properties
+  (`temp`/`label`/`today_*`/`tomorrow_*`, Celsius; the controller converts using
+  `data-globe-temperature-unit-value`). Clicking a marker opens that location's
   detail view. The page hides the app nav (`content_for :hide_app_nav`) and
   the globe fills the viewport; a Wii-style top bar (`.wii-top.map-bar`,
   reusing the detail-view bar styling + `press` animation) is overlaid on the
