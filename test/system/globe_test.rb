@@ -42,6 +42,21 @@ class GlobeTest < ApplicationSystemTestCase
     assert_selector ".map-banner", text: "CURRENT WEATHER" # wraps back around
   end
 
+  test "the tilt buttons pitch the globe and Restore resets it" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    pitch = -> { evaluate_script("document.querySelector('[data-controller=globe]').__map.getPitch()") }
+    assert_equal 0, pitch.call # starts flat, so decreasing is disabled
+    assert_selector ".map-bar [aria-label='Decrease tilt']:disabled"
+
+    find(".map-bar [aria-label='Increase tilt']").click
+    assert_equal true, wait_until { pitch.call > 5 }, "expected the globe to tilt"
+
+    find(".map-bar button", text: "Restore").click
+    assert_equal true, wait_until { pitch.call.zero? }, "expected Restore to reset the tilt"
+  end
+
   private
 
   # Polls the block until it returns truthy or Capybara's default wait elapses.

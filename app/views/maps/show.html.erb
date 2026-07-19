@@ -11,7 +11,7 @@
   <div data-globe-target="map" class="h-screen w-full bg-[#030a1b]"></div>
 
   <%# Wii-style control bar overlaid on the globe; faint until hovered. %>
-  <div class="wii-top map-bar" data-controller="press">
+  <div class="wii-top map-bar map-bar--top" data-controller="press">
     <div class="wii-bar__slot">
       <button type="button" class="wii-arrow" aria-label="Zoom out"
         data-action="globe#zoomOut" data-globe-target="zoomOut">
@@ -44,6 +44,38 @@
 
   <%# Green banner naming what the marker icons currently represent. %>
   <div class="map-banner" data-globe-target="banner">Current Weather</div>
+
+  <%# Bottom bar: leave the globe, tilt it, or reset the tilt. %>
+  <div class="wii-bottom map-bar map-bar--bottom" data-controller="press">
+    <div class="wii-bar__slot">
+      <%= link_to "End", root_path, class: "wii-chrome-link" %>
+    </div>
+    <div class="wii-bar__slot">
+      <button type="button" class="wii-arrow" aria-label="Increase tilt"
+        data-action="globe#pitchUp" data-globe-target="pitchUp">
+        <svg class="wii-pitch__icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5.5 10 A8.5 8.5 0 0 1 18 13"/>
+          <path d="M18 13 L13.6 13 M18 13 L18 8.6"/>
+        </svg>
+      </button>
+    </div>
+    <div class="wii-bar__slot">
+      <button type="button" class="wii-arrow" aria-label="Decrease tilt"
+        data-action="globe#pitchDown" data-globe-target="pitchDown">
+        <svg class="wii-pitch__icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <g transform="translate(24,0) scale(-1,1)">
+            <path d="M5.5 10 A8.5 8.5 0 0 1 18 13"/>
+            <path d="M18 13 L13.6 13 M18 13 L18 8.6"/>
+          </g>
+        </svg>
+      </button>
+    </div>
+    <div class="wii-bar__slot">
+      <button type="button" class="wii-chrome-link" data-action="globe#resetPitch">Restore</button>
+    </div>
+  </div>
 
   <% if @locations.none? %>
     <div class="pointer-events-none absolute inset-0 flex items-center justify-center px-4">

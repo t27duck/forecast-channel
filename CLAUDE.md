@@ -121,7 +121,12 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   the `icon`/`icon_today`/`icon_tomorrow` feature properties from
   `LocationGeojson`, which fall back to the current icon when that day isn't
   fetched). A green banner below the bar (`.map-banner`, `banner` target) names
-  the active view. The bar is faint (20% opacity) and rises to 80% on hover.
+  the active view. A matching bottom bar (`.map-bar--bottom`) holds "End" (a
+  link back to the root forecast), two curved-arrow tilt buttons
+  (`globe#pitchUp`/`globe#pitchDown`, ±`PITCH_STEP`° via `easeTo`, disabling +
+  blanking at the pitch limits like the zoom buttons), and "Restore"
+  (`globe#resetPitch` back to `DEFAULT_PITCH`). Both bars are faint (20%
+  opacity) and rise to 80% on hover.
 - **Location detail** (`LocationsController#show`): the Wii Forecast
   Channel-style paneled view. Served at the root path `/` for the current
   location (a `current_location_id` cookie later; the first location for now)

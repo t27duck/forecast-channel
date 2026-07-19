@@ -24,6 +24,11 @@ const WEATHER_MODES = [
   { icon: "icon_tomorrow", title: "Tomorrow's Weather" }
 ]
 
+// Degrees of tilt added/removed per pitch-button press; the "Restore" button
+// returns to this default.
+const PITCH_STEP = 15
+const DEFAULT_PITCH = 0
+
 // Icons display at ICON_SIZE px, rasterized at 2x (pixelRatio) for crispness.
 const ICON_SIZE = 34
 const ICON_PIXEL_RATIO = 2
@@ -34,7 +39,7 @@ const ICON_PIXEL_RATIO = 2
 // population is used as the priority so larger cities win a collision.
 export default class extends Controller {
   static values = { token: String, markersUrl: String }
-  static targets = ["map", "zoomIn", "zoomOut", "banner"]
+  static targets = ["map", "zoomIn", "zoomOut", "banner", "pitchUp", "pitchDown"]
 
   connect() {
     if (!this.tokenValue) {
@@ -79,6 +84,38 @@ export default class extends Controller {
     this.#applyMode()
   }
 
+  // The bottom-bar tilt controls.
+  pitchUp() {
+    this.#setPitch(this.map ? this.map.getPitch() + PITCH_STEP : DEFAULT_PITCH)
+  }
+
+  pitchDown() {
+    this.#setPitch(this.map ? this.map.getPitch() - PITCH_STEP : DEFAULT_PITCH)
+  }
+
+  resetPitch() {
+    this.#setPitch(DEFAULT_PITCH)
+  }
+
+  #setPitch(target) {
+    if (!this.map) return
+    const clamped = Math.max(this.map.getMinPitch(), Math.min(target, this.map.getMaxPitch()))
+    this.map.easeTo({ pitch: clamped, duration: 300 })
+  }
+
+  // Blank + disable the tilt buttons once their pitch limit is reached.
+  #syncPitchButtons() {
+    if (!this.map) return
+    const pitch = this.map.getPitch()
+
+    if (this.hasPitchUpTarget) {
+      this.pitchUpTarget.disabled = pitch >= this.map.getMaxPitch() - 1e-3
+    }
+    if (this.hasPitchDownTarget) {
+      this.pitchDownTarget.disabled = pitch <= this.map.getMinPitch() + 1e-3
+    }
+  }
+
   #applyMode() {
     const mode = WEATHER_MODES[this.modeIndex]
     if (this.hasBannerTarget) this.bannerTarget.textContent = mode.title
@@ -112,6 +149,10 @@ export default class extends Controller {
     // Disable the +/- buttons at the zoom limits (and keep them in sync).
     map.on("zoom", () => this.#syncZoomButtons())
     this.#syncZoomButtons()
+
+    // Same for the tilt buttons at the pitch limits.
+    map.on("pitch", () => this.#syncPitchButtons())
+    this.#syncPitchButtons()
 
     this.element.dataset.mapReady = "true"
   }

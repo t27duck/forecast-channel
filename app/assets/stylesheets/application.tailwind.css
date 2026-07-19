@@ -232,10 +232,11 @@
   --panel-bg: #0a1a3a; /* dark recess behind a pressed button, over space */
 }
 
-/* Reuses the silver .wii-top bar (Zoom / Next / Zoom) as a faint overlay. */
+/* Reuses the silver .wii-top/.wii-bottom bars as faint overlays on the globe:
+   the top bar is Zoom / Next / Zoom, the bottom bar is End / tilt / tilt /
+   Restore. */
 .map-bar {
   position: absolute;
-  top: 0;
   left: 0;
   right: 0;
   z-index: 10;
@@ -244,16 +245,30 @@
   transition: opacity 0.25s ease;
 }
 
+.map-bar--top {
+  top: 0;
+}
+
+.map-bar--bottom {
+  bottom: 0;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.map-bar--bottom .wii-bar__slot + .wii-bar__slot {
+  border-left: 1px solid #bcbcbc;
+}
+
 .map-bar:hover {
   opacity: 0.8;
 }
 
-/* At a zoom limit the button greys out (via :disabled) and goes blank. */
+/* At a zoom/pitch limit the button greys out (via :disabled) and goes blank. */
 .map-bar .wii-arrow:disabled > * {
   visibility: hidden;
 }
 
-.wii-zoom__icon {
+.wii-zoom__icon,
+.wii-pitch__icon {
   display: block;
   width: clamp(20px, 3.2vh, 28px);
   height: clamp(20px, 3.2vh, 28px);
