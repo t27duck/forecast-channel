@@ -95,4 +95,14 @@ module ForecastsHelper
   rescue Date::Error
     nil
   end
+
+  # Whether an ISO date string falls on a Saturday or Sunday (the Wii tints
+  # weekend day names differently in the 5-day forecast).
+  def weekend?(date_string)
+    return false if date_string.blank?
+
+    Date.parse(date_string).on_weekend?
+  rescue Date::Error
+    false
+  end
 end

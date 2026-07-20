@@ -4,10 +4,12 @@
     <div class="wii-fiveday">
       <% location.five_day_forecast.each do |day| %>
         <div class="wii-day">
-          <div class="wii-day__name"><%= weekday_abbr(day["date"]) %></div>
-          <div class="wii-day__icon"><%= weather_icon(day["condition_code"], size: 88) %></div>
-          <div class="wii-day__high"><%= forecast_temperature(day["high"], degree: false) %></div>
-          <div class="wii-day__low"><%= forecast_temperature(day["low"], degree: false) %></div>
+          <div class="<%= class_names("wii-day__name", "wii-day__name--weekend" => weekend?(day["date"])) %>"><%= weekday_abbr(day["date"]) %></div>
+          <div class="wii-day__body">
+            <div class="wii-day__icon"><%= weather_icon(day["condition_code"], size: 96) %></div>
+            <div class="wii-day__high"><%= forecast_temperature(day["high"], degree: false) %></div>
+            <div class="wii-day__low"><%= forecast_temperature(day["low"], degree: false) %></div>
+          </div>
         </div>
       <% end %>
     </div>

@@ -607,33 +607,56 @@
   padding: clamp(4px, 1vh, 10px) 0;
   background: rgba(4, 16, 44, 0.55);
   text-align: center;
-  color: #ffd21e;
+  color: #fff;
   font-weight: 800;
   font-size: clamp(16px, 2.8vh, 30px);
+}
+
+/* The Wii tints weekend days gold. */
+.wii-day__name--weekend {
+  color: #ffd21e;
+}
+
+/* Icon + high/low kept together as one group, centred a touch above the middle
+   of the column (like the Wii) instead of icon-top / temps-bottom. */
+.wii-day__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 0.8vh, 8px);
+  padding-bottom: clamp(10px, 4vh, 48px);
+  min-height: 0;
 }
 
 .wii-day__icon {
   display: flex;
   align-items: center;
-  padding: clamp(10px, 3vh, 32px) 0;
+  margin-bottom: clamp(4px, 1.4vh, 16px);
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+/* Grow the day's icon with the panel, always fitting its narrow column. */
+.wii-day__icon .weather-icon {
+  width: min(90%, 18vh);
+  max-width: 172px;
+  height: auto;
 }
 
 .wii-day__high,
 .wii-day__low {
   font-weight: 800;
-  font-size: clamp(24px, 5vh, 48px);
+  font-size: clamp(26px, 5.8vh, 58px);
   line-height: 1.05;
 }
 
 .wii-day__high {
   color: #ffd21e;
-  margin-top: auto;
 }
 
 .wii-day__low {
   color: #7fe0ff;
-  padding-bottom: clamp(6px, 1.4vh, 14px);
 }
 
 .wii-empty {

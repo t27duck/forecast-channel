@@ -55,6 +55,14 @@ class ForecastsHelperTest < ActionView::TestCase
     assert_nil weekday_name(nil)
   end
 
+  test "weekend? is true only on Saturday and Sunday" do
+    assert weekend?("2026-07-18"), "Saturday"
+    assert weekend?("2026-07-19"), "Sunday"
+    assert_not weekend?("2026-07-20"), "Monday"
+    assert_not weekend?(nil)
+    assert_not weekend?("nope")
+  end
+
   test "six_hour_windows returns four ordered windows with data looked up by key" do
     location = Location.new(hourly_windows: [
       { "day" => "today", "window" => "morning", "condition_code" => 2 },
