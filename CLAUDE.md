@@ -42,9 +42,11 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - **Location** (`app/models/location.rb`): a place tracked on the globe. Holds
   geocoding data (name, latitude/longitude, country, admin1/region, timezone,
   elevation) plus cached weather. Current conditions, UV, air quality
-  (`air_quality_index`/`air_quality_label`/`air_quality_pm2_5`), humidity and
-  precipitation probability are flat columns; the today/tomorrow forecasts,
-  6-hour windows, and 5-day forecast are JSON columns. `weather_stale?` gates
+  (`air_quality_index`/`air_quality_label`/`air_quality_pm2_5`), feels-like
+  (`current_apparent_temperature`), humidity and precipitation probability are
+  flat columns; the today/tomorrow forecasts, 6-hour windows, and 5-day forecast
+  are JSON columns (each day also carrying `sunrise`/`sunset` and apparent
+  high/low). `weather_stale?` gates
   refresh (1-hour TTL); `refresh_weather!` fetches and stores fresh weather
   (and, best-effort, air quality). `air_quality_name` labels the stored AQI and
   `laundry_rating` derives the laundry index from the current conditions.
@@ -75,7 +77,9 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   (`https://api.open-meteo.com/v1/forecast`, `timezone=auto`, Celsius); the
   mapper (pure, side-effect free) shapes the payload into Location attributes,
   bucketing hourly data into the four 6-hour windows (overnight/morning/
-  afternoon/evening) for today and tomorrow.
+  afternoon/evening) for today and tomorrow. It also carries feels-like
+  (apparent) temperature, humidity, precipitation probability, and each day's
+  sunrise/sunset.
 - **OpenMeteo::AirQualityClient** + **OpenMeteo::AirQualityMapper**: fetch and
   shape current air quality from the *separate* air-quality API
   (`https://air-quality-api.open-meteo.com/v1/air-quality`, no key) — US AQI and
@@ -206,9 +210,12 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   `application.tailwind.css`; the app nav is hidden via `content_for
   :hide_app_nav`. Detailed glossy weather icons come from `WeatherIconsHelper`
   (`weather_icon`, `uv_icon`); `ForecastsHelper` formats temperatures (Wii
-  degree style), wind (`compass_direction`/`wind_display`, mph), the "As of"
-  timestamp, and weekday abbreviations. Reachable from a globe marker or the
-  locations list.
+  degree style), wind (`compass_direction`/`wind_display`, mph), local times
+  (`forecast_time`), the feels-like range (`apparent_range`), the "As of"
+  timestamp, and weekday abbreviations. The Current/Today/Tomorrow panels close
+  with a shared `_stats` strip (`.wii-stats` tiles) — feels-like, humidity, rain
+  chance, wind, and sunrise/sunset (blank stats are dropped). Reachable from a
+  globe marker or the locations list.
   - **6-hour overlay:** clicking the Today/Tomorrow panel opens a breakdown of
     the day's four 6-hour windows (overnight/morning/afternoon/evening, from
     `hourly_windows`) over the dimmed forecast, swapping the header title to the

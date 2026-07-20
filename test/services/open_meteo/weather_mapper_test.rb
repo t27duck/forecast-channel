@@ -19,6 +19,16 @@ class OpenMeteo::WeatherMapperTest < ActiveSupport::TestCase
     assert_equal 20, @attributes[:current_precipitation_probability]
   end
 
+  test "maps the feels-like temperature and each day's sunrise, sunset and apparent range" do
+    assert_in_delta 19.8, @attributes[:current_apparent_temperature]
+
+    today = @attributes[:today_forecast]
+    assert_equal 27, today["apparent_high"]
+    assert_equal 13, today["apparent_low"]
+    assert_equal "2026-07-18T05:12", today["sunrise"]
+    assert_equal "2026-07-18T21:30", today["sunset"]
+  end
+
   test "maps current and daily wind" do
     assert_in_delta 18.3, @attributes[:current_wind_speed]
     assert_equal 160, @attributes[:current_wind_direction]

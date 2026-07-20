@@ -20,6 +20,7 @@ module OpenMeteo
     def attributes
       {
         current_temperature: round(current["temperature_2m"], 1),
+        current_apparent_temperature: round(current["apparent_temperature"], 1),
         current_humidity: current["relative_humidity_2m"]&.round,
         current_precipitation_probability: current["precipitation_probability"]&.round,
         current_condition_code: current_code,
@@ -64,10 +65,14 @@ module OpenMeteo
         "date" => dates[index],
         "high" => round(daily["temperature_2m_max"]&.dig(index)),
         "low" => round(daily["temperature_2m_min"]&.dig(index)),
+        "apparent_high" => round(daily["apparent_temperature_max"]&.dig(index)),
+        "apparent_low" => round(daily["apparent_temperature_min"]&.dig(index)),
         "condition_code" => code,
         "condition_label" => WeatherCode.label_for(code),
         "wind_speed" => round(daily["wind_speed_10m_max"]&.dig(index), 1),
-        "wind_direction" => daily["wind_direction_10m_dominant"]&.dig(index)&.round
+        "wind_direction" => daily["wind_direction_10m_dominant"]&.dig(index)&.round,
+        "sunrise" => daily["sunrise"]&.dig(index),
+        "sunset" => daily["sunset"]&.dig(index)
       }
     end
 

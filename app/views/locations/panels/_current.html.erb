@@ -7,7 +7,12 @@
     </div>
     <div class="wii-conditions__icon"><%= weather_icon(location.current_condition_code, size: 160) %></div>
   </div>
-  <% if (wind = wind_display(location.current_wind_speed, location.current_wind_direction)) %>
-    <div class="wii-wind"><%= wind %></div>
-  <% end %>
+  <%= render "locations/panels/stats", stats: [
+    [ "Feels like", forecast_temperature(location.current_apparent_temperature, fallback: nil) ],
+    [ "Humidity", location.current_humidity && "#{location.current_humidity}%" ],
+    [ "Rain", location.current_precipitation_probability && "#{location.current_precipitation_probability}%" ],
+    [ "Wind", wind_display(location.current_wind_speed, location.current_wind_direction) ],
+    [ "Sunrise", forecast_time(location.today_forecast["sunrise"]) ],
+    [ "Sunset", forecast_time(location.today_forecast["sunset"]) ]
+  ] %>
 <% end %>

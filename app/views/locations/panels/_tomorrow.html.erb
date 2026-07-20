@@ -10,9 +10,12 @@
       </div>
       <div class="wii-conditions__icon"><%= weather_icon(forecast["condition_code"], size: 160) %></div>
     </div>
-    <% if (wind = wind_display(forecast["wind_speed"], forecast["wind_direction"])) %>
-      <div class="wii-wind"><%= wind %></div>
-    <% end %>
+    <%= render "locations/panels/stats", stats: [
+      [ "Feels like", apparent_range(forecast) ],
+      [ "Wind", wind_display(forecast["wind_speed"], forecast["wind_direction"]) ],
+      [ "Sunrise", forecast_time(forecast["sunrise"]) ],
+      [ "Sunset", forecast_time(forecast["sunset"]) ]
+    ] %>
     <%= render "locations/panels/six_hour", location: location, day: "tomorrow" %>
   </div>
 <% end %>

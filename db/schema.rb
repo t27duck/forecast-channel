@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_220642) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_20_221847) do
   create_table "locations", force: :cascade do |t|
     t.string "admin1"
     t.integer "air_quality_index"
@@ -19,6 +19,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_220642) do
     t.string "country"
     t.string "country_code"
     t.datetime "created_at", null: false
+    t.decimal "current_apparent_temperature", precision: 5, scale: 2
     t.integer "current_condition_code"
     t.string "current_condition_label"
     t.integer "current_humidity"

@@ -24,7 +24,9 @@ The root page (`/`) shows the current location's forecast — a Wii Forecast
 Channel-style set of panels (UV, Air Quality, Laundry Index, Current, Today,
 Tomorrow, 5-Day) that slide vertically; clicking the Today or Tomorrow panel
 reveals its 6-hour breakdown. Air Quality shows the US AQI and PM2.5; the
-Laundry Index rates how well washing will dry from the current conditions.
+Laundry Index rates how well washing will dry from the current conditions. The
+Current/Today/Tomorrow panels also carry a stats strip — feels-like temperature,
+humidity, rain chance, wind, and sunrise/sunset.
 On a first visit the app asks the browser for your location and opens the
 nearest one (needs HTTPS or localhost); otherwise it falls back to the first
 location. You can also set it explicitly in Settings.

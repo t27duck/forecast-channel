@@ -36,7 +36,8 @@ module ActiveSupport
 
       {
         "current" => {
-          "temperature_2m" => 21.4, "relative_humidity_2m" => 68, "weather_code" => 3,
+          "temperature_2m" => 21.4, "apparent_temperature" => 19.8,
+          "relative_humidity_2m" => 68, "weather_code" => 3,
           "uv_index" => 5.2, "wind_speed_10m" => 18.3, "wind_direction_10m" => 160,
           "precipitation_probability" => 20
         },
@@ -45,10 +46,14 @@ module ActiveSupport
           "time" => [ today, tomorrow, "2026-07-20", "2026-07-21", "2026-07-22" ],
           "temperature_2m_max" => [ 25.0, 26.0, 24.0, 23.0, 22.0 ],
           "temperature_2m_min" => [ 14.0, 15.0, 13.0, 12.0, 11.0 ],
+          "apparent_temperature_max" => [ 27.0, 28.0, 25.0, 24.0, 23.0 ],
+          "apparent_temperature_min" => [ 13.0, 14.0, 12.0, 11.0, 10.0 ],
           "weather_code" => [ 3, 61, 2, 0, 80 ],
           "uv_index_max" => [ 6.0, 7.0, 5.0, 4.0, 8.0 ],
           "wind_speed_10m_max" => [ 24.0, 20.5, 15.0, 12.0, 30.0 ],
-          "wind_direction_10m_dominant" => [ 135, 200, 90, 270, 315 ]
+          "wind_direction_10m_dominant" => [ 135, 200, 90, 270, 315 ],
+          "sunrise" => [ "#{today}T05:12", "#{tomorrow}T05:13", "2026-07-20T05:14", "2026-07-21T05:15", "2026-07-22T05:16" ],
+          "sunset" => [ "#{today}T21:30", "#{tomorrow}T21:29", "2026-07-20T21:28", "2026-07-21T21:27", "2026-07-22T21:26" ]
         }
       }
     end

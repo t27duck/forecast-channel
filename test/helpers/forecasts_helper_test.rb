@@ -27,6 +27,18 @@ class ForecastsHelperTest < ActionView::TestCase
     assert_equal "SSE 26 kph", wind_display(26, 160)
   end
 
+  test "forecast_time formats the local clock from an Open-Meteo timestamp" do
+    assert_equal "5:12 a.m.", forecast_time("2026-07-18T05:12")
+    assert_equal "9:30 p.m.", forecast_time("2026-07-18T21:30")
+    assert_nil forecast_time(nil)
+    assert_nil forecast_time("not-a-time")
+  end
+
+  test "apparent_range formats the feels-like high and low" do
+    assert_equal "27° / 13°", apparent_range("apparent_high" => 27, "apparent_low" => 13)
+    assert_nil apparent_range("apparent_high" => nil, "apparent_low" => nil)
+  end
+
   test "as_of formats the local time" do
     time = Time.utc(2026, 7, 18, 20, 0)
     assert_equal "As of 3:00 p.m., 07/18", as_of(time, "America/Chicago")

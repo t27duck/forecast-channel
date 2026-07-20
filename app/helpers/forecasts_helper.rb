@@ -37,6 +37,27 @@ module ForecastsHelper
     degree ? "#{value}°" : value
   end
 
+  # Clock time from an Open-Meteo local timestamp like "2026-07-20T05:12",
+  # e.g. "5:12 a.m." The stamp is already in the location's local time, so only
+  # the wall-clock portion is formatted. Nil when missing or unparseable.
+  def forecast_time(iso_local)
+    return nil if iso_local.blank?
+
+    Time.parse(iso_local).strftime("%-l:%M %p").sub("AM", "a.m.").sub("PM", "p.m.")
+  rescue ArgumentError
+    nil
+  end
+
+  # "Feels like" range for a day's forecast, e.g. "26° / 15°". Nil when the
+  # apparent temperatures are missing.
+  def apparent_range(forecast)
+    high = forecast["apparent_high"]
+    low = forecast["apparent_low"]
+    return nil if high.nil? && low.nil?
+
+    "#{forecast_temperature(high)} / #{forecast_temperature(low)}"
+  end
+
   # 16-point compass label for a wind bearing in degrees, e.g. 160 -> "SSE".
   def compass_direction(degrees)
     return nil if degrees.nil?

@@ -1,0 +1,16 @@
+<%#
+  A row of small label/value stat tiles at the foot of a conditions panel.
+  `stats` is an array of [label, value] pairs; pairs with a blank value are
+  dropped, and the strip renders nothing when none remain.
+%>
+<% visible = stats.reject { |_label, value| value.blank? } %>
+<% if visible.any? %>
+  <div class="wii-stats">
+    <% visible.each do |label, value| %>
+      <div class="wii-stat">
+        <span class="wii-stat__label"><%= label %></span>
+        <span class="wii-stat__value"><%= value %></span>
+      </div>
+    <% end %>
+  </div>
+<% end %>

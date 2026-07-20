@@ -13,13 +13,14 @@ module OpenMeteo
     TEMPERATURE_UNIT = "celsius".freeze
 
     CURRENT_VARIABLES = %w[
-      temperature_2m relative_humidity_2m weather_code uv_index
-      wind_speed_10m wind_direction_10m precipitation_probability
+      temperature_2m apparent_temperature relative_humidity_2m weather_code
+      uv_index wind_speed_10m wind_direction_10m precipitation_probability
     ].freeze
     HOURLY_VARIABLES = %w[temperature_2m weather_code].freeze
     DAILY_VARIABLES = %w[
-      temperature_2m_max temperature_2m_min weather_code uv_index_max
-      wind_speed_10m_max wind_direction_10m_dominant
+      temperature_2m_max temperature_2m_min apparent_temperature_max
+      apparent_temperature_min weather_code uv_index_max
+      wind_speed_10m_max wind_direction_10m_dominant sunrise sunset
     ].freeze
 
     # A batch response carries far more data than a single location's.

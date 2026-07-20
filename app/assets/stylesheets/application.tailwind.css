@@ -440,12 +440,39 @@
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
 }
 
-.wii-wind {
+/* The details strip under the conditions: feels-like, humidity, rain, wind,
+   sunrise/sunset. Wraps to more rows on narrow viewports. */
+.wii-stats {
   margin-top: auto;
-  text-align: right;
-  font-weight: 700;
-  font-size: clamp(18px, 3.2vh, 30px);
-  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(84px, 14vw, 120px), 1fr));
+  gap: clamp(6px, 1vw, 12px);
+}
+
+.wii-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: clamp(6px, 1.2vh, 12px) clamp(6px, 1vw, 12px);
+  border-radius: 8px;
+  background: rgba(4, 16, 44, 0.4);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.18);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.wii-stat__label {
+  font-size: clamp(11px, 1.7vh, 15px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.wii-stat__value {
+  font-size: clamp(16px, 2.6vh, 24px);
+  font-weight: 800;
+  text-align: center;
 }
 
 /* UV Index ------------------------------------------------------------- */
