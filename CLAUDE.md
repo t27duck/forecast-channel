@@ -53,8 +53,12 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - **WeatherCode** (`app/models/concerns/weather_code.rb`) and **UvIndex**
   (`app/models/concerns/uv_index.rb`): the single sources of truth mapping
   Open-Meteo WMO weather codes and UV values to human labels. `icon_group`
-  also picks the marker icon name; passed `is_day: false` it returns the
-  `_night` variant for clear/partly skies (a sun becomes a moon).
+  also picks the marker icon name — distinguishing drizzle, rain, `heavy_rain`,
+  `sleet` (freezing), snow, `heavy_snow`, thunder and `hail` — and, passed
+  `is_day: false`, returns the `_night` variant for clear/partly skies (a sun
+  becomes a moon). The names are shared by the flat globe glyphs
+  (`app/javascript/lib/weather_icons.js`) and the glossy detail icons
+  (`WeatherIconsHelper`).
 - **AirQuality** (`app/models/concerns/air_quality.rb`) and **LaundryIndex**
   (`app/models/concerns/laundry_index.rb`): more index concerns. `AirQuality`
   maps a US AQI value to its EPA category (`label_for`) and a colour key

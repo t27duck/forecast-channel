@@ -69,9 +69,14 @@ module WeatherCode
     when 2 then "partly"
     when 3 then "overcast"
     when 45, 48 then "fog"
-    when 51..67, 80..82 then "rain"
-    when 71..77, 85, 86 then "snow"
-    when 95.. then "thunder"
+    when 51, 53, 55 then "drizzle"          # drizzle
+    when 56, 57, 66, 67 then "sleet"        # freezing drizzle / freezing rain
+    when 61, 63, 80, 81 then "rain"         # rain and rain showers
+    when 65, 82 then "heavy_rain"           # heavy rain / violent showers
+    when 71, 73, 77, 85 then "snow"         # snow and snow grains/showers
+    when 75, 86 then "heavy_snow"           # heavy snowfall / heavy snow showers
+    when 95 then "thunder"                  # thunderstorm
+    when 96, 99 then "hail"                 # thunderstorm with hail
     else "unknown"
     end
   end

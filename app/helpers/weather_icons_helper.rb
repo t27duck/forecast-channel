@@ -48,9 +48,14 @@ module WeatherIconsHelper
     when "partly" then sun(salt, cx: 22, cy: 20, r: 11, rays: :upper) + cloud(salt)
     when "overcast" then cloud(salt, tint: :grey)
     when "fog" then cloud(salt, tint: :grey) + fog_lines
+    when "drizzle" then cloud(salt) + drizzle_dots
     when "rain" then cloud(salt) + rain_streaks
+    when "heavy_rain" then cloud(salt, tint: :storm) + rain_streaks(heavy: true)
+    when "sleet" then cloud(salt, tint: :grey) + sleet_marks
     when "snow" then cloud(salt) + snowflakes
+    when "heavy_snow" then cloud(salt) + snowflakes(heavy: true)
     when "thunder" then cloud(salt, tint: :storm) + lightning_bolt + rain_streaks(short: true)
+    when "hail" then cloud(salt, tint: :storm) + lightning_bolt + hailstones
     else unknown_mark
     end
   end
@@ -109,18 +114,46 @@ module WeatherIconsHelper
     SVG
   end
 
-  def rain_streaks(short: false)
+  # Diagonal rain streaks. `heavy` adds a fourth, thicker streak; `short` pulls
+  # them up (under a storm cloud with a bolt).
+  def rain_streaks(short: false, heavy: false)
     y2 = short ? 57 : 60
-    lines = [ 22, 32, 42 ].map { |x| %(<line x1="#{x}" y1="52" x2="#{x - 3}" y2="#{y2}"/>) }.join
-    %(<g stroke="#4aa3ff" stroke-width="3" stroke-linecap="round">#{lines}</g>)
+    xs = heavy ? [ 18, 27, 36, 45 ] : [ 22, 32, 42 ]
+    width = heavy ? 4 : 3
+    lines = xs.map { |x| %(<line x1="#{x}" y1="52" x2="#{x - 3}" y2="#{y2}"/>) }.join
+    %(<g stroke="#4aa3ff" stroke-width="#{width}" stroke-linecap="round">#{lines}</g>)
   end
 
-  def snowflakes
+  # Short, light dashes for drizzle.
+  def drizzle_dots
+    dashes = [ 24, 32, 40 ].map { |x| %(<line x1="#{x}" y1="52" x2="#{x}" y2="56"/>) }.join
+    %(<g stroke="#8fbaf5" stroke-width="3" stroke-linecap="round">#{dashes}</g>)
+  end
+
+  # Freezing rain: rain streaks mixed with an ice pellet.
+  def sleet_marks
     <<~SVG
-      <g fill="#d6ecff">
-        <circle cx="22" cy="55" r="2.4"/>
-        <circle cx="32" cy="59" r="2.4"/>
-        <circle cx="42" cy="55" r="2.4"/>
+      <g stroke="#4aa3ff" stroke-width="3" stroke-linecap="round">
+        <line x1="24" y1="52" x2="21" y2="59"/>
+        <line x1="41" y1="52" x2="38" y2="59"/>
+      </g>
+      <circle cx="33" cy="57" r="2.8" fill="#d6ecff"/>
+    SVG
+  end
+
+  def snowflakes(heavy: false)
+    centers = heavy ? [ [ 18, 54 ], [ 28, 58 ], [ 36, 53 ], [ 44, 57 ], [ 32, 61 ] ]
+                    : [ [ 22, 55 ], [ 32, 59 ], [ 42, 55 ] ]
+    circles = centers.map { |cx, cy| %(<circle cx="#{cx}" cy="#{cy}" r="2.4"/>) }.join
+    %(<g fill="#d6ecff">#{circles}</g>)
+  end
+
+  # Hailstones under a storm cloud (paired with a bolt).
+  def hailstones
+    <<~SVG
+      <g fill="#eaf3ff" stroke="#b9cfe8" stroke-width="0.8">
+        <circle cx="23" cy="56" r="3"/>
+        <circle cx="41" cy="55" r="3"/>
       </g>
     SVG
   end

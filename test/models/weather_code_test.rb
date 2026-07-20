@@ -13,11 +13,23 @@ class WeatherCodeTest < ActiveSupport::TestCase
     assert_equal "partly", WeatherCode.icon_group(2)
     assert_equal "overcast", WeatherCode.icon_group(3)
     assert_equal "fog", WeatherCode.icon_group(48)
-    assert_equal "rain", WeatherCode.icon_group(65)
+    assert_equal "rain", WeatherCode.icon_group(63)
     assert_equal "rain", WeatherCode.icon_group(81)
     assert_equal "snow", WeatherCode.icon_group(73)
     assert_equal "thunder", WeatherCode.icon_group(95)
     assert_equal "unknown", WeatherCode.icon_group(nil)
+  end
+
+  test "icon_group splits the coarse precip groups by type and severity" do
+    assert_equal "drizzle", WeatherCode.icon_group(51)      # light drizzle
+    assert_equal "sleet", WeatherCode.icon_group(56)        # freezing drizzle
+    assert_equal "sleet", WeatherCode.icon_group(66)        # freezing rain
+    assert_equal "heavy_rain", WeatherCode.icon_group(65)   # heavy rain
+    assert_equal "heavy_rain", WeatherCode.icon_group(82)   # violent rain showers
+    assert_equal "heavy_snow", WeatherCode.icon_group(75)   # heavy snowfall
+    assert_equal "heavy_snow", WeatherCode.icon_group(86)   # heavy snow showers
+    assert_equal "hail", WeatherCode.icon_group(96)         # thunderstorm with hail
+    assert_equal "hail", WeatherCode.icon_group(99)
   end
 
   test "icon_group returns night variants for clear and partly at night" do
@@ -28,7 +40,8 @@ class WeatherCodeTest < ActiveSupport::TestCase
   test "icon_group keeps cloudy and precip groups the same at night" do
     # An overcast/rainy/etc. sky hides the sun or moon, so there's no night art.
     assert_equal "overcast", WeatherCode.icon_group(3, is_day: false)
-    assert_equal "rain", WeatherCode.icon_group(65, is_day: false)
+    assert_equal "rain", WeatherCode.icon_group(63, is_day: false)
+    assert_equal "heavy_rain", WeatherCode.icon_group(65, is_day: false)
     assert_equal "snow", WeatherCode.icon_group(73, is_day: false)
     assert_equal "unknown", WeatherCode.icon_group(nil, is_day: false)
   end
