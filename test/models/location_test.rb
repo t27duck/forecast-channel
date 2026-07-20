@@ -55,4 +55,38 @@ class LocationTest < ActiveSupport::TestCase
     assert_predicate locations(:tokyo), :weather_stale?
     assert_not locations(:berlin).weather_stale?
   end
+
+  test "the hot tier holds the biggest cities plus anywhere recently viewed" do
+    big = Location.create!(name: "Metropolis", latitude: 1, longitude: 1, population: 90_000_000)
+    viewed = Location.create!(name: "Smallville", latitude: 2, longitude: 2,
+      population: 100, last_viewed_at: 1.hour.ago)
+    # No population at all, and not looked at in a long time.
+    forgotten = Location.create!(name: "Hamlet", latitude: 3, longitude: 3,
+      population: nil, last_viewed_at: 30.days.ago)
+
+    assert_includes Location.hot, big
+    assert_includes Location.hot, viewed
+    assert_includes Location.cold, forgotten
+    assert_not_includes Location.hot, forgotten
+  end
+
+  test "hot and cold partition every location" do
+    assert_equal Location.count, Location.hot.count + Location.cold.count
+  end
+
+  test "mark_viewed! stamps the view, then throttles repeats" do
+    location = locations(:tokyo)
+    assert_nil location.last_viewed_at
+
+    location.mark_viewed!
+    first = location.reload.last_viewed_at
+    assert_not_nil first
+
+    location.mark_viewed! # within the throttle window, so unchanged
+    assert_equal first, location.reload.last_viewed_at
+
+    location.update_column(:last_viewed_at, 1.hour.ago)
+    location.mark_viewed!
+    assert_operator location.reload.last_viewed_at, :>, 1.minute.ago
+  end
 end

@@ -2,6 +2,14 @@ class Location < ApplicationRecord
   # How long cached weather stays fresh before it should be refreshed.
   WEATHER_TTL = 1.hour
 
+  # The "hot" tier — refreshed hourly, while the rest refresh every few hours.
+  # It's the big cities plus anywhere someone has actually looked at recently.
+  HOT_CITY_COUNT = 50
+  RECENTLY_VIEWED_WITHIN = 7.days
+
+  # Don't rewrite last_viewed_at on every panel navigation.
+  VIEW_TRACKING_INTERVAL = 10.minutes
+
   RADIANS_PER_DEGREE = Math::PI / 180
   EARTH_RADIUS_KM = 6371.0
 
@@ -12,6 +20,16 @@ class Location < ApplicationRecord
     numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
 
   scope :by_name, -> { order(:name) }
+  scope :most_populous, -> { where.not(population: nil).order(population: :desc).limit(HOT_CITY_COUNT) }
+  scope :recently_viewed, -> { where(last_viewed_at: RECENTLY_VIEWED_WITHIN.ago..) }
+  scope :hot, -> { where(id: hot_ids) }
+  scope :cold, -> { where.not(id: hot_ids) }
+
+  # Ids of the frequently-refreshed tier. Resolved in Ruby so the two halves stay
+  # readable (and it's a trivial query at our scale).
+  def self.hot_ids
+    most_populous.ids | recently_viewed.ids
+  end
 
   # The stored location closest to the given coordinates, or nil when there are
   # none. Fine to compute in Ruby at our scale (tens/hundreds of locations).
@@ -57,5 +75,13 @@ class Location < ApplicationRecord
   # Fetch fresh weather from Open-Meteo and store it. Returns true on success.
   def refresh_weather!
     WeatherRefresher.call(self)
+  end
+
+  # Records that someone looked at this location, which keeps it in the hot
+  # refresh tier. Throttled, and written without touching updated_at.
+  def mark_viewed!
+    return if last_viewed_at.present? && last_viewed_at > VIEW_TRACKING_INTERVAL.ago
+
+    update_column(:last_viewed_at, Time.current)
   end
 end

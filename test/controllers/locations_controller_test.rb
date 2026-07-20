@@ -39,6 +39,15 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".wii-bottom a[href=?]", map_path, text: "Globe"
   end
 
+  test "viewing a forecast marks the location as recently viewed" do
+    assert_nil locations(:tokyo).last_viewed_at
+
+    get location_url(locations(:tokyo))
+
+    assert_not_nil locations(:tokyo).reload.last_viewed_at
+    assert_includes Location.hot, locations(:tokyo) # keeps it in the hourly tier
+  end
+
   test "root shows the first location's forecast by default" do
     get root_url
     assert_response :success

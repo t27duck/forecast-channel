@@ -11,13 +11,15 @@ module OpenMeteo
 
     module_function
 
-    # Returns the parsed JSON body as a Hash, or nil on failure.
-    def get_json(endpoint, params)
+    # Returns the parsed JSON body (a Hash, or an Array for multi-location
+    # requests), or nil on failure. Batch requests return much more data, so the
+    # read timeout is adjustable.
+    def get_json(endpoint, params, read_timeout: READ_TIMEOUT)
       uri = URI(endpoint)
       uri.query = URI.encode_www_form(params)
 
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: true,
-        open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT) do |http|
+        open_timeout: OPEN_TIMEOUT, read_timeout: read_timeout) do |http|
         http.get(uri.request_uri)
       end
 

@@ -33,7 +33,7 @@ module OpenMeteo
       return [] if query.length < 2
 
       body = Request.get_json(ENDPOINT,
-        name: query, count: count, language: "en", format: "json")
+        { name: query, count: count, language: "en", format: "json" })
       return [] if body.nil?
 
       Array(body["results"]).map { |result| build_result(result) }

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_18_223519) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_20_001801) do
   create_table "locations", force: :cascade do |t|
     t.string "admin1"
     t.string "country"
@@ -24,6 +24,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_18_223519) do
     t.decimal "elevation", precision: 8, scale: 2
     t.json "five_day_forecast", default: [], null: false
     t.json "hourly_windows", default: [], null: false
+    t.datetime "last_viewed_at"
     t.decimal "latitude", precision: 9, scale: 6, null: false
     t.decimal "longitude", precision: 9, scale: 6, null: false
     t.string "name", null: false
@@ -36,6 +37,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_18_223519) do
     t.decimal "uv_index", precision: 4, scale: 1
     t.string "uv_label"
     t.datetime "weather_refreshed_at"
+    t.index ["last_viewed_at"], name: "index_locations_on_last_viewed_at"
     t.index ["latitude", "longitude"], name: "index_locations_on_latitude_and_longitude"
   end
 

@@ -63,9 +63,21 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - **WeatherRefresher** (`app/services/weather_refresher.rb`): orchestrates
   fetch → map → `update!` for a Location. Returns false (leaving the record
   untouched) when the fetch fails.
-- **Jobs**: `RefreshLocationWeatherJob` refreshes one location;
-  `RefreshAllWeatherJob` fans out per-location jobs and is scheduled hourly in
-  `config/recurring.yml`. Run the worker with `bin/jobs`.
+- **Jobs / refresh tiers**: weather is fetched in **batches**, not one request
+  per location. `WeatherRefresher.call_many` slices locations into
+  `BATCH_SIZE` (50) chunks and calls `OpenMeteo::ForecastClient.fetch_many`,
+  which sends comma-separated coordinates and gets back an array of payloads in
+  the same order (`timezone=auto` still resolves per location). The array has no
+  per-location key, so a length guard fails a chunk closed rather than risk
+  mispairing. `RefreshWeatherBatchJob` refreshes one chunk (by ids, so deleted
+  locations drop out); `RefreshWeatherTierJob` enqueues those chunks for a tier.
+  `config/recurring.yml` runs the **hot** tier hourly and the **cold** tier every
+  6 hours — `Location.hot` is the top `HOT_CITY_COUNT` by population plus
+  anything viewed within `RECENTLY_VIEWED_WITHIN` (`last_viewed_at`, stamped by
+  `Location#mark_viewed!` from `LocationsController#show`, throttled);
+  `Location.cold` is the remainder. `RefreshAllWeatherJob` still refreshes
+  everything (the "Refresh all" button) and `RefreshLocationWeatherJob` still
+  does a single location. Run the worker with `bin/jobs`.
 - **Setting** (`app/models/setting.rb`): a singleton row (`Setting.current`)
   holding app-wide display preferences — `temperature_unit` (celsius/fahrenheit)
   and `wind_unit` (mph/kph). Weather is stored canonically (Celsius, km/h) and

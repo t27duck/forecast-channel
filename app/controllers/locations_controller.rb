@@ -18,6 +18,8 @@ class LocationsController < ApplicationController
       @is_current_location = @location.id == current_location&.id
       # On the root path with no chosen location yet, ask the browser to locate.
       @auto_locate = params[:id].nil? && cookies[:current_location_id].blank?
+      # Somewhere people actually look stays in the hourly refresh tier.
+      @location.mark_viewed!
     end
   end
 

@@ -58,10 +58,16 @@ Locations are the places plotted on the globe. Manage them at `/locations`:
 Cached weather is fetched from Open-Meteo and refreshed periodically:
 
 - **Manually**: on `/locations`, use a row's "Refresh" button (immediate) or
-  "Refresh all" (enqueues a background job).
-- **Automatically**: `RefreshAllWeatherJob` is scheduled hourly via
-  `config/recurring.yml`. Run the Solid Queue worker with `bin/jobs` to process
-  enqueued and recurring jobs.
+  "Refresh all" (enqueues background jobs).
+- **Automatically**: two schedules in `config/recurring.yml` — the **hot** tier
+  (the biggest cities plus anywhere viewed in the last week) refreshes hourly,
+  and everywhere else every 6 hours. Run the Solid Queue worker with `bin/jobs`
+  to process enqueued and recurring jobs.
+
+Requests are **batched**: up to 50 locations are fetched per HTTP call rather
+than one call each, so a full sweep of ~200 cities takes a handful of requests
+instead of hundreds. Together with the tiers this cuts daily requests from
+roughly 4,900 to ~40, and roughly a third of the API quota.
 
 ## Settings
 

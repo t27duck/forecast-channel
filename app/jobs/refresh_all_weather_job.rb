@@ -1,11 +1,12 @@
-# Fans out a weather refresh for every location. Wired into config/recurring.yml
-# to keep cached forecasts fresh, and also triggerable from the locations UI.
+# Refreshes every location, in batches. Backs the "Refresh all" button in the
+# locations UI; the recurring schedule uses RefreshWeatherTierJob instead so the
+# long tail doesn't get refreshed as often as the places people look at.
 class RefreshAllWeatherJob < ApplicationJob
   queue_as :default
 
   def perform
-    Location.find_each do |location|
-      RefreshLocationWeatherJob.perform_later(location)
+    Location.ids.each_slice(WeatherRefresher::BATCH_SIZE) do |ids|
+      RefreshWeatherBatchJob.perform_later(ids)
     end
   end
 end
