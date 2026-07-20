@@ -5,7 +5,8 @@
 # weather is left blank and filled in later by RefreshAllWeatherJob.
 #
 # Idempotent: re-running updates existing cities (matched by open_meteo_id)
-# and adds any new ones. Regenerate with the script in the scratchpad.
+# and adds any new ones. To add more cities, resolve their geocoding data with
+# script/fetch_seed_cities.rb and paste the printed rows in below.
 
 WORLD_CITIES = [
   { open_meteo_id: 1796236, name: "Shanghai", latitude: 31.22222, longitude: 121.45806, country: "China", country_code: "CN", admin1: "Shanghai Municipality", timezone: "Asia/Shanghai", elevation: 12.0, population: 24874500 },
@@ -210,7 +211,57 @@ WORLD_CITIES = [
   { open_meteo_id: 5110629, name: "Buffalo", latitude: 42.88645, longitude: -78.87837, country: "United States", country_code: "US", admin1: "New York", timezone: "America/New_York", elevation: 183.0, population: 258071 },
   { open_meteo_id: 4464368, name: "Durham", latitude: 35.99403, longitude: -78.89862, country: "United States", country_code: "US", admin1: "North Carolina", timezone: "America/New_York", elevation: 123.0, population: 257636 },
   { open_meteo_id: 5359777, name: "Irvine", latitude: 33.66946, longitude: -117.82311, country: "United States", country_code: "US", admin1: "California", timezone: "America/Los_Angeles", elevation: 17.0, population: 256927 },
-  { open_meteo_id: 3413829, name: "Reykjavik", latitude: 64.13548, longitude: -21.89541, country: "Iceland", country_code: "IS", admin1: "Capital Region", timezone: "Atlantic/Reykjavik", elevation: 37.0, population: 118918 }
+  { open_meteo_id: 3413829, name: "Reykjavik", latitude: 64.13548, longitude: -21.89541, country: "Iceland", country_code: "IS", admin1: "Capital Region", timezone: "Atlantic/Reykjavik", elevation: 37.0, population: 118918 },
+
+  # --- Additional cities (captured statically from the geocoding API) ---
+  # United States
+  { open_meteo_id: 5586437, name: "Boise", latitude: 43.6135, longitude: -116.20345, country: "United States", country_code: "US", admin1: "Idaho", timezone: "America/Boise", elevation: 823.0, population: 235684 },
+  { open_meteo_id: 5780993, name: "Salt Lake City", latitude: 40.76078, longitude: -111.89105, country: "United States", country_code: "US", admin1: "Utah", timezone: "America/Denver", elevation: 1299.0, population: 215548 },
+  { open_meteo_id: 4049979, name: "Birmingham", latitude: 33.52066, longitude: -86.80249, country: "United States", country_code: "US", admin1: "Alabama", timezone: "America/Chicago", elevation: 187.0, population: 196357 },
+  { open_meteo_id: 4781708, name: "Richmond", latitude: 37.55376, longitude: -77.46026, country: "United States", country_code: "US", admin1: "Virginia", timezone: "America/New_York", elevation: 64.0, population: 226610 },
+  { open_meteo_id: 5134086, name: "Rochester", latitude: 43.15478, longitude: -77.61556, country: "United States", country_code: "US", admin1: "New York", timezone: "America/New_York", elevation: 154.0, population: 209802 },
+  { open_meteo_id: 4994358, name: "Grand Rapids", latitude: 42.96336, longitude: -85.66809, country: "United States", country_code: "US", admin1: "Michigan", timezone: "America/Detroit", elevation: 195.0, population: 195097 },
+  { open_meteo_id: 4853828, name: "Des Moines", latitude: 41.60054, longitude: -93.60911, country: "United States", country_code: "US", admin1: "Iowa", timezone: "America/Chicago", elevation: 266.0, population: 214133 },
+  { open_meteo_id: 5811696, name: "Spokane", latitude: 47.65966, longitude: -117.42908, country: "United States", country_code: "US", admin1: "Washington", timezone: "America/Los_Angeles", elevation: 571.0, population: 229447 },
+  { open_meteo_id: 4119403, name: "Little Rock", latitude: 34.74648, longitude: -92.28959, country: "United States", country_code: "US", admin1: "Arkansas", timezone: "America/Chicago", elevation: 102.0, population: 202591 },
+  { open_meteo_id: 4634946, name: "Knoxville", latitude: 35.96064, longitude: -83.92074, country: "United States", country_code: "US", admin1: "Tennessee", timezone: "America/New_York", elevation: 276.0, population: 190740 },
+  { open_meteo_id: 5224151, name: "Providence", latitude: 41.82399, longitude: -71.41283, country: "United States", country_code: "US", admin1: "Rhode Island", timezone: "America/New_York", elevation: 2.0, population: 190934 },
+  { open_meteo_id: 4612862, name: "Chattanooga", latitude: 35.04563, longitude: -85.30968, country: "United States", country_code: "US", admin1: "Tennessee", timezone: "America/New_York", elevation: 206.0, population: 181099 },
+  { open_meteo_id: 4221552, name: "Savannah", latitude: 32.08354, longitude: -81.09983, country: "United States", country_code: "US", admin1: "Georgia", timezone: "America/New_York", elevation: 6.0, population: 147780 },
+  { open_meteo_id: 4574324, name: "Charleston", latitude: 32.77632, longitude: -79.93275, country: "United States", country_code: "US", admin1: "South Carolina", timezone: "America/New_York", elevation: 6.0, population: 132609 },
+  { open_meteo_id: 5261457, name: "Madison", latitude: 43.07305, longitude: -89.40123, country: "United States", country_code: "US", admin1: "Wisconsin", timezone: "America/Chicago", elevation: 267.0, population: 280305 },
+
+  # United States — Indiana
+  { open_meteo_id: 4257227, name: "Evansville", latitude: 37.97476, longitude: -87.55585, country: "United States", country_code: "US", admin1: "Indiana", timezone: "America/Chicago", elevation: 118.0, population: 119943 },
+  { open_meteo_id: 4926563, name: "South Bend", latitude: 41.68338, longitude: -86.25001, country: "United States", country_code: "US", admin1: "Indiana", timezone: "America/Indiana/Indianapolis", elevation: 211.0, population: 101516 },
+  { open_meteo_id: 4255466, name: "Carmel", latitude: 39.97837, longitude: -86.11804, country: "United States", country_code: "US", admin1: "Indiana", timezone: "America/Indiana/Indianapolis", elevation: 260.0, population: 88713 },
+  { open_meteo_id: 4257494, name: "Fishers", latitude: 39.95559, longitude: -86.01387, country: "United States", country_code: "US", admin1: "Indiana", timezone: "America/Indiana/Indianapolis", elevation: 249.0, population: 76794 },
+  { open_meteo_id: 4254679, name: "Bloomington", latitude: 39.16533, longitude: -86.52639, country: "United States", country_code: "US", admin1: "Indiana", timezone: "America/Indiana/Indianapolis", elevation: 235.0, population: 84067 },
+  { open_meteo_id: 4921100, name: "Hammond", latitude: 41.58337, longitude: -87.50004, country: "United States", country_code: "US", admin1: "Indiana", timezone: "America/Chicago", elevation: 183.0, population: 77614 },
+
+  # Japan
+  { open_meteo_id: 1848354, name: "Yokohama", latitude: 35.43333, longitude: 139.65, country: "Japan", country_code: "JP", admin1: "Kanagawa", timezone: "Asia/Tokyo", elevation: 21.0, population: 3777491 },
+  { open_meteo_id: 1856057, name: "Nagoya", latitude: 35.18147, longitude: 136.9064, country: "Japan", country_code: "JP", admin1: "Aichi", timezone: "Asia/Tokyo", elevation: 23.0, population: 2332176 },
+
+  # Canada
+  { open_meteo_id: 5913490, name: "Calgary", latitude: 51.05011, longitude: -114.08529, country: "Canada", country_code: "CA", admin1: "Alberta", timezone: "America/Edmonton", elevation: 1048.0, population: 1306784 },
+  { open_meteo_id: 6094817, name: "Ottawa", latitude: 45.41117, longitude: -75.69812, country: "Canada", country_code: "CA", admin1: "Ontario", timezone: "America/Toronto", elevation: 71.0, population: 1017449 },
+  { open_meteo_id: 5946768, name: "Edmonton", latitude: 53.55014, longitude: -113.46871, country: "Canada", country_code: "CA", admin1: "Alberta", timezone: "America/Edmonton", elevation: 668.0, population: 1010899 },
+  { open_meteo_id: 6183235, name: "Winnipeg", latitude: 49.8844, longitude: -97.14704, country: "Canada", country_code: "CA", admin1: "Manitoba", timezone: "America/Winnipeg", elevation: 245.0, population: 749607 },
+  { open_meteo_id: 6173331, name: "Vancouver", latitude: 49.24966, longitude: -123.11934, country: "Canada", country_code: "CA", admin1: "British Columbia", timezone: "America/Vancouver", elevation: 70.0, population: 662248 },
+  { open_meteo_id: 6325494, name: "Québec", latitude: 46.81228, longitude: -71.21454, country: "Canada", country_code: "CA", admin1: "Quebec", timezone: "America/Toronto", elevation: 54.0, population: 531902 },
+
+  # Mexico
+  { open_meteo_id: 3981609, name: "Tijuana", latitude: 32.5027, longitude: -117.00371, country: "Mexico", country_code: "MX", admin1: "Baja California", timezone: "America/Tijuana", elevation: 97.0, population: 1922523 },
+  { open_meteo_id: 3521081, name: "Puebla City", latitude: 19.04778, longitude: -98.20723, country: "Mexico", country_code: "MX", admin1: "Puebla", timezone: "America/Mexico_City", elevation: 2166.0, population: 1692181 },
+
+  # Europe
+  { open_meteo_id: 2886242, name: "Cologne", latitude: 50.93333, longitude: 6.95, country: "Germany", country_code: "DE", admin1: "North Rhine-Westphalia", timezone: "Europe/Berlin", elevation: 58.0, population: 963395 },
+  { open_meteo_id: 2995469, name: "Marseille", latitude: 43.29695, longitude: 5.38107, country: "France", country_code: "FR", admin1: "Provence-Alpes-Côte d'Azur", timezone: "Europe/Paris", elevation: 28.0, population: 877215 },
+  { open_meteo_id: 3094802, name: "Krakow", latitude: 50.06143, longitude: 19.93658, country: "Poland", country_code: "PL", admin1: "Lesser Poland", timezone: "Europe/Warsaw", elevation: 219.0, population: 804237 },
+  { open_meteo_id: 2509954, name: "Valencia", latitude: 39.47391, longitude: -0.37966, country: "Spain", country_code: "ES", admin1: "Valencia", timezone: "Europe/Madrid", elevation: 15.0, population: 824340 },
+  { open_meteo_id: 2925533, name: "Frankfurt am Main", latitude: 50.11552, longitude: 8.68417, country: "Germany", country_code: "DE", admin1: "Hesse", timezone: "Europe/Berlin", elevation: 113.0, population: 650000 },
+  { open_meteo_id: 2996944, name: "Lyon", latitude: 45.74906, longitude: 4.84789, country: "France", country_code: "FR", admin1: "Rhône-Alpes", timezone: "Europe/Paris", elevation: 173.0, population: 520774 }
 ].freeze
 
 created = 0
