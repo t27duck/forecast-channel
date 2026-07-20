@@ -401,18 +401,31 @@
 }
 
 /* Current / Today / Tomorrow ------------------------------------------- */
+/* Two equal halves — reading (temp + condition) and the icon — each centring
+   its own content, the way the Wii channel lays it out. The bottom padding sits
+   the block a touch above dead-centre, matching the Wii. */
 .wii-conditions {
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: clamp(12px, 3vw, 40px);
   min-height: 0;
+  padding-bottom: clamp(16px, 5vh, 56px);
+}
+
+.wii-conditions__text,
+.wii-conditions__icon {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .wii-temp {
   font-weight: 800;
-  font-size: clamp(64px, 15vh, 128px);
+  font-size: clamp(64px, 18vh, 168px);
   line-height: 0.95;
   letter-spacing: -0.02em;
 }
@@ -428,49 +441,60 @@
 }
 
 .wii-condition {
-  margin-top: clamp(4px, 1vh, 10px);
+  margin-top: clamp(4px, 1.4vh, 14px);
   font-weight: 600;
-  font-size: clamp(20px, 3.6vh, 36px);
-  max-width: 12em;
+  font-size: clamp(20px, 4vh, 44px);
+  max-width: 14em;
+  text-align: center;
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
 }
 
 .wii-conditions__icon {
-  flex: none;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
 }
 
+/* Grow the icon to fill its half's vertical space, always fitting the column
+   width, so it's big on a large monitor and never overflows on a small one. */
+.wii-conditions__icon .weather-icon {
+  width: min(82%, 46vh);
+  max-width: 420px;
+  height: auto;
+}
+
 /* The details strip under the conditions: feels-like, humidity, rain, wind,
-   sunrise/sunset. Wraps to more rows on narrow viewports. */
+   sunrise/sunset. Compact tiles clustered to the right, echoing the Wii's
+   bottom-right wind readout; wraps onto more rows on narrow viewports. */
 .wii-stats {
   margin-top: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(clamp(84px, 14vw, 120px), 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: clamp(6px, 1vw, 12px);
 }
 
 .wii-stat {
+  min-width: clamp(74px, 9vw, 108px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: clamp(6px, 1.2vh, 12px) clamp(6px, 1vw, 12px);
+  gap: 1px;
+  padding: clamp(4px, 0.9vh, 9px) clamp(8px, 1vw, 14px);
   border-radius: 8px;
-  background: rgba(4, 16, 44, 0.4);
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.18);
+  background: rgba(4, 16, 44, 0.32);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.14);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .wii-stat__label {
-  font-size: clamp(11px, 1.7vh, 15px);
+  font-size: clamp(10px, 1.5vh, 14px);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  opacity: 0.72;
+  opacity: 0.7;
 }
 
 .wii-stat__value {
-  font-size: clamp(16px, 2.6vh, 24px);
+  font-size: clamp(15px, 2.3vh, 22px);
   font-weight: 800;
   text-align: center;
 }
