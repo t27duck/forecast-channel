@@ -229,7 +229,8 @@
    the reused .wii-top bar expects. */
 .map-view {
   --chrome: clamp(40px, 7vh, 56px);
-  --panel-bg: #0a1a3a; /* dark recess behind a pressed button, over space */
+  --panel-bg: #0a1a3a;
+  /* dark recess behind a pressed button, over space */
 }
 
 /* Reuses the silver .wii-top/.wii-bottom bars as faint overlays on the globe:
@@ -254,7 +255,7 @@
   grid-template-columns: repeat(4, 1fr);
 }
 
-.map-bar--bottom .wii-bar__slot + .wii-bar__slot {
+.map-bar--bottom .wii-bar__slot+.wii-bar__slot {
   border-left: 1px solid #bcbcbc;
 }
 
@@ -263,7 +264,7 @@
 }
 
 /* At a zoom/pitch limit the button greys out (via :disabled) and goes blank. */
-.map-bar .wii-arrow:disabled > * {
+.map-bar .wii-arrow:disabled>* {
   visibility: hidden;
 }
 
@@ -285,30 +286,42 @@
   font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
   text-align: center;
 }
-.globe-popup .mapboxgl-popup-tip { display: none; }
+
+.globe-popup .mapboxgl-popup-tip {
+  display: none;
+}
+
 .globe-popup .gp__name {
   font-weight: 700;
   font-size: 15px;
   letter-spacing: 0.01em;
 }
+
 .globe-popup .gp__temp {
   margin-top: 2px;
   font-weight: 800;
   font-size: 26px;
   line-height: 1.05;
 }
-.globe-popup .gp__slash { color: rgba(255, 255, 255, 0.5); font-weight: 600; }
+
+.globe-popup .gp__slash {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+}
+
 .globe-popup .gp__cond {
   margin-top: 1px;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.88);
 }
+
 .globe-popup .gp__hilo {
   margin-top: 4px;
   font-size: 12px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.72);
 }
+
 .globe-popup .gp__muted {
   margin-top: 2px;
   font-size: 12.5px;
@@ -571,17 +584,42 @@
 }
 
 /* Air-quality category tints (EPA colours). */
-.wii-index__label--good { background: rgba(80, 200, 120, 0.4); }
-.wii-index__label--moderate { background: rgba(240, 210, 90, 0.42); }
-.wii-index__label--sensitive { background: rgba(245, 165, 75, 0.44); }
-.wii-index__label--unhealthy { background: rgba(235, 100, 100, 0.46); }
-.wii-index__label--very-unhealthy { background: rgba(170, 110, 210, 0.46); }
-.wii-index__label--hazardous { background: rgba(160, 70, 90, 0.5); }
+.wii-index__label--good {
+  background: rgba(80, 200, 120, 0.4);
+}
+
+.wii-index__label--moderate {
+  background: rgba(240, 210, 90, 0.42);
+}
+
+.wii-index__label--sensitive {
+  background: rgba(245, 165, 75, 0.44);
+}
+
+.wii-index__label--unhealthy {
+  background: rgba(235, 100, 100, 0.46);
+}
+
+.wii-index__label--very-unhealthy {
+  background: rgba(170, 110, 210, 0.46);
+}
+
+.wii-index__label--hazardous {
+  background: rgba(160, 70, 90, 0.5);
+}
 
 /* Laundry rating tints. */
-.wii-index__label--excellent { background: rgba(80, 200, 120, 0.42); }
-.wii-index__label--fair { background: rgba(240, 210, 90, 0.4); }
-.wii-index__label--poor { background: rgba(235, 120, 110, 0.44); }
+.wii-index__label--excellent {
+  background: rgba(80, 200, 120, 0.42);
+}
+
+.wii-index__label--fair {
+  background: rgba(240, 210, 90, 0.4);
+}
+
+.wii-index__label--poor {
+  background: rgba(235, 120, 110, 0.44);
+}
 
 /* 5-Day forecast ------------------------------------------------------- */
 .wii-fiveday {
@@ -680,12 +718,16 @@
 
 .wii-sixhour {
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  /* Span the full page width by cancelling the panel body's side padding. */
+  left: calc(-1 * clamp(16px, 3.5vw, 44px));
+  right: calc(-1 * clamp(16px, 3.5vw, 44px));
   display: none;
   flex-direction: column;
-  gap: clamp(8px, 1.8vh, 20px);
-  padding: clamp(6px, 1.4vh, 14px) 0;
-  background: rgba(9, 30, 74, 0.8);
+  /* Keep the title and boxes clear of the screen edges. */
+  padding: clamp(8px, 1.6vh, 16px) clamp(22px, 4.5vw, 64px) clamp(12px, 2.4vh, 24px);
+  background: rgba(9, 30, 74, 0.95);
 }
 
 .wii-sixhour-zone.is-open .wii-sixhour {
@@ -693,14 +735,20 @@
 }
 
 .wii-sixhour__heading {
+  flex: none;
   font-weight: 700;
   font-size: clamp(18px, 2.8vh, 28px);
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
 }
 
+/* The boxes + times fill the space under the title and sit centred in it. */
 .wii-sixhour__grid {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  gap: clamp(14px, 3vw, 48px);
+  align-content: center;
 }
 
 .wii-sixhour__cell {
@@ -717,11 +765,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(120, 165, 225, 0.28);
-  border-right: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.wii-sixhour__cell:last-child .wii-sixhour__icon {
-  border-right: 0;
+  border-radius: 12px;
 }
 
 .wii-sixhour__nodata {
