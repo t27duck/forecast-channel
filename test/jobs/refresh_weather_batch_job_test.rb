@@ -5,11 +5,16 @@ class RefreshWeatherBatchJobTest < ActiveJob::TestCase
     locations = Location.all.to_a
     payloads = Array.new(locations.size) { open_meteo_forecast_payload }
 
-    stub_singleton(OpenMeteo::ForecastClient, :fetch_many, ->(_coords) { payloads }) do
-      RefreshWeatherBatchJob.perform_now(locations.map(&:id))
+    stub_air_quality do
+      stub_singleton(OpenMeteo::ForecastClient, :fetch_many, ->(_coords) { payloads }) do
+        RefreshWeatherBatchJob.perform_now(locations.map(&:id))
+      end
     end
 
-    locations.each { |location| assert_not_nil location.reload.weather_refreshed_at }
+    locations.each do |location|
+      assert_not_nil location.reload.weather_refreshed_at
+      assert_equal 42, location.air_quality_index # air quality refreshed in the same job
+    end
   end
 
   test "ignores ids whose location has since been deleted" do

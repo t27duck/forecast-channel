@@ -15,14 +15,16 @@ class ForecastDetailTest < ApplicationSystemTestCase
     # Default panel is Current.
     assert_selector ".wii[data-active-panel=current]", wait: 10
 
-    # ▲ goes up to UV; a second ▲ is a no-op (top of the stack, non-looping).
-    find("body").send_keys(:up)
-    assert_selector ".wii[data-active-panel=uv]"
+    # ▲ walks up through the index panels to UV; a further ▲ is a no-op (top).
+    %w[laundry air_quality uv].each do |panel|
+      find("body").send_keys(:up)
+      assert_selector ".wii[data-active-panel=#{panel}]"
+    end
     find("body").send_keys(:up)
     assert_selector ".wii[data-active-panel=uv]"
 
-    # ▼ walks down through the stack to the last panel, then stops.
-    %w[current today tomorrow five_day].each do |panel|
+    # ▼ walks back down through the whole stack to the last panel, then stops.
+    %w[air_quality laundry current today tomorrow five_day].each do |panel|
       find("body").send_keys(:down)
       assert_selector ".wii[data-active-panel=#{panel}]"
     end

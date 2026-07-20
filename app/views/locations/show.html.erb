@@ -48,6 +48,8 @@
   <div class="wii-viewport">
     <div class="wii__track" data-forecast-target="track">
       <%= render "locations/panels/uv", location: @location %>
+      <%= render "locations/panels/air_quality", location: @location %>
+      <%= render "locations/panels/laundry", location: @location %>
       <%= render "locations/panels/current", location: @location %>
       <%= render "locations/panels/today", location: @location %>
       <%= render "locations/panels/tomorrow", location: @location %>

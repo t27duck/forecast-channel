@@ -14,6 +14,11 @@ class OpenMeteo::WeatherMapperTest < ActiveSupport::TestCase
     assert_not_nil @attributes[:weather_refreshed_at]
   end
 
+  test "maps current humidity and precipitation probability for the laundry index" do
+    assert_equal 68, @attributes[:current_humidity]
+    assert_equal 20, @attributes[:current_precipitation_probability]
+  end
+
   test "maps current and daily wind" do
     assert_in_delta 18.3, @attributes[:current_wind_speed]
     assert_equal 160, @attributes[:current_wind_direction]

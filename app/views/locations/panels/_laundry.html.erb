@@ -1,0 +1,18 @@
+<% rating = location.laundry_rating %>
+<%= render layout: "locations/panels/frame",
+  locals: { key: "laundry", title: "Laundry Index" } do %>
+  <div class="wii-index">
+    <div class="wii-index__figure"><%= laundry_icon(size: 110) %></div>
+    <div class="wii-index__panel">
+      <div class="wii-index__heading">Laundry Index</div>
+      <div class="wii-index__boxes wii-index__boxes--single">
+        <div class="wii-index__label wii-index__label--<%= rating&.key || "none" %>">
+          <%= rating&.label || "Not available" %>
+        </div>
+      </div>
+      <% if rating&.blurb %>
+        <div class="wii-index__note"><%= rating.blurb %></div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

@@ -72,9 +72,29 @@ class Location < ApplicationRecord
     weather_refreshed_at.nil? || weather_refreshed_at < WEATHER_TTL.ago
   end
 
-  # Fetch fresh weather from Open-Meteo and store it. Returns true on success.
+  # Fetch fresh weather (and air quality) from Open-Meteo and store it. The
+  # result tracks the weather fetch; air quality is best-effort and never fails
+  # the refresh. Returns true on success.
   def refresh_weather!
-    WeatherRefresher.call(self)
+    refreshed = WeatherRefresher.call(self)
+    AirQualityRefresher.call(self) if refreshed
+    refreshed
+  end
+
+  # Category label for the stored air quality index.
+  def air_quality_name
+    air_quality_label.presence || AirQuality.label_for(air_quality_index)
+  end
+
+  # How well laundry will dry in the current conditions, or nil when the data
+  # needed to judge (temperature/humidity) is missing.
+  def laundry_rating
+    LaundryIndex.rating(
+      temperature: current_temperature,
+      humidity: current_humidity,
+      wind_speed: current_wind_speed,
+      precipitation_probability: current_precipitation_probability
+    )
   end
 
   # Records that someone looked at this location, which keeps it in the hot

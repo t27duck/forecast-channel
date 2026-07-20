@@ -5,6 +5,8 @@ class RefreshWeatherBatchJob < ApplicationJob
   queue_as :default
 
   def perform(location_ids)
-    WeatherRefresher.call_many(Location.where(id: location_ids).to_a)
+    locations = Location.where(id: location_ids).to_a
+    WeatherRefresher.call_many(locations)
+    AirQualityRefresher.call_many(locations)
   end
 end

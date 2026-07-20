@@ -51,6 +51,41 @@ class LocationTest < ActiveSupport::TestCase
     assert_equal "Slight rain", location.current_condition_name
   end
 
+  test "air_quality_name falls back to the label for the stored index" do
+    assert_equal "Moderate", Location.new(air_quality_index: 80, air_quality_label: nil).air_quality_name
+    assert_equal "Good", Location.new(air_quality_index: 20, air_quality_label: "Good").air_quality_name
+  end
+
+  test "laundry_rating derives a rating from the stored conditions" do
+    location = Location.new(current_temperature: 26, current_humidity: 40,
+      current_wind_speed: 15, current_precipitation_probability: 5)
+    assert_equal "excellent", location.laundry_rating.key
+  end
+
+  test "laundry_rating is nil without the conditions it needs" do
+    assert_nil Location.new(current_temperature: nil, current_humidity: nil).laundry_rating
+  end
+
+  test "refresh_weather! also refreshes air quality, but air quality never fails it" do
+    location = locations(:tokyo)
+    forecast = open_meteo_forecast_payload
+
+    # Air quality unreachable (nil) must not flip the weather refresh to a failure.
+    stub_singleton(OpenMeteo::AirQualityClient, :fetch, ->(**) { nil }) do
+      stub_singleton(OpenMeteo::ForecastClient, :fetch, ->(**) { forecast }) do
+        assert location.refresh_weather!
+      end
+    end
+    assert_nil location.reload.air_quality_index
+
+    stub_air_quality(open_meteo_air_quality_payload(us_aqi: 55)) do
+      stub_singleton(OpenMeteo::ForecastClient, :fetch, ->(**) { forecast }) do
+        assert location.refresh_weather!
+      end
+    end
+    assert_equal 55, location.reload.air_quality_index
+  end
+
   test "weather_stale? is true when never refreshed and false when fresh" do
     assert_predicate locations(:tokyo), :weather_stale?
     assert_not locations(:berlin).weather_stale?

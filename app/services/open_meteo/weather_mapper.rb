@@ -20,6 +20,8 @@ module OpenMeteo
     def attributes
       {
         current_temperature: round(current["temperature_2m"], 1),
+        current_humidity: current["relative_humidity_2m"]&.round,
+        current_precipitation_probability: current["precipitation_probability"]&.round,
         current_condition_code: current_code,
         current_condition_label: WeatherCode.label_for(current_code),
         current_wind_speed: round(current["wind_speed_10m"], 1),

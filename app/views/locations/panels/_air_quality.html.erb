@@ -1,0 +1,18 @@
+<%= render layout: "locations/panels/frame",
+  locals: { key: "air_quality", title: "Air Quality" } do %>
+  <div class="wii-index">
+    <div class="wii-index__figure"><%= air_quality_icon(size: 110) %></div>
+    <div class="wii-index__panel">
+      <div class="wii-index__heading">Air Quality (US AQI)</div>
+      <div class="wii-index__boxes">
+        <div class="wii-index__value"><%= location.air_quality_index || "--" %></div>
+        <div class="wii-index__label wii-index__label--<%= AirQuality.key_for(location.air_quality_index) %>">
+          <%= location.air_quality_index ? location.air_quality_name : "Not available" %>
+        </div>
+      </div>
+      <% if location.air_quality_pm2_5 %>
+        <div class="wii-index__note">PM2.5 &middot; <%= location.air_quality_pm2_5 %> µg/m³</div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

@@ -1,12 +1,12 @@
 <%= render layout: "locations/panels/frame",
   locals: { key: "uv", title: "UV Index" } do %>
-  <div class="wii-uv">
-    <div class="wii-uv__figure"><%= uv_icon(size: 110) %></div>
-    <div class="wii-uv__panel">
-      <div class="wii-uv__heading">UV Index</div>
-      <div class="wii-uv__boxes">
-        <div class="wii-uv__value"><%= location.uv_index&.round || "--" %></div>
-        <div class="wii-uv__label"><%= location.uv_label.presence || "Not available" %></div>
+  <div class="wii-index">
+    <div class="wii-index__figure"><%= uv_icon(size: 110) %></div>
+    <div class="wii-index__panel">
+      <div class="wii-index__heading">UV Index</div>
+      <div class="wii-index__boxes">
+        <div class="wii-index__value"><%= location.uv_index&.round || "--" %></div>
+        <div class="wii-index__label"><%= location.uv_label.presence || "Not available" %></div>
       </div>
     </div>
   </div>

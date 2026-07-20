@@ -21,8 +21,10 @@ locations UI).
 ## Forecast & globe
 
 The root page (`/`) shows the current location's forecast — a Wii Forecast
-Channel-style set of panels (UV, Current, Today, Tomorrow, 5-Day) that slide
-vertically; clicking the Today or Tomorrow panel reveals its 6-hour breakdown.
+Channel-style set of panels (UV, Air Quality, Laundry Index, Current, Today,
+Tomorrow, 5-Day) that slide vertically; clicking the Today or Tomorrow panel
+reveals its 6-hour breakdown. Air Quality shows the US AQI and PM2.5; the
+Laundry Index rates how well washing will dry from the current conditions.
 On a first visit the app asks the browser for your location and opens the
 nearest one (needs HTTPS or localhost); otherwise it falls back to the first
 location. You can also set it explicitly in Settings.
@@ -53,7 +55,8 @@ Locations are the places plotted on the globe. Manage them at `/locations`:
   location metadata, and lets you review before saving.
 - Each location also stores cached weather (current conditions, UV, today/
   tomorrow forecasts, 6-hour windows, and a 5-day forecast), fetched from the
-  free Open-Meteo forecast API.
+  free Open-Meteo forecast API, plus current air quality (US AQI, PM2.5) from
+  the free Open-Meteo air-quality API.
 
 ## Weather refresh
 

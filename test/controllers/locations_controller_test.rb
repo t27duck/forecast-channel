@@ -21,7 +21,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "nav", false, "detail view should hide the app nav"
     assert_select "[data-controller~=forecast]"
-    assert_select "[data-panel]", 5
+    assert_select "[data-panel]", 7
     assert_select ".wii-header__location", text: @location.name
   end
 
@@ -137,8 +137,10 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
 
   test "refresh updates a location's weather" do
     payload = open_meteo_forecast_payload
-    stub_singleton(OpenMeteo::ForecastClient, :fetch, ->(**) { payload }) do
-      post refresh_location_url(@location)
+    stub_air_quality do
+      stub_singleton(OpenMeteo::ForecastClient, :fetch, ->(**) { payload }) do
+        post refresh_location_url(@location)
+      end
     end
 
     assert_redirected_to locations_url

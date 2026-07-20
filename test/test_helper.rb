@@ -36,8 +36,9 @@ module ActiveSupport
 
       {
         "current" => {
-          "temperature_2m" => 21.4, "weather_code" => 3, "uv_index" => 5.2,
-          "wind_speed_10m" => 18.3, "wind_direction_10m" => 160
+          "temperature_2m" => 21.4, "relative_humidity_2m" => 68, "weather_code" => 3,
+          "uv_index" => 5.2, "wind_speed_10m" => 18.3, "wind_direction_10m" => 160,
+          "precipitation_probability" => 20
         },
         "hourly" => { "time" => times, "temperature_2m" => temps, "weather_code" => codes },
         "daily" => {
@@ -50,6 +51,21 @@ module ActiveSupport
           "wind_direction_10m_dominant" => [ 135, 200, 90, 270, 315 ]
         }
       }
+    end
+
+    # A representative Open-Meteo air-quality payload for one location.
+    def open_meteo_air_quality_payload(us_aqi: 42, pm2_5: 9.3)
+      { "current" => { "us_aqi" => us_aqi, "pm2_5" => pm2_5 } }
+    end
+
+    # Stub the air-quality client (both single and batched) for the block, so
+    # tests exercising a refresh don't reach the network for air quality.
+    def stub_air_quality(payload = open_meteo_air_quality_payload)
+      stub_singleton(OpenMeteo::AirQualityClient, :fetch, ->(**) { payload }) do
+        stub_singleton(OpenMeteo::AirQualityClient, :fetch_many, ->(coords) { Array.new(coords.size) { payload } }) do
+          yield
+        end
+      end
     end
   end
 end

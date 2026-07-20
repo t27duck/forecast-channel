@@ -449,7 +449,8 @@
 }
 
 /* UV Index ------------------------------------------------------------- */
-.wii-uv {
+/* Index panels (UV, Air Quality, Laundry) share this figure + boxes layout. */
+.wii-index {
   flex: 1;
   display: flex;
   align-items: center;
@@ -457,19 +458,19 @@
   min-height: 0;
 }
 
-.wii-uv__figure {
+.wii-index__figure {
   flex: none;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
 }
 
-.wii-uv__panel {
+.wii-index__panel {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: clamp(6px, 1.4vh, 14px);
 }
 
-.wii-uv__heading {
+.wii-index__heading {
   padding: clamp(4px, 1vh, 10px) clamp(12px, 2vw, 22px);
   border-radius: 6px;
   background: rgba(4, 16, 44, 0.55);
@@ -478,17 +479,23 @@
   font-size: clamp(16px, 2.6vh, 26px);
 }
 
-.wii-uv__boxes {
+.wii-index__boxes {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: clamp(8px, 1.6vw, 18px);
 }
 
-.wii-uv__value,
-.wii-uv__label {
+/* A single full-width box (the Laundry rating has no separate number). */
+.wii-index__boxes--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.wii-index__value,
+.wii-index__label {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
   min-height: clamp(90px, 20vh, 150px);
   border-radius: 8px;
   background: rgba(120, 165, 225, 0.32);
@@ -496,13 +503,34 @@
   font-weight: 800;
 }
 
-.wii-uv__value {
+.wii-index__value {
   font-size: clamp(48px, 11vh, 92px);
 }
 
-.wii-uv__label {
-  font-size: clamp(28px, 6vh, 56px);
+.wii-index__label {
+  padding: 0 clamp(8px, 2vw, 20px);
+  font-size: clamp(24px, 5vh, 48px);
 }
+
+/* A caption under the boxes (PM2.5 reading, laundry advice). */
+.wii-index__note {
+  text-align: center;
+  font-size: clamp(13px, 2vh, 19px);
+  opacity: 0.85;
+}
+
+/* Air-quality category tints (EPA colours). */
+.wii-index__label--good { background: rgba(80, 200, 120, 0.4); }
+.wii-index__label--moderate { background: rgba(240, 210, 90, 0.42); }
+.wii-index__label--sensitive { background: rgba(245, 165, 75, 0.44); }
+.wii-index__label--unhealthy { background: rgba(235, 100, 100, 0.46); }
+.wii-index__label--very-unhealthy { background: rgba(170, 110, 210, 0.46); }
+.wii-index__label--hazardous { background: rgba(160, 70, 90, 0.5); }
+
+/* Laundry rating tints. */
+.wii-index__label--excellent { background: rgba(80, 200, 120, 0.42); }
+.wii-index__label--fair { background: rgba(240, 210, 90, 0.4); }
+.wii-index__label--poor { background: rgba(235, 120, 110, 0.44); }
 
 /* 5-Day forecast ------------------------------------------------------- */
 .wii-fiveday {

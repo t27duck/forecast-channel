@@ -41,15 +41,25 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 
 - **Location** (`app/models/location.rb`): a place tracked on the globe. Holds
   geocoding data (name, latitude/longitude, country, admin1/region, timezone,
-  elevation) plus cached weather. Current conditions and UV are flat columns;
-  the today/tomorrow forecasts, 6-hour windows, and 5-day forecast are JSON
-  columns. `weather_stale?` gates refresh (1-hour TTL); `refresh_weather!`
-  fetches and stores fresh data.
+  elevation) plus cached weather. Current conditions, UV, air quality
+  (`air_quality_index`/`air_quality_label`/`air_quality_pm2_5`), humidity and
+  precipitation probability are flat columns; the today/tomorrow forecasts,
+  6-hour windows, and 5-day forecast are JSON columns. `weather_stale?` gates
+  refresh (1-hour TTL); `refresh_weather!` fetches and stores fresh weather
+  (and, best-effort, air quality). `air_quality_name` labels the stored AQI and
+  `laundry_rating` derives the laundry index from the current conditions.
 - **WeatherCode** (`app/models/concerns/weather_code.rb`) and **UvIndex**
   (`app/models/concerns/uv_index.rb`): the single sources of truth mapping
   Open-Meteo WMO weather codes and UV values to human labels. `icon_group`
   also picks the marker icon name; passed `is_day: false` it returns the
   `_night` variant for clear/partly skies (a sun becomes a moon).
+- **AirQuality** (`app/models/concerns/air_quality.rb`) and **LaundryIndex**
+  (`app/models/concerns/laundry_index.rb`): more index concerns. `AirQuality`
+  maps a US AQI value to its EPA category (`label_for`) and a colour key
+  (`key_for`). `LaundryIndex.rating` derives how well washing will dry from the
+  stored current conditions (warm + dry + breezy + rain-free) — a `Rating`
+  struct (`key`/`label`/`blurb`), or nil when temperature/humidity are missing;
+  a high rain chance is decisive.
 - **SolarPosition** (`app/services/solar_position.rb`): computes whether the
   sun is above the horizon at a coordinate and instant (`day?`), from a
   low-precision solar position — no timezone needed. Drives the globe's
@@ -66,9 +76,18 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   mapper (pure, side-effect free) shapes the payload into Location attributes,
   bucketing hourly data into the four 6-hour windows (overnight/morning/
   afternoon/evening) for today and tomorrow.
-- **WeatherRefresher** (`app/services/weather_refresher.rb`): orchestrates
-  fetch → map → `update!` for a Location. Returns false (leaving the record
-  untouched) when the fetch fails.
+- **OpenMeteo::AirQualityClient** + **OpenMeteo::AirQualityMapper**: fetch and
+  shape current air quality from the *separate* air-quality API
+  (`https://air-quality-api.open-meteo.com/v1/air-quality`, no key) — US AQI and
+  PM2.5. Same batching contract as the forecast client (comma-separated coords →
+  array in order, length-guarded).
+- **WeatherRefresher** (`app/services/weather_refresher.rb`) and
+  **AirQualityRefresher** (`app/services/air_quality_refresher.rb`): each
+  orchestrates fetch → map → `update!` for its own API (weather vs. air quality;
+  air quality is a separate endpoint, so a separate pass). Both return false /
+  skip a chunk, leaving records untouched, when the fetch fails. Callers run
+  both: `RefreshWeatherBatchJob` and `Location#refresh_weather!` (where air
+  quality is best-effort and never fails the weather refresh).
 - **Jobs / refresh tiers**: weather is fetched in **batches**, not one request
   per location. `WeatherRefresher.call_many` slices locations into
   `BATCH_SIZE` (50) chunks and calls `OpenMeteo::ForecastClient.fetch_many`,
@@ -76,7 +95,9 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   the same order (`timezone=auto` still resolves per location). The array has no
   per-location key, so a length guard fails a chunk closed rather than risk
   mispairing. `RefreshWeatherBatchJob` refreshes one chunk (by ids, so deleted
-  locations drop out); `RefreshWeatherTierJob` enqueues those chunks for a tier.
+  locations drop out) — weather **and** air quality, via
+  `AirQualityRefresher.call_many` (a second batched request to the air-quality
+  API); `RefreshWeatherTierJob` enqueues those chunks for a tier.
   `config/recurring.yml` runs the **hot** tier hourly and the **cold** tier every
   6 hours — `Location.hot` is the top `HOT_CITY_COUNT` by population plus
   anything viewed within `RECENTLY_VIEWED_WITHIN` (`last_viewed_at`, stamped by
@@ -174,11 +195,14 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   none exist. The "Globe" button links to `/map?location=<id>` from your own
   location (centres the globe on it) or plain `/map` from any other location
   (resumes the saved globe view); the music zone follows the same distinction.
-  Five full-screen panels — UV Index,
-  Current, Today, Tomorrow, 5-Day (default Current) — slide vertically
-  (non-looping) via the `forecast` Stimulus controller (arrow buttons + Up/Down
-  keys). Panels are partials under `app/views/locations/panels/` wrapped in the
-  shared `_frame` chrome; styling is the `.wii-*` block in
+  Seven full-screen panels — three "index" panels (UV Index, Air Quality,
+  Laundry Index) then Current, Today, Tomorrow, 5-Day (default Current) — slide
+  vertically (non-looping) via the `forecast` Stimulus controller (arrow buttons
+  + Up/Down keys). The three index panels share the `.wii-index` figure/boxes
+  layout; the Laundry panel colours its rating and the Air Quality panel its
+  category (`AirQuality.key_for`). Panels are partials under
+  `app/views/locations/panels/` wrapped in the shared `_frame` chrome; styling
+  is the `.wii-*` block in
   `application.tailwind.css`; the app nav is hidden via `content_for
   :hide_app_nav`. Detailed glossy weather icons come from `WeatherIconsHelper`
   (`weather_icon`, `uv_icon`); `ForecastsHelper` formats temperatures (Wii

@@ -22,6 +22,24 @@ module WeatherIconsHelper
       role: "img", "aria-label": "UV index", xmlns: "http://www.w3.org/2000/svg"
   end
 
+  # The Air Quality panel's breeze graphic.
+  def air_quality_icon(size: 96, classes: "aqi-icon")
+    salt = SecureRandom.hex(3)
+
+    content_tag :svg, air_quality_icon_body(salt).html_safe,
+      viewBox: "0 0 64 64", width: size, height: size, class: classes,
+      role: "img", "aria-label": "Air quality", xmlns: "http://www.w3.org/2000/svg"
+  end
+
+  # The Laundry Index panel's t-shirt-on-a-line graphic.
+  def laundry_icon(size: 96, classes: "laundry-icon")
+    salt = SecureRandom.hex(3)
+
+    content_tag :svg, laundry_icon_body(salt).html_safe,
+      viewBox: "0 0 64 64", width: size, height: size, class: classes,
+      role: "img", "aria-label": "Laundry index", xmlns: "http://www.w3.org/2000/svg"
+  end
+
   private
 
   def weather_icon_body(group, salt)
@@ -124,6 +142,42 @@ module WeatherIconsHelper
     <<~SVG
       <circle cx="32" cy="32" r="14" fill="#94a3b8"/>
       <text x="32" y="40" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">?</text>
+    SVG
+  end
+
+  # Three breeze swirls in a fresh teal→blue, suggesting moving air.
+  def air_quality_icon_body(salt)
+    id = "aqi-#{salt}"
+    <<~SVG
+      <defs>
+        <linearGradient id="#{id}" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#7fe3d0"/>
+          <stop offset="100%" stop-color="#3aa0e6"/>
+        </linearGradient>
+      </defs>
+      <g fill="none" stroke="url(##{id})" stroke-width="4.5" stroke-linecap="round">
+        <path d="M12 22 H40 a6 6 0 1 0 -6 -6"/>
+        <path d="M12 34 H48 a6.5 6.5 0 1 1 -6.5 6.5"/>
+        <path d="M12 46 H34 a5 5 0 1 0 -5 5"/>
+      </g>
+    SVG
+  end
+
+  # A glossy t-shirt hanging on a line.
+  def laundry_icon_body(salt)
+    id = "shirt-#{salt}"
+    <<~SVG
+      <defs>
+        <linearGradient id="#{id}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="100%" stop-color="#bcd3ef"/>
+        </linearGradient>
+      </defs>
+      <line x1="6" y1="15" x2="58" y2="15" stroke="#9fb1c9" stroke-width="2"/>
+      <path d="M22 17 L13 23 L9 30 L16 35 L22 31 L22 52 L42 52 L42 31 L48 35 L55 30 L51 23 L42 17 C39 22 25 22 22 17 Z"
+        fill="url(##{id})" stroke="#8fa8c6" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M26 17 C28 21 36 21 38 17" fill="none" stroke="#8fa8c6" stroke-width="1.5"/>
+      <ellipse cx="30" cy="26" rx="6" ry="3" fill="#ffffff" opacity="0.6"/>
     SVG
   end
 
