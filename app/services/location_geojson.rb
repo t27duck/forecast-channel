@@ -11,7 +11,11 @@ class LocationGeojson
   end
 
   def self.feature(location)
-    current_icon = WeatherCode.icon_group(location.current_condition_code)
+    code = location.current_condition_code
+    # The current marker follows the location's local day/night; a day's
+    # forecast (and the fallback when it's missing) always uses the day icon.
+    day_icon = WeatherCode.icon_group(code)
+    current_icon = WeatherCode.icon_group(code, is_day: daytime?(location))
     today = location.today_forecast
     tomorrow = location.tomorrow_forecast
 
@@ -27,8 +31,8 @@ class LocationGeojson
         # One icon per globe view (current / today / tomorrow); the layer swaps
         # which one it renders as the user cycles the "Next" button.
         icon: current_icon,
-        icon_today: forecast_icon(today, current_icon),
-        icon_tomorrow: forecast_icon(tomorrow, current_icon),
+        icon_today: forecast_icon(today, day_icon),
+        icon_tomorrow: forecast_icon(tomorrow, day_icon),
         population: location.population || 0,
         # Weather for the hover popup — temperatures in Celsius; the client
         # converts to the display unit. Keys match the globe's three views.
@@ -43,6 +47,12 @@ class LocationGeojson
       }
     }
   end
+
+  # Whether it's currently daytime at the location (drives the night icon).
+  def self.daytime?(location)
+    SolarPosition.day?(latitude: location.latitude, longitude: location.longitude)
+  end
+  private_class_method :daytime?
 
   # Icon group for a stored daily forecast, falling back to the current icon
   # when that day hasn't been fetched yet.

@@ -47,7 +47,13 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   fetches and stores fresh data.
 - **WeatherCode** (`app/models/concerns/weather_code.rb`) and **UvIndex**
   (`app/models/concerns/uv_index.rb`): the single sources of truth mapping
-  Open-Meteo WMO weather codes and UV values to human labels.
+  Open-Meteo WMO weather codes and UV values to human labels. `icon_group`
+  also picks the marker icon name; passed `is_day: false` it returns the
+  `_night` variant for clear/partly skies (a sun becomes a moon).
+- **SolarPosition** (`app/services/solar_position.rb`): computes whether the
+  sun is above the horizon at a coordinate and instant (`day?`), from a
+  low-precision solar position — no timezone needed. Drives the globe's
+  day/night marker icons.
 - **OpenMeteo::Request** (`app/services/open_meteo/request.rb`): shared
   `Net::HTTP` JSON GET helper for the Open-Meteo APIs. Failure-tolerant —
   returns `nil` on non-success status or any network/parse error.
@@ -127,7 +133,10 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   (`symbol-sort-key`). The controller rasterizes the SVG glyphs in
   `app/javascript/lib/weather_icons.js` via `map.addImage`; each feature's
   `icon` (from `WeatherCode.icon_group`) picks one, with the name as a
-  halo'd `text-field` to its right. Pointing at a marker shows a hover popup
+  halo'd `text-field` to its right. The Current-view icon follows each city's
+  local day/night: `LocationGeojson` asks `SolarPosition.day?` and, after dark,
+  a clear/partly marker shows a moon (`clear_night`/`partly_night`) instead of a
+  sun (Today/Tomorrow always use the day icon). Pointing at a marker shows a hover popup
   (`.globe-popup`, dark Wii card) with that location's weather for the active
   view — temperature/condition + high/low for Current, or high/low + condition
   for Today/Tomorrow — built from extra `LocationGeojson` properties

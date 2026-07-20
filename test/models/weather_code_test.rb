@@ -19,4 +19,17 @@ class WeatherCodeTest < ActiveSupport::TestCase
     assert_equal "thunder", WeatherCode.icon_group(95)
     assert_equal "unknown", WeatherCode.icon_group(nil)
   end
+
+  test "icon_group returns night variants for clear and partly at night" do
+    assert_equal "clear_night", WeatherCode.icon_group(0, is_day: false)
+    assert_equal "partly_night", WeatherCode.icon_group(2, is_day: false)
+  end
+
+  test "icon_group keeps cloudy and precip groups the same at night" do
+    # An overcast/rainy/etc. sky hides the sun or moon, so there's no night art.
+    assert_equal "overcast", WeatherCode.icon_group(3, is_day: false)
+    assert_equal "rain", WeatherCode.icon_group(65, is_day: false)
+    assert_equal "snow", WeatherCode.icon_group(73, is_day: false)
+    assert_equal "unknown", WeatherCode.icon_group(nil, is_day: false)
+  end
 end

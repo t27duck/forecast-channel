@@ -39,6 +39,10 @@ module WeatherCode
 
   UNKNOWN_LABEL = "Unknown"
 
+  # Groups whose icon differs at night (a sun becomes a moon). Cloudy/precip
+  # groups hide the sky, so they look the same day or night.
+  NIGHT_ICON_GROUPS = %w[clear partly].freeze
+
   # Returns the human-readable label for a WMO code, or "Unknown" when the
   # code is nil or unrecognized.
   def self.label_for(code)
@@ -48,11 +52,19 @@ module WeatherCode
   end
 
   # Coarse group used to pick a weather icon on the globe. Names match the keys
-  # in app/javascript/lib/weather_icons.js.
-  def self.icon_group(code)
+  # in app/javascript/lib/weather_icons.js. When it's night at the location
+  # (`is_day: false`), clear/partly groups return their "_night" variant.
+  def self.icon_group(code, is_day: true)
     return "unknown" if code.nil?
 
-    case code.to_i
+    group = base_icon_group(code.to_i)
+    return "#{group}_night" if !is_day && NIGHT_ICON_GROUPS.include?(group)
+
+    group
+  end
+
+  def self.base_icon_group(code)
+    case code
     when 0, 1 then "clear"
     when 2 then "partly"
     when 3 then "overcast"
@@ -63,4 +75,5 @@ module WeatherCode
     else "unknown"
     end
   end
+  private_class_method :base_icon_group
 end

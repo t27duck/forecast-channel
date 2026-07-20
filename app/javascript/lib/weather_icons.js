@@ -5,11 +5,19 @@
 
 const CLOUD = '<path d="M7 15h10a4 4 0 0 0 0-8 6 6 0 0 0-11.3 1.8A3.6 3.6 0 0 0 7 15z" fill="#e8eef7"/>'
 
+// Crescent moon, in a paler gold than the sun; scaled/positioned inline where
+// it peeks from behind a cloud (partly_night).
+const MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="#ffe08a"/>'
+
 export const WEATHER_ICONS = {
   clear:
     '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="5" fill="#ffd257"/><g stroke="#ffd257" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="23"/><line x1="1" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="23" y2="12"/><line x1="4" y1="4" x2="5.8" y2="5.8"/><line x1="18.2" y1="18.2" x2="20" y2="20"/><line x1="4" y1="20" x2="5.8" y2="18.2"/><line x1="18.2" y1="5.8" x2="20" y2="4"/></g></svg>',
+  clear_night:
+    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' + MOON + "</svg>",
   partly:
     '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="3.6" fill="#ffd257"/>' + CLOUD + "</svg>",
+  partly_night:
+    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g transform="translate(1 1) scale(0.5)">' + MOON + "</g>" + CLOUD + "</svg>",
   overcast:
     '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' + CLOUD + "</svg>",
   fog:

@@ -45,6 +45,22 @@ class LocationGeojsonTest < ActiveSupport::TestCase
     assert_nil props[:tomorrow_label]
   end
 
+  test "the current icon goes to its night variant after dark, but the day's forecast stays a day icon" do
+    london = Location.new(name: "London", latitude: 51.5, longitude: -0.13, current_condition_code: 0)
+
+    # Midnight UTC is the middle of the night in London.
+    travel_to Time.utc(2026, 7, 20, 0, 0, 0) do
+      props = LocationGeojson.feature(london)[:properties]
+      assert_equal "clear_night", props[:icon]
+      assert_equal "clear", props[:icon_today], "a missing day forecast falls back to the day icon, not the moon"
+    end
+
+    # Noon UTC is daytime in London: the plain clear icon.
+    travel_to Time.utc(2026, 7, 20, 12, 0, 0) do
+      assert_equal "clear", LocationGeojson.feature(london)[:properties][:icon]
+    end
+  end
+
   test "a missing daily forecast falls back to the current icon" do
     location = Location.new(
       name: "Testville", latitude: 1.0, longitude: 2.0,
