@@ -1,20 +1,35 @@
 <% content_for :title, "Choose Location" %>
 <% content_for :hide_app_nav, true %>
 
+<%
+  prompt =
+    if @locations then "Choose the location closest to where you live."
+    elsif @states then "Choose the state or region closest to where you live."
+    else "Choose the country closest to where you live."
+    end
+  back_path =
+    if @state.present? then settings_location_path(country: @country)
+    elsif @country.present? then settings_location_path
+    else settings_path
+    end
+%>
+
 <div class="picker" data-controller="scroller">
-  <div class="picker__prompt">
-    <%= @country ? "Choose the location closest to where you live." : "Choose the country closest to where you live." %>
-  </div>
+  <div class="picker__prompt"><%= prompt %></div>
 
   <div class="picker__list" data-scroller-target="list">
-    <% if @country %>
+    <% if @locations %>
       <% @locations.each do |location| %>
         <%= button_to location.name, settings_location_path, method: :patch,
           params: { current_location_id: location.id },
           class: "picker__row", form: { class: "picker__form" } %>
       <% end %>
       <% if @locations.empty? %>
-        <div class="picker__empty">No locations in <%= @country %> yet.</div>
+        <div class="picker__empty">No locations here yet.</div>
+      <% end %>
+    <% elsif @states %>
+      <% @states.each do |state| %>
+        <%= link_to state, settings_location_path(country: @country, state: state), class: "picker__row" %>
       <% end %>
     <% else %>
       <% @countries.each do |country| %>
@@ -28,7 +43,7 @@
 
   <div class="picker__bar">
     <div class="picker__bar-slot">
-      <%= link_to "Back", (@country ? settings_location_path : settings_path), class: "wii-chrome-link" %>
+      <%= link_to "Back", back_path, class: "wii-chrome-link" %>
     </div>
     <div class="picker__bar-slot picker__bar-slot--center">
       <button type="button" class="wii-arrow" data-action="scroller#up" aria-label="Scroll up">

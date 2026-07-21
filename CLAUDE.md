@@ -134,22 +134,26 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   geolocation silently keeps the default. Needs a secure origin
   (HTTPS/localhost) — the browser blocks geolocation otherwise.
 - **Location picker** (`Settings::LocationsController#show` at
-  `/settings/location`): the Wii two-step "choose closest location" screen —
-  pick a country, then a location in it (`?country=` toggles the step); striped
-  rows on a blue background with a prompt bubble and a scrollable list (`scroller`
-  Stimulus controller drives the ▲/▼ bar buttons). `#update` writes the
-  `current_location_id` cookie and returns to settings.
+  `/settings/location`): the Wii "choose closest location" screen — pick a
+  country, then a location in it (`?country=` toggles the step). A country with
+  more than `STATE_STEP_THRESHOLD` locations spread across several regions (the
+  US today) gets an intermediate state/region step (`?state=`) so the final city
+  list isn't an overwhelming scroll; smaller countries still list cities
+  directly. Striped rows on a blue background with a prompt bubble and a
+  scrollable list (`scroller` Stimulus controller drives the ▲/▼ bar buttons).
+  `#update` writes the `current_location_id` cookie and returns to settings.
 - **Locations management UI** (`LocationsController`, `/locations`): CRUD for
   locations. The "New location" page searches by name (Turbo Frame proxy to the
   geocoding client) and pre-fills the form with a picked result's coordinates.
   Rows have a "Refresh" button (synchronous) and the page has "Refresh all"
   (enqueues the bulk job) plus a °C/°F unit toggle (`SettingsController#update`).
   Currently unauthenticated.
-- **Seed data** (`db/seeds.rb`): populates ~200 major world cities so the globe
-  is full on a fresh database. The geocoding data (identity/coordinates only,
-  no weather) was captured once from the Open-Meteo geocoding API and baked in
-  statically, so `bin/rails db:seed` needs no network; it's idempotent (upsert
-  by `open_meteo_id`). Regenerate via the script in the session scratchpad.
+- **Seed data** (`db/seeds.rb`): populates ~300 major world cities (including at
+  least three per US state) so the globe is full and the picker's state step
+  isn't sparse on a fresh database. The geocoding data (identity/coordinates
+  only, no weather) was captured once from the Open-Meteo geocoding API and
+  baked in statically, so `bin/rails db:seed` needs no network; it's idempotent
+  (upsert by `open_meteo_id`). Add more with `script/fetch_seed_cities.rb`.
   Weather is filled in afterwards by `RefreshAllWeatherJob`.
 - **Globe** (`MapsController#show` at `/map`): a full-bleed Mapbox globe
   (`standard-satellite` style, `projection: globe`, custom fog + star field)

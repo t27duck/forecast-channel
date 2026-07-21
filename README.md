@@ -8,7 +8,7 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 bundle install
 npm install
 bin/rails db:migrate
-bin/rails db:seed   # populate the globe with ~200 major world cities
+bin/rails db:seed   # populate the globe with ~300 major world cities
 bin/dev             # starts the server plus JS/CSS watchers
 ```
 

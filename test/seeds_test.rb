@@ -7,7 +7,7 @@ class SeedsTest < ActiveSupport::TestCase
 
     count = Location.count
     assert_operator count, :>=, 150
-    assert_operator count, :<=, 250
+    assert_operator count, :<=, 400
     assert_equal WORLD_CITIES.length, count
 
     # No duplicate places baked into the data.
