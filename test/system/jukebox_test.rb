@@ -21,7 +21,7 @@ class JukeboxTest < ApplicationSystemTestCase
     assert_equal generation, evaluate_script("document.getElementById('jukebox').dataset.generation")
   end
 
-  test "exploring another location from the map keeps the globe track playing" do
+  test "leaving the map for a location switches zone without reloading the player" do
     visit map_path
     assert_selector "[data-controller=globe]", wait: 10
     assert_equal "globe", evaluate_script("document.body.dataset.musicZone")
@@ -33,9 +33,10 @@ class JukeboxTest < ApplicationSystemTestCase
     execute_script("window.Turbo.visit('#{location_path(locations(:tokyo))}')")
     assert_selector ".wii-header__location", text: "Tokyo"
 
-    # The zone stays "globe", so the jukebox keeps the same source; the element
-    # and its Audio persist (same generation) — playback continues uninterrupted.
-    assert_equal "globe", evaluate_script("document.body.dataset.musicZone")
+    # Every forecast page is the "current" zone, so the source switches to the
+    # forecast track — but the element and its Audio persist (same generation),
+    # proving Turbo carried the player over rather than a full reload.
+    assert_equal "current", evaluate_script("document.body.dataset.musicZone")
     assert_equal "yes", evaluate_script("document.getElementById('jukebox').dataset.marked || ''")
     assert_equal generation, evaluate_script("document.getElementById('jukebox').dataset.generation")
   end
