@@ -209,7 +209,11 @@ export default class extends Controller {
     this.#syncPitchButtons()
 
     // Remember the view so returning to the map resumes where it was left.
+    // Persist the initial camera too: arriving via ?location centres the globe
+    // without firing a move, so without this an unpanned visit would never be
+    // saved and a later plain /map visit would fall back to the world view.
     map.on("moveend", () => this.#saveCamera())
+    this.#saveCamera()
 
     this.element.dataset.mapReady = "true"
   }
