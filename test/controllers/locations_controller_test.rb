@@ -32,10 +32,10 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".wii-bottom a[href=?]", map_path(location: locations(:berlin).id), text: "Globe"
   end
 
-  test "another location keeps the map track and returns Globe to the saved view" do
+  test "another location plays the forecast track and returns Globe to the saved view" do
     cookies[:current_location_id] = locations(:berlin).id
     get location_url(locations(:tokyo))
-    assert_select "body[data-music-zone=?]", "globe"
+    assert_select "body[data-music-zone=?]", "current"
     assert_select ".wii-bottom a[href=?]", map_path, text: "Globe"
   end
 

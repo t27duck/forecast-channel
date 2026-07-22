@@ -236,11 +236,9 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   :music_zone`) and the time of day (day 7am–7pm, night otherwise), flipping at
   those boundaries; because it only reloads the source when that source
   changes, staying in one zone across navigations never interrupts playback.
-  The zone is "globe" on the map, "current" on your own location's forecast,
-  and "globe" on any *other* location's forecast — so exploring cities off the
-  globe keeps the map track playing, and only returning to your location (e.g.
-  the map's "End" button → root) switches back to the "current" track
-  (`LocationsController#show` sets `@is_current_location`). Autoplay starts on
+  The zone is "globe" on the map and "current" on every forecast page
+  (whichever location it shows), so leaving the globe for any location's
+  forecast switches to the "current" track. Autoplay starts on
   the first user gesture (tracks use `preload="none"` so the large files only
   download when playback starts). A mute button in the detail view's top-bar
   left slot (`mute` Stimulus controller, connected to the jukebox via an outlet)

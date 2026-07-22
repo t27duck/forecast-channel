@@ -1,7 +1,7 @@
 <% content_for :title, @location.name %>
 <% content_for :hide_app_nav, true %>
-<%# Your own location plays the "current" track; exploring others keeps the "map" track. %>
-<% content_for :music_zone, @is_current_location ? "current" : "globe" %>
+<%# Every forecast page plays the "current" track, whichever location it shows. %>
+<% content_for :music_zone, "current" %>
 
 <% if @auto_locate %>
   <%= form_with url: current_location_path, method: :post,
