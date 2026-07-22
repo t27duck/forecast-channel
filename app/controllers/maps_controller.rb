@@ -1,4 +1,6 @@
 class MapsController < ApplicationController
+  allow_unauthenticated_access
+
   def show
     @locations = Location.by_name
     # When arriving from a location's forecast, centre the globe on it.

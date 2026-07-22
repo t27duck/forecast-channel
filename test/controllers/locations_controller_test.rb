@@ -3,6 +3,32 @@ require "test_helper"
 class LocationsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @location = locations(:berlin)
+    sign_in_as(users(:one)) # managing locations is admin-only
+  end
+
+  test "forecast pages stay public when signed out" do
+    sign_out
+
+    get root_url
+    assert_response :success
+
+    get location_url(@location)
+    assert_response :success
+  end
+
+  test "managing locations requires signing in" do
+    sign_out
+
+    get locations_url
+    assert_redirected_to new_session_path
+
+    get new_location_url
+    assert_redirected_to new_session_path
+
+    assert_no_difference("Location.count") do
+      post locations_url, params: { location: { name: "Oslo", latitude: 59.91, longitude: 10.75 } }
+    end
+    assert_redirected_to new_session_path
   end
 
   test "index lists locations" do

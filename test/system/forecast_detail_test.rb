@@ -33,6 +33,7 @@ class ForecastDetailTest < ApplicationSystemTestCase
   end
 
   test "reaches the detail view from the locations list" do
+    sign_in_as(users(:one)) # the locations list is admin-only
     visit locations_path
     click_link "Testville"
     assert_selector ".wii-header__title", text: "CURRENT" # css uppercases the title

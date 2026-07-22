@@ -11,4 +11,16 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   else
     driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ]
   end
+
+  # System tests drive a real browser, so the integration cookie helper doesn't
+  # apply — sign in through the form instead.
+  def sign_in_as(user, password: "password")
+    visit new_session_path
+    fill_in "Username", with: user.username
+    fill_in "Password", with: password
+    click_on "Sign in"
+    # Wait for the redirect to complete before the test navigates on, and fail
+    # loudly here if the credentials were rejected (form still on screen).
+    assert_no_field "Username", wait: 5
+  end
 end

@@ -1,6 +1,8 @@
 # Wii-style closest-location picker: choose a country, then — for a country with
 # many locations, like the US — a state/region, then a location in it.
 class Settings::LocationsController < ApplicationController
+  allow_unauthenticated_access
+
   # A country with more locations than this gets an intermediate state/region
   # step, so its final list of cities isn't an overwhelming scroll.
   STATE_STEP_THRESHOLD = 15

@@ -8,6 +8,10 @@
 # and adds any new ones. To add more cities, resolve their geocoding data with
 # script/fetch_seed_cities.rb and paste the printed rows in below.
 
+if Rails.env.development?
+  User.create!(username: "admin", password: "testing123") unless User.exists?(username: "admin")
+end
+
 WORLD_CITIES = [
   { open_meteo_id: 1796236, name: "Shanghai", latitude: 31.22222, longitude: 121.45806, country: "China", country_code: "CN", admin1: "Shanghai Municipality", timezone: "Asia/Shanghai", elevation: 12.0, population: 24874500 },
   { open_meteo_id: 1816670, name: "Beijing", latitude: 39.9075, longitude: 116.39723, country: "China", country_code: "CN", admin1: "Beijing Municipality", timezone: "Asia/Shanghai", elevation: 49.0, population: 18960744 },

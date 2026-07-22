@@ -1,4 +1,5 @@
 class LocationsController < ApplicationController
+  allow_unauthenticated_access only: %i[show]
   before_action :set_location, only: %i[edit update destroy refresh]
 
   def index

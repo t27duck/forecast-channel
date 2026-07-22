@@ -146,8 +146,24 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   locations. The "New location" page searches by name (Turbo Frame proxy to the
   geocoding client) and pre-fills the form with a picked result's coordinates.
   Rows have a "Refresh" button (synchronous) and the page has "Refresh all"
-  (enqueues the bulk job) plus a °C/°F unit toggle (`SettingsController#update`).
-  Currently unauthenticated.
+  (enqueues the bulk job) plus a °C/°F unit toggle (`SettingsController#update`)
+  and a "Sign out" button. These management actions require signing in (see
+  Authentication); the forecast/globe/settings views are public.
+- **Authentication** (`Authentication` concern, `SessionsController`, `User`/
+  `Session`/`Current` models): the Rails 8 auth generator (bcrypt
+  `has_secure_password`), customised for a **single admin** who signs in by
+  `username` (not email). The concern is included in `ApplicationController`
+  and adds a global `require_authentication` before_action, so the app is
+  **fail-closed**: every action needs a session unless it opts out with
+  `allow_unauthenticated_access`. Only `LocationsController`'s management
+  actions stay protected — everything public opts out: `LocationsController`
+  for `:show` (the forecast/root), `MapsController`, `SettingsController`,
+  `Settings::LocationsController`, `CurrentLocationsController`, and
+  `SessionsController` (`new`/`create`). The styled sign-in page lives at
+  `/session/new`; there's no password-reset flow (single admin). Sessions are a
+  signed, httponly `session_id` cookie. In tests, integration specs use the
+  `sign_in_as` cookie helper (`test/test_helpers/`); system specs sign in
+  through the form via the helper on `ApplicationSystemTestCase`.
 - **Seed data** (`db/seeds.rb`): populates ~300 major world cities (including at
   least three per US state) so the globe is full and the picker's state step
   isn't sparse on a fresh database. The geocoding data (identity/coordinates

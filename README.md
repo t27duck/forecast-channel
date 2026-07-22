@@ -50,7 +50,17 @@ bin/rails credentials:edit   # add: mapbox_token: pk....
 
 ## Locations
 
-Locations are the places plotted on the globe. Manage them at `/locations`:
+Managing locations is admin-only. The app has a single sign-in (username +
+password, via the Rails auth generator). In **development**, `bin/rails db:seed`
+creates an `admin` / `testing123` account. For **production**, create the admin
+in the console:
+
+```bash
+bin/rails runner 'User.create!(username: "admin", password: "a-strong-password")'
+```
+
+Only the location-management actions are protected — the forecast, globe, and
+settings views are public. Manage locations at `/locations`:
 
 - **New location** searches by place name (powered by the free Open-Meteo
   geocoding API — no API key required), captures the latitude/longitude and
