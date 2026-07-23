@@ -36,6 +36,11 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - Run system tests: `bin/rails test:system`
 - Run specific test file: `bin/rails test test/path/to/test_file.rb`
 - Run specific test method: `bin/rails test test/path/to/test_file.rb:LINE_NUMBER`
+- The test environment serves nothing out of `public/`
+  (`public_file_server.enabled = false`): a browser streaming one of the
+  multi-MB music tracks holds that connection — and one of the test server's few
+  threads — open for the whole track, which starved the server and made Turbo
+  navigations hang at random. Leave it off unless a test needs a public file.
 
 ## Domain Concepts
 
