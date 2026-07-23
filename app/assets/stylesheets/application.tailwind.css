@@ -6,6 +6,44 @@
 @import 'mapbox-gl/dist/mapbox-gl.css';
 
 /* ---------------------------------------------------------------------------
+   Wii hand cursors
+   The pointing hand is the cursor everywhere; the globe swaps it for the open
+   hand (and, while dragging, the fist) the way the Wii's map does. Each url()
+   is followed by its hotspot (the pixel that actually points) and a keyword
+   fallback for browsers that refuse the image.
+
+   The `-32` images are 32x32 downscales of the full-size art in the same
+   folder. Chromium drops a custom cursor larger than 32x32 as soon as it would
+   spill outside the page (an anti-spoofing rule), which meant the OS arrow came
+   back whenever the pointer reached the button bars at the screen edges.
+   Staying inside 32x32 keeps one cursor everywhere.
+--------------------------------------------------------------------------- */
+:root {
+  --cursor-point: url("cursors/point-1-32.png") 11 2, pointer;
+  --cursor-open-hand: url("cursors/open-hand-1-32.png") 16 16, grab;
+  --cursor-grab: url("cursors/grab-1-32.png") 16 14, grabbing;
+}
+
+html,
+body {
+  cursor: var(--cursor-point);
+}
+
+/* `cursor` inherits, but UA and Tailwind defaults still win on these, so name
+   them explicitly. */
+a,
+button,
+input,
+select,
+textarea,
+label,
+summary,
+[role="button"],
+.cursor-pointer {
+  cursor: var(--cursor-point);
+}
+
+/* ---------------------------------------------------------------------------
    Wii Forecast Channel — location detail view
    A vertical stack of full-screen panels that slide up/down between each other.
 --------------------------------------------------------------------------- */
@@ -100,7 +138,7 @@
   padding: clamp(4px, 1vh, 9px) clamp(10px, 2vw, 22px);
   background: none;
   border: 0;
-  cursor: pointer;
+  cursor: var(--cursor-point);
   color: #2a2a2a;
   font: inherit;
   font-weight: 600;
@@ -133,7 +171,7 @@
 }
 
 .wii-arrow:disabled {
-  cursor: default;
+  cursor: var(--cursor-point);
 }
 
 /* Wii-style hover/press: the whole cell turns blue with white text. */
@@ -197,7 +235,7 @@
 
 .wii-chrome-link--muted {
   color: #8a8a8a;
-  cursor: default;
+  cursor: var(--cursor-point);
 }
 
 .wii-chrome-link--muted:hover {
@@ -231,6 +269,23 @@
   --chrome: clamp(40px, 7vh, 56px);
   --panel-bg: #0a1a3a;
   /* dark recess behind a pressed button, over space */
+}
+
+/* Globe cursors: an open hand over the globe, a fist while dragging it, and
+   the pointing hand over a marker (the control bars keep the page default).
+   The classes are toggled by the globe controller; `:active` covers the moment
+   between mousedown and Mapbox reporting the drag. */
+.map-view .mapboxgl-canvas-container.mapboxgl-interactive {
+  cursor: var(--cursor-open-hand);
+}
+
+.map-view.is-pointing .mapboxgl-canvas-container.mapboxgl-interactive {
+  cursor: var(--cursor-point);
+}
+
+.map-view.is-grabbing .mapboxgl-canvas-container.mapboxgl-interactive,
+.map-view .mapboxgl-canvas-container.mapboxgl-interactive:active {
+  cursor: var(--cursor-grab);
 }
 
 /* Reuses the silver .wii-top/.wii-bottom bars as faint overlays on the globe:
@@ -713,7 +768,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  cursor: pointer;
+  cursor: var(--cursor-point);
 }
 
 .wii-sixhour {
@@ -872,7 +927,7 @@
   font-size: clamp(15px, 2.2vh, 24px);
   text-align: center;
   text-decoration: none;
-  cursor: pointer;
+  cursor: var(--cursor-point);
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25);
 }
 
@@ -948,7 +1003,7 @@
   text-align: center;
   text-decoration: none;
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
+  cursor: var(--cursor-point);
 }
 
 .picker__row:hover,

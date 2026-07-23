@@ -41,7 +41,9 @@ click it (or a location in the list) to open the full detail view. A Wii-style b
 "Next", and "Zoom" (in) buttons, and a green banner names what the markers show —
 "Next" cycles the icons through Current, Today's, and Tomorrow's weather. A bottom
 bar holds "End" (back to your forecast), two tilt buttons, and "Restore" (reset the
-tilt). The bars stay faint until you hover them. The globe needs a `mapbox_token`
+tilt). The bars stay faint until you hover them. Wii hand cursors are used
+throughout: a pointing hand everywhere, swapping to an open hand over the globe
+and a fist while you drag it. The globe needs a `mapbox_token`
 in the Rails credentials:
 
 ```bash

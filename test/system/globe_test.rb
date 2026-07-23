@@ -83,6 +83,22 @@ class GlobeTest < ApplicationSystemTestCase
     assert_in_delta 5.5, restored, 0.05
   end
 
+  test "the globe shows the open hand, and a fist while it is dragged" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
+
+    canvas_cursor = -> { evaluate_script("getComputedStyle(document.querySelector('.mapboxgl-canvas-container')).cursor") }
+    assert_match "open-hand-1", canvas_cursor.call
+    assert_match "point-1", evaluate_script("getComputedStyle(document.body).cursor") # bars, page chrome
+
+    map = "document.querySelector('[data-controller=globe]').__map"
+    execute_script("#{map}.fire('dragstart')")
+    assert_match "grab-1", canvas_cursor.call
+
+    execute_script("#{map}.fire('dragend')")
+    assert_match "open-hand-1", canvas_cursor.call
+  end
+
   private
 
   # Polls the block until it returns truthy or Capybara's default wait elapses.

@@ -36,6 +36,10 @@ const DEFAULT_CENTER = [0, 20]
 // another location's forecast resumes the same view.
 const CAMERA_KEY = "globeCamera"
 
+// Cursor state classes on the map container; the CSS picks the Wii hand.
+const POINTING_CLASS = "is-pointing"
+const GRABBING_CLASS = "is-grabbing"
+
 // Icons display at ICON_SIZE px, rasterized at 2x (pixelRatio) for crispness.
 const ICON_SIZE = 34
 const ICON_PIXEL_RATIO = 2
@@ -198,6 +202,7 @@ export default class extends Controller {
     await this.#registerIcons()
     this.#addMarkersLayer()
     this.#enableNavigation()
+    this.#trackDragCursor()
     this.#applyMode() // sync icons/banner with the current view
 
     // Disable the +/- buttons at the zoom limits (and keep them in sync).
@@ -255,14 +260,21 @@ export default class extends Controller {
     })
 
     map.on("mouseenter", LAYER_ID, (event) => {
-      map.getCanvas().style.cursor = "pointer"
+      this.element.classList.add(POINTING_CLASS)
       this.#showPopup(event.features?.[0])
     })
     map.on("mousemove", LAYER_ID, (event) => this.#showPopup(event.features?.[0]))
     map.on("mouseleave", LAYER_ID, () => {
-      map.getCanvas().style.cursor = ""
+      this.element.classList.remove(POINTING_CLASS)
       this.popup.remove()
     })
+  }
+
+  // Panning the globe closes the open hand into a fist (see the .map-view
+  // cursor rules); the classes pick which Wii hand the canvas shows.
+  #trackDragCursor() {
+    this.map.on("dragstart", () => this.element.classList.add(GRABBING_CLASS))
+    this.map.on("dragend", () => this.element.classList.remove(GRABBING_CLASS))
   }
 
   // Show the hovered marker's weather for the active view (current/today/

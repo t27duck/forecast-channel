@@ -221,6 +221,19 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   no focus param is given. So arriving from your own location centres on it,
   while arriving from another location (whose "Globe" button omits the param)
   resumes where you left the map.
+- **Cursors**: the Wii hand cursors in `app/assets/images/cursors/`, wired up as
+  the `--cursor-point` / `--cursor-open-hand` / `--cursor-grab` custom
+  properties (with hotspots) at the top of `application.tailwind.css`. The CSS
+  points at the `-32` (32x32) downscales, not the full-size art beside them:
+  Chromium refuses a bigger custom cursor the moment it would spill outside the
+  page, which brought the OS arrow back over the button bars at the screen
+  edges. Regenerate them with `Vips::Image.thumbnail(src, 32, height: 32)` if
+  the art changes. The
+  pointing hand is the cursor for the whole app — including the map's control
+  bars and markers — while the globe canvas shows the open hand, closing to the
+  fist while it's dragged. The globe controller toggles `is-pointing` (marker
+  hover) and `is-grabbing` (Mapbox `dragstart`/`dragend`) on `.map-view`; the
+  CSS under "Map control bar" does the rest.
 - **Location detail** (`LocationsController#show`): the Wii Forecast
   Channel-style paneled view. Served at the root path `/` for the current
   location (a `current_location_id` cookie later; the first location for now)
