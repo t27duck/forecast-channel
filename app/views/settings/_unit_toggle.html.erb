@@ -1,5 +1,5 @@
 <div class="inline-flex overflow-hidden rounded-md border border-slate-300">
-  <% Setting.temperature_units.each_key do |unit| %>
+  <% Setting::TEMPERATURE_UNITS.each do |unit| %>
     <%= button_to settings_path, method: :patch, params: { temperature_unit: unit },
       form: { class: "contents" },
       class: class_names(

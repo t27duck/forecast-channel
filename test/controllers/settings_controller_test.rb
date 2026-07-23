@@ -11,21 +11,21 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     patch settings_url, params: { temperature_unit: "fahrenheit" }
 
     assert_response :redirect
-    assert_predicate Setting.current, :fahrenheit?
+    assert_equal "fahrenheit", cookies[:temperature_unit]
   end
 
   test "update switches the wind unit" do
     patch settings_url, params: { wind_unit: "kph" }
 
     assert_response :redirect
-    assert_predicate Setting.current, :kph?
+    assert_equal "kph", cookies[:wind_unit]
   end
 
   test "update ignores unknown units" do
     patch settings_url, params: { temperature_unit: "kelvin", wind_unit: "knots" }
 
     assert_response :redirect
-    assert_predicate Setting.current, :celsius?
-    assert_predicate Setting.current, :mph?
+    assert_predicate cookies[:temperature_unit], :blank?
+    assert_predicate cookies[:wind_unit], :blank?
   end
 end

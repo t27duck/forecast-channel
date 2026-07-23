@@ -113,12 +113,17 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   `Location.cold` is the remainder. `RefreshAllWeatherJob` still refreshes
   everything (the "Refresh all" button) and `RefreshLocationWeatherJob` still
   does a single location. Run the worker with `bin/jobs`.
-- **Setting** (`app/models/setting.rb`): a singleton row (`Setting.current`)
-  holding app-wide display preferences — `temperature_unit` (celsius/fahrenheit)
-  and `wind_unit` (mph/kph). Weather is stored canonically (Celsius, km/h) and
-  converted at render time (`display_temperature`, `wind_display`), so switching
-  never re-fetches. The "closest location" is separate — a
-  `current_location_id` cookie read by `ApplicationController#current_location`.
+- **Setting** (`app/models/setting.rb`): a plain value object (not a DB record)
+  holding a visitor's display preferences — `temperature_unit`
+  (celsius/fahrenheit) and `wind_unit` (mph/kph). Both are **per-visitor**,
+  stored in `temperature_unit`/`wind_unit` browser cookies (like the "closest
+  location" `current_location_id` cookie) so each visitor keeps their own.
+  `ApplicationController#current_setting` builds the object from those cookies
+  (unknown/missing units fall back to the defaults celsius/mph) and exposes it
+  as a `helper_method`; `SettingsController#update` writes the cookies (guarded
+  by `Setting::TEMPERATURE_UNITS`/`WIND_UNITS`). Weather is stored canonically
+  (Celsius, km/h) and converted at render time via `current_setting`
+  (`display_temperature`, `wind_display`), so switching never re-fetches.
 - **Settings screen** (`SettingsController#show` at `/settings`): a Wii-style
   "Change Settings" page with Closest Location, Temperature Display, and Wind
   Display rows (each a "Change" control). Temp/wind are toggles handled by

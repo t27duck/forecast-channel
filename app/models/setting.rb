@@ -1,17 +1,29 @@
-# Application-wide preferences. Modelled as a singleton row: there is exactly
-# one Setting, fetched via Setting.current.
+# Per-visitor display preferences (temperature and wind units). Stored in the
+# visitor's browser cookies rather than the database, so every visitor keeps
+# their own units; built from those cookie values by
+# ApplicationController#current_setting.
 #
-# Weather is always stored in Celsius (the canonical unit); the temperature_unit
-# preference only affects how values are displayed, so switching units never
-# requires re-fetching.
-class Setting < ApplicationRecord
-  enum :temperature_unit, { celsius: "celsius", fahrenheit: "fahrenheit" }, default: :celsius
-  enum :wind_unit, { mph: "mph", kph: "kph" }, default: :mph
+# Weather is always stored in Celsius/km-h (the canonical units); these
+# preferences only affect how values are displayed, so switching units never
+# requires re-fetching. Unknown or missing units fall back to the defaults.
+class Setting
+  TEMPERATURE_UNITS = %w[celsius fahrenheit].freeze
+  WIND_UNITS = %w[mph kph].freeze
 
-  # The single settings row, created on first access.
-  def self.current
-    first || create!
+  DEFAULT_TEMPERATURE_UNIT = "celsius"
+  DEFAULT_WIND_UNIT = "mph"
+
+  attr_reader :temperature_unit, :wind_unit
+
+  def initialize(temperature_unit: nil, wind_unit: nil)
+    @temperature_unit = TEMPERATURE_UNITS.include?(temperature_unit) ? temperature_unit : DEFAULT_TEMPERATURE_UNIT
+    @wind_unit = WIND_UNITS.include?(wind_unit) ? wind_unit : DEFAULT_WIND_UNIT
   end
+
+  def celsius? = temperature_unit == "celsius"
+  def fahrenheit? = temperature_unit == "fahrenheit"
+  def mph? = wind_unit == "mph"
+  def kph? = wind_unit == "kph"
 
   def temperature_symbol
     fahrenheit? ? "°F" : "°C"

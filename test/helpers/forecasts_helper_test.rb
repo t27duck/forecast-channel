@@ -1,6 +1,14 @@
 require "test_helper"
 
 class ForecastsHelperTest < ActionView::TestCase
+  # In views current_setting is a controller helper reading cookies; supply a
+  # stand-in here so the formatting helpers can be exercised directly.
+  attr_writer :current_setting
+
+  def current_setting
+    @current_setting ||= Setting.new
+  end
+
   test "forecast_temperature formats with and without a degree sign" do
     assert_equal "18°", forecast_temperature(18.0)
     assert_equal "18", forecast_temperature(18.0, degree: false)
@@ -8,7 +16,7 @@ class ForecastsHelperTest < ActionView::TestCase
   end
 
   test "forecast_temperature converts to the chosen unit" do
-    Setting.current.fahrenheit!
+    self.current_setting = Setting.new(temperature_unit: "fahrenheit")
     assert_equal "64°", forecast_temperature(18.0) # 18C -> 64F
   end
 
@@ -23,7 +31,7 @@ class ForecastsHelperTest < ActionView::TestCase
     assert_equal "SSE 16 mph", wind_display(26, 160) # 26 km/h ~ 16 mph
     assert_nil wind_display(nil, 160)
 
-    Setting.current.kph!
+    self.current_setting = Setting.new(wind_unit: "kph")
     assert_equal "SSE 26 kph", wind_display(26, 160)
   end
 

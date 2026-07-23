@@ -33,7 +33,7 @@ module ForecastsHelper
   def forecast_temperature(celsius, fallback: "--", degree: true)
     return fallback if celsius.nil?
 
-    value = number_with_precision(Setting.current.convert_temperature(celsius), precision: 0)
+    value = number_with_precision(current_setting.convert_temperature(celsius), precision: 0)
     degree ? "#{value}°" : value
   end
 
@@ -70,7 +70,7 @@ module ForecastsHelper
   def wind_display(speed_kmh, degrees)
     return nil if speed_kmh.nil?
 
-    if Setting.current.kph?
+    if current_setting.kph?
       speed = "#{speed_kmh.to_f.round} kph"
     else
       speed = "#{(speed_kmh.to_f * KMH_TO_MPH).round} mph"
