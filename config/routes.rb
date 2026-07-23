@@ -23,6 +23,9 @@ Rails.application.routes.draw do
   # Sets the closest location from the browser's geolocation, then shows it.
   resource :current_location, only: [ :create ]
 
+  # Background-music tracks (admin only).
+  resources :sounds, except: %i[show]
+
   resources :locations do
     get :search, on: :collection
     post :refresh_all, on: :collection

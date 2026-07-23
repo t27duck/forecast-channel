@@ -28,6 +28,11 @@ module Forecast
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # Serve uploaded music inline rather than as a download, so a track's URL
+    # plays in the browser (Active Storage forces "attachment" for any type not
+    # on this list).
+    config.active_storage.content_types_allowed_inline += %w[audio/mpeg]
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

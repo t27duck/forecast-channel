@@ -43,6 +43,3 @@ Thumbs.db
 .DS_Store
 .claude
 screenshots/*
-
-# Copyrighted background-music tracks — add locally / in production, not in git
-/public/audio/*.mp3

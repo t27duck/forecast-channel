@@ -107,12 +107,15 @@ bin/rails test:system   # system tests (headless Chrome via Selenium)
 
 ## Background music
 
-Drop the four Wii Forecast Channel tracks into `public/audio/` named:
+Sign in and upload the four Wii Forecast Channel tracks at `/sounds`, choosing
+what each one is:
 
-- `current-day.mp3` / `current-night.mp3` — the forecast screens
-- `globe-day.mp3` / `globe-night.mp3` — the globe
+- **Forecast · Day** / **Forecast · Night** — the forecast screens
+- **Globe · Day** / **Globe · Night** — the globe
 
-The player switches by zone (globe vs forecast) and time of day (day 7am–7pm,
-night otherwise), persists across navigations, and starts on the first click.
-The globe track plays on the map, and every location's forecast plays the
-forecast track. Until the files are present, the app runs fine with no music.
+The MP3s are stored with Active Storage (so they're uploaded through the app,
+not copied onto the server). The player switches by zone (globe vs forecast) and
+time of day (day 7am–7pm, night otherwise), persists across navigations, and
+starts on the first click. The globe track plays on the map, and every
+location's forecast plays the forecast track. Slots you haven't uploaded are
+simply silent, and the app runs fine with no sounds at all.

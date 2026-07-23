@@ -1,0 +1,8 @@
+<% content_for :title, "Edit sound" %>
+
+<div class="mx-auto max-w-2xl px-4 py-8">
+  <h1 class="text-2xl font-semibold text-slate-900">Edit <%= @sound.label %></h1>
+  <p class="mb-6 text-sm text-slate-500">Replace the track or move it to another slot.</p>
+
+  <%= render "form", sound: @sound %>
+</div>

@@ -18,15 +18,6 @@ Rails.application.configure do
   # Configure public file server for tests with cache-control for performance.
   config.public_file_server.headers = { "cache-control" => "public, max-age=3600" }
 
-  # Don't serve anything out of public/ during tests. The only files there that
-  # a page asks for are the background-music tracks (several MB each), and a
-  # browser playing one holds that connection open for the whole track — which
-  # pins one of the test server's handful of threads per page load until a Turbo
-  # visit can no longer be served and navigation silently hangs. System tests
-  # never need the audio; the stylesheet and JS bundle come from Propshaft's own
-  # middleware, which this doesn't touch.
-  config.public_file_server.enabled = false
-
   # Show full error reports.
   config.consider_all_requests_local = true
   config.cache_store = :null_store

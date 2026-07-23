@@ -65,6 +65,18 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".wii-bottom a[href=?]", map_path, text: "Globe"
   end
 
+  test "the jukebox points at the uploaded tracks, and is blank without them" do
+    get location_url(@location)
+    assert_select "#jukebox[data-jukebox-current-day-value=?]", ""
+
+    sound = Sound.create!(kind: "current_day",
+      audio: fixture_file_upload("track.mp3", "audio/mpeg"))
+
+    get location_url(@location)
+    assert_select "#jukebox[data-jukebox-current-day-value=?]",
+      Rails.application.routes.url_helpers.rails_storage_proxy_path(sound.audio, only_path: true)
+  end
+
   test "viewing a forecast marks the location as recently viewed" do
     assert_nil locations(:tokyo).last_viewed_at
 
