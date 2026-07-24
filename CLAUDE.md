@@ -247,6 +247,14 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
     `prefers-reduced-motion` skips the spin. Note for system tests: a bar that
     has slid away can't be clicked, so move the pointer first (`wake_chrome` in
     `test/system/globe_test.rb`).
+- **App icon**: `public/icon.svg` is the source of truth — the same glossy
+  sun-behind-cloud `WeatherIconsHelper` draws for "partly cloudy", on a tile of
+  `#103a86` (the mid blue of the forecast panels' background gradient), with
+  fatter rays so they survive at 16px. `ruby script/build_favicons.rb`
+  re-renders `public/icon.png` (512, also the apple-touch-icon) and
+  `public/favicon.ico` (16/32/48) from it; the script is plain ruby, not
+  `bin/rails runner`, because ruby-vips is a system gem rather than a bundled
+  one. All four `<link rel="icon">` tags live in the layout.
 - **Cursors**: the Wii hand cursors in `app/assets/images/cursors/`, wired up as
   the `--cursor-point` / `--cursor-open-hand` / `--cursor-grab` custom
   properties (with hotspots) at the top of `application.tailwind.css`. The CSS
