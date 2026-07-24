@@ -52,14 +52,14 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the current location plays the current track and links Globe to it" do
-    cookies[:current_location_id] = locations(:berlin).id
+    write_signed_cookie(:current_location_id, locations(:berlin).id)
     get location_url(locations(:berlin))
     assert_select "body[data-music-zone=?]", "current"
-    assert_select ".wii-bottom a[href=?]", map_path(location: locations(:berlin).id), text: "Globe"
+    assert_select ".wii-bottom a[href=?]", map_path(location: locations(:berlin).slug), text: "Globe"
   end
 
   test "another location plays the forecast track and returns Globe to the saved view" do
-    cookies[:current_location_id] = locations(:berlin).id
+    write_signed_cookie(:current_location_id, locations(:berlin).id)
     get location_url(locations(:tokyo))
     assert_select "body[data-music-zone=?]", "current"
     assert_select ".wii-bottom a[href=?]", map_path, text: "Globe"
@@ -98,9 +98,17 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     get root_url
     assert_select "[data-controller=geolocate]", true, "should ask the browser to locate on first visit"
 
-    cookies[:current_location_id] = locations(:tokyo).id
+    write_signed_cookie(:current_location_id, locations(:tokyo).id)
     get root_url
     assert_select "[data-controller=geolocate]", false, "should not auto-locate once a location is chosen"
+  end
+
+  test "an unsigned location cookie from an older version is ignored" do
+    cookies[:current_location_id] = locations(:tokyo).id # plaintext, as the app once wrote
+
+    get root_url
+    assert_select ".wii-header__location", text: Location.by_name.first.name
+    assert_select "[data-controller=geolocate]", true, "an unverifiable cookie counts as unset"
   end
 
   test "root redirects to add a location when none exist" do
@@ -112,6 +120,15 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   test "index links each location to its detail view" do
     get locations_url
     assert_select "a[href=?]", location_path(@location), text: @location.name
+    assert_select "a[href=?]", "/locations/#{@location.slug}", text: @location.name
+  end
+
+  test "show is addressed by slug alone — an id or an unknown slug is a 404" do
+    get "/locations/#{@location.id}"
+    assert_response :not_found
+
+    get "/locations/nowhere-at-all"
+    assert_response :not_found
   end
 
   test "new prefills the form from picked search params" do

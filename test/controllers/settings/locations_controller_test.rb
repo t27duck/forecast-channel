@@ -59,13 +59,13 @@ class Settings::LocationsControllerTest < ActionDispatch::IntegrationTest
     patch settings_location_url, params: { current_location_id: locations(:tokyo).id }
 
     assert_redirected_to settings_path
-    assert_equal locations(:tokyo).id.to_s, cookies[:current_location_id]
+    assert_equal locations(:tokyo).id, read_signed_cookie(:current_location_id)
   end
 
   test "update ignores an unknown location" do
     patch settings_location_url, params: { current_location_id: 999_999 }
 
     assert_redirected_to settings_path
-    assert_predicate cookies[:current_location_id], :blank?
+    assert_nil read_signed_cookie(:current_location_id)
   end
 end

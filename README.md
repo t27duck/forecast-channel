@@ -113,8 +113,9 @@ roughly 4,900 to ~40, and roughly a third of the API quota.
 The `/settings` page (reached from the forecast's "Settings" link) chooses the
 closest location (a Wii-style country-then-location picker), the temperature
 unit (°C/°F), and the wind unit (mph/kph).
-Units are per-visitor display preferences stored in the browser (cookies, like
-the closest location) — weather is stored canonically (Celsius, km/h) and
+Units are per-visitor display preferences stored in the browser (signed,
+httponly cookies, like the closest location) — weather is stored canonically
+(Celsius, km/h) and
 converted at render time, so switching never re-fetches and every visitor keeps
 their own units. There's also a quick °C/°F toggle on the `/locations` list.
 

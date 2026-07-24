@@ -51,7 +51,15 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 
 - **Location** (`app/models/location.rb`): a place tracked on the globe. Holds
   geocoding data (name, latitude/longitude, country, admin1/region, timezone,
-  elevation) plus cached weather. Current conditions, UV, air quality
+  elevation) plus cached weather. Addressed in URLs by its **slug**, not its id
+  (`to_param`; `resources :locations, param: :slug`, so controllers look it up
+  with `find_by!(slug: params[:slug])` and a numeric id 404s). The slug is
+  `[name, admin1, country]` parameterized and joined with `-`
+  ("berlin-berlin-germany"); a `before_validation` rebuilds it whenever those
+  parts change, so renaming a location changes its URL, and a slug another row
+  already holds gains a `-2`/`-3` suffix (unique index). Ids stay internal —
+  the `current_location_id` cookie, the refresh jobs and `dom_id` all still use
+  them. Current conditions, UV, air quality
   (`air_quality_index`/`air_quality_label`/`air_quality_pm2_5`), feels-like
   (`current_apparent_temperature`), humidity and precipitation probability are
   flat columns; the today/tomorrow forecasts, 6-hour windows, and 5-day forecast
@@ -131,9 +139,23 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   `ApplicationController#current_setting` builds the object from those cookies
   (unknown/missing units fall back to the defaults celsius/mph) and exposes it
   as a `helper_method`; `SettingsController#update` writes the cookies (guarded
-  by `Setting::TEMPERATURE_UNITS`/`WIND_UNITS`). Weather is stored canonically
+  by `Setting::TEMPERATURE_UNITS`/`WIND_UNITS`) through
+  `store_visitor_cookie` (below). Weather is stored canonically
   (Celsius, km/h) and converted at render time via `current_setting`
   (`display_temperature`, `wind_display`), so switching never re-fetches.
+- **Visitor cookies** (`ApplicationController#store_visitor_cookie`): the one
+  way anything a visitor chose is written — `current_location_id`,
+  `temperature_unit`, `wind_unit`. All three are **signed** (a tampered value is
+  rejected rather than trusted), **httponly** (nothing in the browser reads
+  them; only the server does) and **permanent**, the same shape as the
+  `session_id` cookie in `Authentication#start_new_session_for`. Reads go
+  through `cookies.signed[...]`, so a plain unsigned value simply doesn't
+  verify and the app falls back to its default. `store_current_location` wraps
+  it for the closest-location cookie, shared by `CurrentLocationsController`
+  and `Settings::LocationsController`. In tests, `write_signed_cookie` /
+  `read_signed_cookie` (`test/test_helpers/cookie_test_helper.rb`) sign and
+  verify through a throwaway request's jar, since Rack::Test's own jar has no
+  `#signed`.
 - **Settings screen** (`SettingsController#show` at `/settings`): a Wii-style
   "Change Settings" page with Closest Location, Temperature Display, and Wind
   Display rows (each a "Change" control). Temp/wind are toggles handled by
@@ -214,7 +236,9 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   for Today/Tomorrow — built from extra `LocationGeojson` properties
   (`temp`/`label`/`today_*`/`tomorrow_*`, Celsius; the controller converts using
   `data-globe-temperature-unit-value`). Clicking a marker opens that location's
-  detail view. The page hides the app nav (`content_for :hide_app_nav`) and
+  detail view — the feature's `slug` property, which the controller hand-builds
+  into `/locations/${slug}`, so `to_param` doesn't reach it and both sides have
+  to change together. The page hides the app nav (`content_for :hide_app_nav`) and
   the globe fills the viewport; a Wii-style top bar (`.wii-top.map-bar`,
   reusing the detail-view bar styling + `press` animation) is overlaid on the
   globe with three buttons — "Zoom" (circle-minus, out), "Next" (▶, center)
@@ -232,7 +256,7 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   blanking at the pitch limits like the zoom buttons), and "Restore"
   (`globe#resetPitch` back to `DEFAULT_PITCH`). Both bars are faint (20%
   opacity) and rise to 80% on hover. `MapsController#show` accepts a
-  `?location=<id>` param and, when present, exposes `data-globe-center-value`
+  `?location=<slug>` param and, when present, exposes `data-globe-center-value`
   so the globe opens centred on that location. The globe otherwise resumes the
   view it was last left at: the controller saves center/zoom/pitch/bearing to
   `sessionStorage` (`globeCamera`) on `moveend` and restores it on connect when
@@ -276,8 +300,8 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - **Location detail** (`LocationsController#show`): the Wii Forecast
   Channel-style paneled view. Served at the root path `/` for the current
   location (a `current_location_id` cookie later; the first location for now)
-  and at `/locations/:id` for a specific one; redirects to add a location when
-  none exist. The "Globe" button links to `/map?location=<id>` from your own
+  and at `/locations/:slug` for a specific one; redirects to add a location when
+  none exist. The "Globe" button links to `/map?location=<slug>` from your own
   location (centres the globe on it) or plain `/map` from any other location
   (resumes the saved globe view); the music zone follows the same distinction.
   Seven full-screen panels — three "index" panels (UV Index, Air Quality,

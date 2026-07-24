@@ -4,7 +4,7 @@ class CurrentLocationsController < ApplicationController
   allow_unauthenticated_access
   def create
     location = Location.nearest_to(params[:latitude], params[:longitude])
-    cookies.permanent[:current_location_id] = location.id if location
+    store_current_location(location) if location
 
     redirect_to root_path
   end

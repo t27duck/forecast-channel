@@ -19,10 +19,10 @@ class SettingsController < ApplicationController
 
   private
 
-  # Persists a submitted unit to a permanent cookie when it's a known value,
+  # Persists a submitted unit to the visitor's cookie when it's a known value,
   # ignoring anything unrecognised.
   def store_unit(name, allowed)
     value = params[name]
-    cookies.permanent[name] = value if allowed.include?(value)
+    store_visitor_cookie(name, value) if allowed.include?(value)
   end
 end

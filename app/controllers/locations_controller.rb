@@ -6,10 +6,10 @@ class LocationsController < ApplicationController
     @locations = Location.by_name
   end
 
-  # The Wii-style paneled forecast. Reached at /locations/:id (a specific
+  # The Wii-style paneled forecast. Reached at /locations/:slug (a specific
   # location) or at the root path (the current location).
   def show
-    @location = params[:id] ? Location.find(params[:id]) : current_location
+    @location = params[:slug] ? Location.find_by!(slug: params[:slug]) : current_location
 
     if @location.nil?
       redirect_to new_location_path, notice: "Add a location to see its forecast."
@@ -18,7 +18,7 @@ class LocationsController < ApplicationController
       # any other location's Globe button resumes the saved map view.
       @is_current_location = @location.id == current_location&.id
       # On the root path with no chosen location yet, ask the browser to locate.
-      @auto_locate = params[:id].nil? && cookies[:current_location_id].blank?
+      @auto_locate = params[:slug].nil? && cookies.signed[:current_location_id].blank?
       # Somewhere people actually look stays in the hourly refresh tier.
       @location.mark_viewed!
     end
@@ -80,7 +80,7 @@ class LocationsController < ApplicationController
   private
 
   def set_location
-    @location = Location.find(params[:id])
+    @location = Location.find_by!(slug: params[:slug])
   end
 
   def location_params

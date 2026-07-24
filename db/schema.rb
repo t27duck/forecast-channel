@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_23_231735) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_24_231500) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -64,6 +64,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_23_231735) do
     t.string "name", null: false
     t.integer "open_meteo_id"
     t.integer "population"
+    t.string "slug", null: false
     t.string "timezone"
     t.json "today_forecast", default: {}, null: false
     t.json "tomorrow_forecast", default: {}, null: false
@@ -73,6 +74,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_23_231735) do
     t.datetime "weather_refreshed_at"
     t.index ["last_viewed_at"], name: "index_locations_on_last_viewed_at"
     t.index ["latitude", "longitude"], name: "index_locations_on_latitude_and_longitude"
+    t.index ["slug"], name: "index_locations_on_slug", unique: true
   end
 
   create_table "sessions", force: :cascade do |t|

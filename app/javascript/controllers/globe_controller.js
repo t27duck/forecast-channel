@@ -364,12 +364,12 @@ export default class extends Controller {
     const map = this.map
 
     map.on("click", LAYER_ID, (event) => {
-      const id = event.features?.[0]?.properties?.id
-      if (!id) return
+      const slug = event.features?.[0]?.properties?.slug
+      if (!slug) return
 
       // Navigate through Turbo so the persistent music player survives (a full
       // reload would restart the track).
-      const url = `/locations/${id}`
+      const url = `/locations/${slug}`
       if (window.Turbo) window.Turbo.visit(url)
       else window.location.assign(url)
     })

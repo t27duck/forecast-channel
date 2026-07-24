@@ -13,7 +13,10 @@ class Location < ApplicationRecord
   RADIANS_PER_DEGREE = Math::PI / 180
   EARTH_RADIUS_KM = 6371.0
 
+  before_validation :assign_slug
+
   validates :name, presence: true
+  validates :slug, presence: true, uniqueness: true
   validates :latitude, presence: true,
     numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
   validates :longitude, presence: true,
@@ -37,6 +40,13 @@ class Location < ApplicationRecord
     return nil if latitude.blank? || longitude.blank?
 
     all.min_by { |location| location.distance_km(latitude, longitude) }
+  end
+
+  # Locations are addressed by slug, not by id: ids shift whenever the database
+  # is reseeded (db/seeds.rb upserts by open_meteo_id), and "berlin-berlin-
+  # germany" says what it points at.
+  def to_param
+    slug
   end
 
   # [latitude, longitude] pair, handy for mapping and API calls.
@@ -103,5 +113,38 @@ class Location < ApplicationRecord
     return if last_viewed_at.present? && last_viewed_at > VIEW_TRACKING_INTERVAL.ago
 
     update_column(:last_viewed_at, Time.current)
+  end
+
+  private
+
+  # Keeps the slug in step with the name/region/country it's built from, so a
+  # renamed location gets a URL that matches what the page says. Saves that
+  # don't touch those parts (a weather refresh) leave it alone — including the
+  # numeric suffix a collision may have added, which is why the guard accepts
+  # "berlin-berlin-germany-2" as still current. (A place whose name ends in a
+  # number makes that guard ambiguous; nowhere near worth handling.)
+  def assign_slug
+    base = slug_base
+    return if base.blank? || slug.to_s.match?(/\A#{Regexp.escape(base)}(-\d+)?\z/)
+
+    self.slug = available_slug(base)
+  end
+
+  def slug_base
+    [ name, admin1, country ].map { |part| part&.parameterize }.compact_blank.join("-")
+  end
+
+  # The base itself, or base-2 / base-3 / … when another location holds it —
+  # two same-named towns in one region would otherwise be unsaveable.
+  def available_slug(base)
+    return base unless slug_taken?(base)
+
+    2.step { |suffix| return "#{base}-#{suffix}" unless slug_taken?("#{base}-#{suffix}") }
+  end
+
+  def slug_taken?(candidate)
+    scope = self.class.where(slug: candidate)
+    scope = scope.where.not(id: id) if persisted?
+    scope.exists?
   end
 end

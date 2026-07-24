@@ -42,6 +42,54 @@ class LocationTest < ActiveSupport::TestCase
     assert_predicate location.errors[:longitude], :any?
   end
 
+  test "slug is built from the name, region and country" do
+    location = Location.create!(name: "São Paulo", admin1: "São Paulo", country: "Brazil",
+      latitude: -23.5, longitude: -46.6)
+    assert_equal "sao-paulo-sao-paulo-brazil", location.slug
+    assert_equal location.slug, location.to_param
+  end
+
+  test "slug drops the parts a location doesn't have" do
+    location = Location.create!(name: "Nowhere", latitude: 1, longitude: 2)
+    assert_equal "nowhere", location.slug
+  end
+
+  test "a location whose slug is taken gets a numeric suffix" do
+    parts = { name: "Manchester", admin1: "England", country: "United Kingdom" }
+    first = Location.create!(**parts, latitude: 53.48, longitude: -2.24)
+    second = Location.create!(**parts, latitude: 53.49, longitude: -2.25)
+    third = Location.create!(**parts, latitude: 53.50, longitude: -2.26)
+
+    assert_equal "manchester-england-united-kingdom", first.slug
+    assert_equal "manchester-england-united-kingdom-2", second.slug
+    assert_equal "manchester-england-united-kingdom-3", third.slug
+  end
+
+  test "renaming a location regenerates its slug" do
+    location = Location.create!(name: "Bombay", country: "India", latitude: 19.07, longitude: 72.87)
+    assert_equal "bombay-india", location.slug
+
+    location.update!(name: "Mumbai")
+    assert_equal "mumbai-india", location.slug
+  end
+
+  test "a save that doesn't touch the name leaves the slug alone" do
+    location = locations(:berlin)
+    slug = location.slug
+
+    location.update!(current_temperature: 21.0)
+    assert_equal slug, location.reload.slug
+  end
+
+  test "a suffixed slug survives a save that doesn't rename the location" do
+    parts = { admin1: "England", country: "United Kingdom", latitude: 53.48, longitude: -2.24 }
+    Location.create!(name: "Manchester", **parts)
+    second = Location.create!(name: "Manchester", **parts)
+
+    second.update!(current_temperature: 12.0)
+    assert_equal "manchester-england-united-kingdom-2", second.reload.slug
+  end
+
   test "display_name combines name and region" do
     assert_equal "Berlin, Berlin", locations(:berlin).display_name
   end

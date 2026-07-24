@@ -27,8 +27,8 @@ class Settings::LocationsController < ApplicationController
   end
 
   def update
-    id = params[:current_location_id]
-    cookies.permanent[:current_location_id] = id if id.present? && Location.exists?(id: id)
+    location = Location.find_by(id: params[:current_location_id])
+    store_current_location(location) if location
 
     # No flash: the settings page is full-height, and a banner above it would
     # push the footer off-screen. The updated closest location shows there anyway.

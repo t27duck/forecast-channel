@@ -34,7 +34,7 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "centres the globe on the location passed from its forecast" do
-    get map_url(location: locations(:berlin).id)
+    get map_url(location: locations(:berlin).slug)
     expected = [ locations(:berlin).longitude.to_f, locations(:berlin).latitude.to_f ].to_json
     assert_select "[data-controller=globe][data-globe-center-value=?]", expected
   end
@@ -61,7 +61,7 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     berlin = json["features"].find { |f| f.dig("properties", "name") == locations(:berlin).name }
     assert_equal [ locations(:berlin).longitude.to_f, locations(:berlin).latitude.to_f ],
       berlin["geometry"]["coordinates"]
-    assert_equal locations(:berlin).id, berlin["properties"]["id"] # for globe click-through
+    assert_equal locations(:berlin).slug, berlin["properties"]["slug"] # for globe click-through
     assert_equal "overcast", berlin["properties"]["icon"] # berlin fixture: code 3
     # No today/tomorrow forecast fetched yet -> fall back to the current icon.
     assert_equal "overcast", berlin["properties"]["icon_today"]

@@ -26,7 +26,8 @@ Rails.application.routes.draw do
   # Background-music tracks (admin only).
   resources :sounds, except: %i[show]
 
-  resources :locations do
+  # Addressed by slug (Location#to_param), so the segment is :slug, not :id.
+  resources :locations, param: :slug do
     get :search, on: :collection
     post :refresh_all, on: :collection
     post :refresh, on: :member

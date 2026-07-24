@@ -26,7 +26,7 @@ class LocationGeojson
         coordinates: [ location.longitude.to_f, location.latitude.to_f ]
       },
       properties: {
-        id: location.id,
+        slug: location.slug, # what the globe navigates to on a marker click
         name: location.name,
         # One icon per globe view (current / today / tomorrow); the layer swaps
         # which one it renders as the user cycles the "Next" button.

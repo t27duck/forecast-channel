@@ -76,7 +76,7 @@
     </div>
     <div class="wii-bar__slot wii-bar__slot--right">
       <%# From your own location, centre the globe on it; from elsewhere, resume where you left the map. %>
-      <%= link_to "Globe", (@is_current_location ? map_path(location: @location.id) : map_path), class: "wii-chrome-link" %>
+      <%= link_to "Globe", (@is_current_location ? map_path(location: @location.slug) : map_path), class: "wii-chrome-link" %>
     </div>
   </div>
 </div>

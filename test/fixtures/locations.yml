@@ -1,5 +1,6 @@
 berlin:
   name: Berlin
+  slug: berlin-berlin-germany
   latitude: 52.52437
   longitude: 13.41053
   country: Germany
@@ -17,6 +18,7 @@ berlin:
 
 tokyo:
   name: Tokyo
+  slug: tokyo-tokyo-japan
   latitude: 35.6895
   longitude: 139.69171
   country: Japan

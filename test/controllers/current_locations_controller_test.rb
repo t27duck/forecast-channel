@@ -6,13 +6,13 @@ class CurrentLocationsControllerTest < ActionDispatch::IntegrationTest
     post current_location_url, params: { latitude: 35.0, longitude: 139.0 }
 
     assert_redirected_to root_path
-    assert_equal locations(:tokyo).id.to_s, cookies[:current_location_id]
+    assert_equal locations(:tokyo).id, read_signed_cookie(:current_location_id)
   end
 
   test "create without coordinates leaves the cookie unset" do
     post current_location_url, params: {}
 
     assert_redirected_to root_path
-    assert_predicate cookies[:current_location_id], :blank?
+    assert_nil read_signed_cookie(:current_location_id)
   end
 end
