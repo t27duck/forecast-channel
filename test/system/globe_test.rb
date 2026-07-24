@@ -21,7 +21,8 @@ class GlobeTest < ApplicationSystemTestCase
     visit map_path
     assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
 
-    zoom = -> { evaluate_script("document.querySelector('[data-controller=globe]').__map.getZoom()") }
+    wake_chrome
+    zoom = -> { evaluate_script("#{map_handle}.getZoom()") }
     before = zoom.call
     find(".map-bar [aria-label='Zoom in']").click
 
@@ -33,6 +34,7 @@ class GlobeTest < ApplicationSystemTestCase
     visit map_path
     assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
 
+    wake_chrome
     assert_selector ".map-banner", text: "CURRENT WEATHER" # uppercased in CSS
     find(".map-bar [aria-label='Next weather view']").click
     assert_selector ".map-banner", text: "TODAY'S WEATHER"
@@ -46,7 +48,8 @@ class GlobeTest < ApplicationSystemTestCase
     visit map_path
     assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
 
-    pitch = -> { evaluate_script("document.querySelector('[data-controller=globe]').__map.getPitch()") }
+    wake_chrome
+    pitch = -> { evaluate_script("#{map_handle}.getPitch()") }
     assert_equal 0, pitch.call # starts flat, so decreasing is disabled
     assert_selector ".map-bar [aria-label='Decrease tilt']:disabled"
 
@@ -61,6 +64,7 @@ class GlobeTest < ApplicationSystemTestCase
     visit map_path
     assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
 
+    wake_chrome
     find(".map-bar [aria-label='Zoom in']").click
     sleep 0.8 # let the zoom animation settle and moveend save the view
 
@@ -87,19 +91,112 @@ class GlobeTest < ApplicationSystemTestCase
     visit map_path
     assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
 
-    canvas_cursor = -> { evaluate_script("getComputedStyle(document.querySelector('.mapboxgl-canvas-container')).cursor") }
+    wake_chrome # an idle pointer hides the cursor entirely
+    canvas_cursor = -> { style(".mapboxgl-canvas-container", "cursor") }
     assert_match "open-hand-1", canvas_cursor.call
     assert_match "point-1", evaluate_script("getComputedStyle(document.body).cursor") # bars, page chrome
 
-    map = "document.querySelector('[data-controller=globe]').__map"
-    execute_script("#{map}.fire('dragstart')")
+    execute_script("#{map_handle}.fire('dragstart')")
     assert_match "grab-1", canvas_cursor.call
 
-    execute_script("#{map}.fire('dragend')")
+    execute_script("#{map_handle}.fire('dragend')")
     assert_match "open-hand-1", canvas_cursor.call
   end
 
+  test "the chrome gets out of the way while the mouse is idle" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    # Nothing has moved the pointer since the page opened, so it idles on its own.
+    assert_selector ".map-view.is-idle", wait: 5
+    assert_equal "none", style(".map-view", "cursor"), "expected the cursor to be hidden"
+    assert_equal "none", style(".mapboxgl-canvas-container", "cursor")
+    assert_equal true, wait_until { style(".map-banner", "opacity") == "0" },
+      "expected the banner to fade out"
+
+    viewport = evaluate_script("window.innerHeight")
+    assert_equal true, wait_until { edge(".map-bar--top", "bottom") <= 0 },
+      "expected the top bar to slide off the top of the page"
+    assert_equal true, wait_until { edge(".map-bar--bottom", "top") >= viewport },
+      "expected the bottom bar to slide off the bottom of the page"
+  end
+
+  test "moving the mouse brings the chrome back" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector ".map-view.is-idle", wait: 5
+
+    page.driver.browser.action.move_to(find(".map-view").native).perform
+
+    assert_no_selector ".map-view.is-idle"
+    assert_match "open-hand-1", style(".mapboxgl-canvas-container", "cursor")
+    assert_equal true, wait_until { style(".map-banner", "opacity").to_f > 0.99 },
+      "expected the banner to fade back in"
+  end
+
+  test "the idle globe turns on its own once it is zoomed right out" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    # Zoom 2 is the widest view; the drift only starts there.
+    park_globe_at(zoom: 2)
+    longitude = -> { evaluate_script("#{map_handle}.getCenter().lng") }
+    start = longitude.call
+
+    assert_equal true, wait_until { longitude.call < start - 0.5 },
+      "expected the idle globe to drift westward"
+
+    # ...and settles the moment the mouse comes back.
+    page.driver.browser.action.move_to(find(".map-view").native).perform
+    stopped = longitude.call
+    sleep 0.6
+    assert_in_delta stopped, longitude.call, 0.05, "expected the spin to stop on wake"
+  end
+
+  test "the idle globe stays put when it is zoomed in" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    park_globe_at(zoom: 5)
+    longitude = -> { evaluate_script("#{map_handle}.getCenter().lng") }
+    start = longitude.call
+    sleep 1.5 # long enough for a spin step to have moved it
+
+    assert_in_delta start, longitude.call, 0.05, "expected no drift while zoomed in"
+  end
+
   private
+
+  # The chrome hides itself after two idle seconds, and a driver click can't
+  # reach a bar that has slid off the page. A real pointer move brings it back
+  # the way a viewer's would; wait for the slide to finish before clicking.
+  def wake_chrome
+    page.driver.browser.action.move_to(find(".map-view").native).perform
+    assert_no_selector ".map-view.is-idle"
+    assert_equal true, wait_until { edge(".map-bar--top", "top") >= -0.5 },
+      "expected the top bar to slide back into place"
+  end
+
+  # Put the globe at a known camera the way a viewer would leave it: wake first
+  # (which stops any drift already under way), move, then let it idle again.
+  def park_globe_at(zoom:)
+    page.driver.browser.action.move_to(find(".map-view").native).perform
+    assert_no_selector ".map-view.is-idle"
+    execute_script("#{map_handle}.jumpTo({ center: [0, 20], zoom: #{zoom} })")
+    assert_selector ".map-view.is-idle", wait: 5
+  end
+
+  def map_handle
+    "document.querySelector('[data-controller=globe]').__map"
+  end
+
+  def style(selector, property)
+    evaluate_script("getComputedStyle(document.querySelector('#{selector}')).#{property}")
+  end
+
+  def edge(selector, side)
+    evaluate_script("document.querySelector('#{selector}').getBoundingClientRect().#{side}")
+  end
 
   # Polls the block until it returns truthy or Capybara's default wait elapses.
   def wait_until

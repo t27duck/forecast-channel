@@ -227,6 +227,19 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   no focus param is given. So arriving from your own location centres on it,
   while arriving from another location (whose "Globe" button omits the param)
   resumes where you left the map.
+  - **Idle**: two seconds without mouse movement — or the pointer leaving the
+    page, which skips the wait — puts `is-idle` on `.map-view`, and the CSS
+    slides both bars off their edges, fades the banner out and hides the
+    cursor; any mouse movement (or key/wheel/click) takes it straight back off.
+    Idling at `SPIN_MAX_ZOOM` (2, the widest view) also sets the globe turning
+    westward, a revolution per `SECONDS_PER_REVOLUTION`: each step is a
+    one-second linear `easeTo` and the `moveend` handler queues the next, so
+    while it drifts the camera isn't saved (an unattended globe's position
+    isn't a view worth resuming) and waking `map.stop()`s it where it is. Too
+    zoomed in, the spin stays armed but idle, picking up if the view widens.
+    `prefers-reduced-motion` skips the spin. Note for system tests: a bar that
+    has slid away can't be clicked, so move the pointer first (`wake_chrome` in
+    `test/system/globe_test.rb`).
 - **Cursors**: the Wii hand cursors in `app/assets/images/cursors/`, wired up as
   the `--cursor-point` / `--cursor-open-hand` / `--cursor-grab` custom
   properties (with hotspots) at the top of `application.tailwind.css`. The CSS

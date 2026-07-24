@@ -40,6 +40,19 @@ const CAMERA_KEY = "globeCamera"
 const POINTING_CLASS = "is-pointing"
 const GRABBING_CLASS = "is-grabbing"
 
+// Leave the globe alone this long — or take the pointer off the page — and the
+// chrome gets out of the way: the bars slide off their edges, the banner fades,
+// and the cursor is hidden (all CSS, off this class). Any mouse movement brings
+// it back.
+const IDLE_CLASS = "is-idle"
+const IDLE_AFTER = 2000
+
+// Idling on the fully-zoomed-out globe also sets it turning, one revolution per
+// SECONDS_PER_REVOLUTION. Any closer than SPIN_MAX_ZOOM and the drift reads as
+// the map running away rather than as an idle animation.
+const SPIN_MAX_ZOOM = 2
+const SECONDS_PER_REVOLUTION = 180
+
 // Icons display at ICON_SIZE px, rasterized at 2x (pixelRatio) for crispness.
 const ICON_SIZE = 34
 const ICON_PIXEL_RATIO = 2
@@ -80,9 +93,12 @@ export default class extends Controller {
 
     this.element.__map = this.map // handle for system tests
     this.map.on("style.load", () => this.#setupScene())
+
+    this.#watchIdle()
   }
 
   disconnect() {
+    this.#unwatchIdle()
     this.popup?.remove()
     this.map?.remove()
   }
@@ -113,6 +129,83 @@ export default class extends Controller {
 
   resetPitch() {
     this.#setPitch(DEFAULT_PITCH)
+  }
+
+  // Idle chrome ---------------------------------------------------------
+  // Listening on the document (not the element) so a pointer resting on a bar
+  // or wandering off the globe still counts; leaving the page skips the wait,
+  // since a cursor that isn't here can't be about to do anything.
+  #watchIdle() {
+    this.onWake = () => this.#wake()
+    this.onPointerLeave = () => this.#idle()
+
+    document.addEventListener("mousemove", this.onWake)
+    document.addEventListener("pointerdown", this.onWake)
+    document.addEventListener("keydown", this.onWake)
+    document.addEventListener("wheel", this.onWake, { passive: true })
+    document.documentElement.addEventListener("mouseleave", this.onPointerLeave)
+
+    this.#wake() // start the countdown as soon as the globe opens
+  }
+
+  #unwatchIdle() {
+    clearTimeout(this.idleTimer)
+    document.removeEventListener("mousemove", this.onWake)
+    document.removeEventListener("pointerdown", this.onWake)
+    document.removeEventListener("keydown", this.onWake)
+    document.removeEventListener("wheel", this.onWake)
+    document.documentElement.removeEventListener("mouseleave", this.onPointerLeave)
+  }
+
+  #wake() {
+    clearTimeout(this.idleTimer)
+
+    if (this.idle) {
+      this.idle = false
+      this.element.classList.remove(IDLE_CLASS)
+      this.#stopSpin()
+    }
+
+    this.idleTimer = setTimeout(() => this.#idle(), IDLE_AFTER)
+  }
+
+  #idle() {
+    if (this.idle) return
+
+    clearTimeout(this.idleTimer)
+    this.idle = true
+    this.element.classList.add(IDLE_CLASS)
+    this.#startSpin()
+  }
+
+  // Ambient rotation while idle: nudge the centre west and let Mapbox ease
+  // there linearly over a second; the moveend handler queues the next nudge, so
+  // the steps join into one continuous turn.
+  #startSpin() {
+    if (this.spinning || !this.map) return
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return
+
+    this.spinning = true
+    this.#spinStep()
+  }
+
+  #spinStep() {
+    if (!this.spinning || !this.map) return
+
+    // Too close in to drift: stay armed rather than stopping, so idling through
+    // a zoom back out (the next moveend) picks the turn up.
+    if (this.map.getZoom() > SPIN_MAX_ZOOM + 1e-3) return
+
+    const center = this.map.getCenter()
+    center.lng -= 360 / SECONDS_PER_REVOLUTION
+    this.map.easeTo({ center, duration: 1000, easing: (t) => t })
+  }
+
+  #stopSpin() {
+    if (!this.spinning) return
+
+    this.spinning = false
+    this.map?.stop() // freeze where it is rather than coasting to the next step
   }
 
   #setPitch(target) {
@@ -217,7 +310,13 @@ export default class extends Controller {
     // Persist the initial camera too: arriving via ?location centres the globe
     // without firing a move, so without this an unpanned visit would never be
     // saved and a later plain /map visit would fall back to the world view.
-    map.on("moveend", () => this.#saveCamera())
+    // The idle spin is the exception: it keeps the turn going instead, since
+    // where an unattended globe happened to drift to isn't a view worth
+    // resuming — the last place the viewer left it is.
+    map.on("moveend", () => {
+      if (this.spinning) this.#spinStep()
+      else this.#saveCamera()
+    })
     this.#saveCamera()
 
     this.element.dataset.mapReady = "true"

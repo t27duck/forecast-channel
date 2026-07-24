@@ -298,7 +298,7 @@ summary,
   z-index: 10;
   font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
   opacity: 0.2;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.25s ease, transform 0.45s ease;
 }
 
 .map-bar--top {
@@ -400,6 +400,38 @@ summary,
   letter-spacing: 0.02em;
   text-transform: uppercase;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: opacity 0.35s ease;
+}
+
+/* Idle: two seconds without the mouse (or the pointer off the page) and the
+   chrome leaves the globe to itself — the bars slide off their own edges, the
+   banner fades out, and the cursor is hidden. The globe controller toggles
+   .is-idle and any mouse movement takes it back off. The canvas needs naming
+   separately: its hand-cursor rules above are just as specific as `.is-idle *`,
+   so only a longer selector (later in the file) beats them. */
+.map-view.is-idle,
+.map-view.is-idle * {
+  cursor: none;
+}
+
+.map-view.is-idle .mapboxgl-canvas-container.mapboxgl-interactive {
+  cursor: none;
+}
+
+.map-view.is-idle .map-bar {
+  pointer-events: none;
+}
+
+.map-view.is-idle .map-bar--top {
+  transform: translateY(-100%);
+}
+
+.map-view.is-idle .map-bar--bottom {
+  transform: translateY(100%);
+}
+
+.map-view.is-idle .map-banner {
+  opacity: 0;
 }
 
 /* Green header --------------------------------------------------------- */
