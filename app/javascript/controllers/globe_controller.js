@@ -82,8 +82,8 @@ export default class extends Controller {
   static targets = ["map", "zoomIn", "zoomOut", "banner", "pitchUp", "pitchDown"]
 
   connect() {
-    // No token (CI, or a checkout without credentials): build the globe on the
-    // offline style instead of not building it at all. `testMode` silences
+    // No token (CI, or a checkout with no MAPBOX_TOKEN set): build the globe on
+    // the offline style instead of not building it at all. `testMode` silences
     // Mapbox's missing-token complaints.
     this.offline = !this.tokenValue
     if (this.offline) console.warn("[globe] no Mapbox token; rendering the offline style")

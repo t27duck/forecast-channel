@@ -18,6 +18,14 @@ require "rails/test_unit/railtie"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# Put the .env files' contents in ENV before anything reads them. The railtie is
+# what widens the search from .env to .env.<environment> (and the .local
+# variants) and hooks the load onto before_configuration, which runs as the
+# application class below is defined — earlier than any config/environments file.
+# "dotenv" first: "dotenv/rails" is the railtie alone and assumes it.
+require "dotenv"
+require "dotenv/rails"
+
 module Forecast
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.

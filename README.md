@@ -12,6 +12,22 @@ bin/rails db:seed   # populate the globe with ~300 major world cities
 bin/dev             # starts the server plus JS/CSS watchers
 ```
 
+## Configuration
+
+Secrets live in the environment, not in Rails credentials (there is no
+`config/credentials.yml.enc` or `master.key`). [dotenv](https://github.com/bkeepers/dotenv)
+loads them on boot from `.env.<environment>` and then `.env`; both are
+gitignored, and blank templates are checked in:
+
+- `.example.env.development` → copy to `.env.development` for local work. Only
+  `MAPBOX_TOKEN` (the globe's Mapbox access token) is needed.
+- `.example.env` → copy to `.env` for deploys. Kamal reads it for the host and
+  registry settings, and passes `SECRET_KEY_BASE` and `MAPBOX_TOKEN` into the
+  container as secrets (see `.kamal/secrets` and `config/deploy.yml`).
+
+Nothing here is required to run the app or the tests — an unset `MAPBOX_TOKEN`
+just means the globe renders without satellite imagery.
+
 `db:seed` loads a curated set of major world cities (geocoding data baked into
 `db/seeds.rb`, so it needs no network) so the globe is populated on a fresh
 database. It's idempotent, and only sets each city's location/metadata — their
@@ -43,12 +59,16 @@ click it (or a location in the list) to open the full detail view. A Wii-style b
 bar holds "End" (back to your forecast), two tilt buttons, and "Restore" (reset the
 tilt). The bars stay faint until you hover them. Wii hand cursors are used
 throughout: a pointing hand everywhere, swapping to an open hand over the globe
-and a fist while you drag it. The globe needs a `mapbox_token`
-in the Rails credentials:
+and a fist while you drag it. The globe needs a Mapbox access token in the
+`MAPBOX_TOKEN` environment variable:
 
 ```bash
-bin/rails credentials:edit   # add: mapbox_token: pk....
+cp .example.env.development .env.development   # then fill in MAPBOX_TOKEN=pk....
 ```
+
+Without one the globe still builds — markers, controls and all — on an offline
+style with no satellite imagery, which is how CI and the test suite run it.
+
 
 ## Locations
 
