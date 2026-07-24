@@ -18,6 +18,12 @@ Rails.application.configure do
   # Configure public file server for tests with cache-control for performance.
   config.public_file_server.headers = { "cache-control" => "public, max-age=3600" }
 
+  # Render the globe without a Mapbox token, so it uses the controller's offline
+  # style: no style, tile or glyph request leaves the browser, the suite doesn't
+  # depend on credentials or the network, and a machine that has the token tests
+  # exactly what CI (which doesn't) tests.
+  config.x.mapbox_token_disabled = true
+
   # Show full error reports.
   config.consider_all_requests_local = true
   config.cache_store = :null_store

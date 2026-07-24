@@ -17,6 +17,20 @@ class GlobeTest < ApplicationSystemTestCase
     assert layer_present, "expected the location-markers symbol layer to exist"
   end
 
+  test "the globe builds without a Mapbox token, reaching nothing on the network" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    # The test environment blanks the token (config/environments/test.rb), so
+    # this is the same path CI takes: the controller's offline style.
+    assert_equal "", find("[data-controller=globe]")["data-globe-token-value"]
+
+    fetched = evaluate_script(
+      "performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.includes('mapbox.com'))"
+    )
+    assert_empty fetched, "expected the globe to render without calling Mapbox"
+  end
+
   test "the zoom-in button zooms the globe in one unit" do
     visit map_path
     assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15

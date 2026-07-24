@@ -16,6 +16,22 @@ const HIDDEN_BASEMAP_FEATURES = [
 const SOURCE_ID = "locations"
 const LAYER_ID = "location-markers"
 
+// The satellite basemap, and the stand-in used when no Mapbox token is
+// configured. The fallback is a valid empty style with nothing in it, so the
+// globe still builds and everything of ours on top of it — markers, controls,
+// the idle chrome — works and can be tested; what's missing is Mapbox's own
+// output, the imagery. Nothing is fetched from Mapbox: `glyphs` has to be
+// declared or the style validator strips `text-field` (and with it the whole
+// marker layer), but it points at a same-origin path that doesn't exist, so
+// labels just don't draw.
+const SATELLITE_STYLE = "mapbox://styles/mapbox/standard-satellite"
+const OFFLINE_STYLE = {
+  version: 8,
+  glyphs: "/fonts/{fontstack}/{range}.pbf",
+  sources: {},
+  layers: []
+}
+
 // The "Next" button cycles the marker icons through these views; the green
 // banner shows which one is on screen. `icon` names a GeoJSON feature property.
 const WEATHER_MODES = [
@@ -66,10 +82,11 @@ export default class extends Controller {
   static targets = ["map", "zoomIn", "zoomOut", "banner", "pitchUp", "pitchDown"]
 
   connect() {
-    if (!this.tokenValue) {
-      console.warn("[globe] missing Mapbox token; skipping map render")
-      return
-    }
+    // No token (CI, or a checkout without credentials): build the globe on the
+    // offline style instead of not building it at all. `testMode` silences
+    // Mapbox's missing-token complaints.
+    this.offline = !this.tokenValue
+    if (this.offline) console.warn("[globe] no Mapbox token; rendering the offline style")
 
     this.modeIndex = 0
     if (this.hasBannerTarget) this.bannerTarget.textContent = WEATHER_MODES[0].title
@@ -80,7 +97,8 @@ export default class extends Controller {
 
     this.map = new mapboxgl.Map({
       container: this.mapTarget,
-      style: "mapbox://styles/mapbox/standard-satellite",
+      style: this.offline ? OFFLINE_STYLE : SATELLITE_STYLE,
+      testMode: this.offline,
       projection: "globe",
       center: camera.center,
       zoom: camera.zoom,
@@ -278,19 +296,9 @@ export default class extends Controller {
   async #setupScene() {
     const map = this.map
 
-    map.setFog({
-      "color": "#20519f",
-      "high-color": "#1a3374",
-      "space-color": "#030a1b",
-      "star-intensity": 0.6,
-      "horizon-blend": 0.03
-    })
-
-    // Strip roads, transit and labels from the Standard basemap for a clean
-    // globe that foregrounds the weather markers.
-    HIDDEN_BASEMAP_FEATURES.forEach((feature) => {
-      map.setConfigProperty("basemap", feature, false)
-    })
+    // Atmosphere and basemap config belong to the satellite style; the offline
+    // fallback has neither to configure.
+    if (!this.offline) this.#dressBasemap()
 
     await this.#registerIcons()
     this.#addMarkersLayer()
@@ -320,6 +328,22 @@ export default class extends Controller {
     this.#saveCamera()
 
     this.element.dataset.mapReady = "true"
+  }
+
+  // Space around the globe, and a basemap stripped of roads, transit and labels
+  // so the weather markers are what you look at.
+  #dressBasemap() {
+    this.map.setFog({
+      "color": "#20519f",
+      "high-color": "#1a3374",
+      "space-color": "#030a1b",
+      "star-intensity": 0.6,
+      "horizon-blend": 0.03
+    })
+
+    HIDDEN_BASEMAP_FEATURES.forEach((feature) => {
+      this.map.setConfigProperty("basemap", feature, false)
+    })
   }
 
   // Blank + disable the zoom-in/out button once its limit is reached.

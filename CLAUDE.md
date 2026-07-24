@@ -36,6 +36,8 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - Run system tests: `bin/rails test:system`
 - Run specific test file: `bin/rails test test/path/to/test_file.rb`
 - Run specific test method: `bin/rails test test/path/to/test_file.rb:LINE_NUMBER`
+- System tests need no credentials: the globe renders offline (see **Globe**),
+  so `bin/rails test:system` passes on a fresh checkout with no `master.key`.
 - Never let a system test play a real music track. A browser streaming one of
   the multi-MB files holds that connection — and one of the test server's few
   threads — open for the whole track; after about four page loads nothing else
@@ -183,7 +185,12 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   (upsert by `open_meteo_id`). Add more with `script/fetch_seed_cities.rb`.
   Weather is filled in afterwards by `RefreshAllWeatherJob`.
 - **Globe** (`MapsController#show` at `/map`): a full-bleed Mapbox globe
-  (`standard-satellite` style, `projection: globe`, custom fog + star field)
+  (`SATELLITE_STYLE`, `projection: globe`, custom fog + star field; with no
+  Mapbox token the controller builds the same globe on `OFFLINE_STYLE` — a
+  valid empty style plus `testMode`, so everything of ours still renders and
+  nothing is fetched from Mapbox. `config.x.mapbox_token_disabled` blanks
+  `MapsHelper#mapbox_token` in the test environment, so the suite always takes
+  that path: no credentials, no network, and the same behaviour as CI)
   driven by the `globe` Stimulus controller (`app/javascript/controllers/
   globe_controller.js`). Locations are served as GeoJSON from
   `MapsController#markers` (`/map/markers`, built by `LocationGeojson`) and

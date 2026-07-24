@@ -8,6 +8,13 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller=globe] [data-globe-target=map]"
   end
 
+  test "renders no Mapbox token in the test environment" do
+    get map_url
+    # config.x.mapbox_token_disabled keeps the suite off api.mapbox.com; the
+    # globe controller falls back to its offline style.
+    assert_select "[data-controller=globe][data-globe-token-value=?]", ""
+  end
+
   test "overlays a control bar with zoom/next buttons, a banner, and no app nav" do
     get map_url
     assert_select ".map-bar--top .wii-arrow", 3
