@@ -12,7 +12,10 @@ export default class extends Controller {
     const start = this.panelTargets.findIndex((p) => p.dataset.panel === this.defaultValue)
     this.index = start < 0 ? 0 : start
 
-    // Jump to the default panel without animating on first paint.
+    // locations/show already renders this state, so on a cold load this is a
+    // no-op. It still matters on a Turbo restore visit, whose cached snapshot
+    // carries the inline transform of whatever panel the visitor left on —
+    // jump back to the default without animating.
     this.trackTarget.style.transition = "none"
     this.#render()
     this.trackTarget.offsetHeight // force reflow so the jump is applied
@@ -50,7 +53,6 @@ export default class extends Controller {
   // Keep the arrow button in place at the ends — just disable it (greyed,
   // label cleared) so the whole button never disappears from the bar.
   #updateControl(control, label, neighbour) {
-    control.hidden = false
     const glyph = control.querySelector("span.wii-arrow__glyph")
     if (neighbour) {
       label.textContent = neighbour.dataset.title

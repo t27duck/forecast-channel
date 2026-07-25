@@ -1,6 +1,5 @@
 <% forecast = location.tomorrow_forecast %>
-<%= render layout: "locations/panels/frame",
-  locals: { key: "tomorrow", title: "Tomorrow" } do %>
+<%= render layout: "locations/panels/frame", locals: { key: "tomorrow" } do %>
   <div class="wii-sixhour-zone" data-controller="sixhour" data-action="click->sixhour#toggle"
     data-sixhour-day-value="<%= weekday_name(forecast["date"]) %>">
     <div class="wii-conditions">

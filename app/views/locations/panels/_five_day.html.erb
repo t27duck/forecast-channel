@@ -1,5 +1,4 @@
-<%= render layout: "locations/panels/frame",
-  locals: { key: "five_day", title: "5-Day Forecast" } do %>
+<%= render layout: "locations/panels/frame", locals: { key: "five_day" } do %>
   <% if location.five_day_forecast.present? %>
     <div class="wii-fiveday">
       <% location.five_day_forecast.each do |day| %>

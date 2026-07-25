@@ -2,9 +2,11 @@
   A forecast panel body — the only part that slides. The silver bars, green
   header, and footer are fixed chrome rendered once in locations/show. Used as a
   partial layout:
-    render layout: "locations/panels/frame", locals: { key:, title: } do ... end
-  data-title feeds the fixed header + silver-bar labels via the forecast controller.
+    render layout: "locations/panels/frame", locals: { key: } do ... end
+  The title comes from ForecastsHelper::PANELS, the one list that also fixes the
+  panels' order; data-title feeds the fixed header + silver-bar labels via the
+  forecast controller.
 %>
-<div class="wii-panel-body" data-panel="<%= key %>" data-title="<%= title %>" data-forecast-target="panel">
+<div class="wii-panel-body" data-panel="<%= key %>" data-title="<%= panel_title(key) %>" data-forecast-target="panel">
   <%= yield %>
 </div>

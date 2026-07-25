@@ -77,7 +77,9 @@ summary,
 
 .wii__track {
   height: 100%;
-  /* transform is set inline by the forecast Stimulus controller */
+  /* The initial transform is rendered inline by locations/show, so the first
+     paint is already the default panel; the forecast Stimulus controller takes
+     it from there. */
   transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

@@ -1,5 +1,4 @@
-<%= render layout: "locations/panels/frame",
-  locals: { key: "current", title: "Current" } do %>
+<%= render layout: "locations/panels/frame", locals: { key: "current" } do %>
   <div class="wii-conditions">
     <div class="wii-conditions__text">
       <div class="wii-temp wii-temp--white"><%= forecast_temperature(location.current_temperature) %></div>

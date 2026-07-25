@@ -51,6 +51,18 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".wii-header__location", text: @location.name
   end
 
+  # No JavaScript runs here, so this is exactly what the browser paints first.
+  test "show renders the default panel's state, so the first paint needs no JavaScript" do
+    get location_url(@location)
+
+    assert_select ".wii[data-active-panel=?]", "current"
+    assert_select ".wii__track[style=?]", "transform: translateY(-300%)"
+    assert_select ".wii-header__title", text: "Current"
+    assert_select "[data-forecast-target=prevLabel]", text: "Laundry Index"
+    assert_select "[data-forecast-target=nextLabel]", text: "Today"
+    assert_select ".wii-arrow[hidden]", false, "the arrows must not need JavaScript to appear"
+  end
+
   test "the current location plays the current track and links Globe to it" do
     write_signed_cookie(:current_location_id, locations(:berlin).id)
     get location_url(locations(:berlin))

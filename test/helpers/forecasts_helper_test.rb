@@ -9,6 +9,28 @@ class ForecastsHelperTest < ActionView::TestCase
     @current_setting ||= Setting.new
   end
 
+  test "panel_track_style scrolls the track to the panel, one track height per step" do
+    assert_equal "transform: translateY(-0%)", panel_track_style("uv")
+    assert_equal "transform: translateY(-300%)", panel_track_style("current")
+    assert_equal "transform: translateY(-600%)", panel_track_style("five_day")
+  end
+
+  test "panel_neighbour_title stops at the ends instead of looping" do
+    assert_equal "Laundry Index", panel_neighbour_title("current", -1)
+    assert_equal "Today", panel_neighbour_title("current", 1)
+    assert_nil panel_neighbour_title("uv", -1)
+    assert_nil panel_neighbour_title("five_day", 1)
+  end
+
+  test "every panel in the list has a title and a partial, and the default is one of them" do
+    ForecastsHelper::PANELS.each do |panel|
+      assert_not_nil panel_title(panel[:key])
+      assert File.exist?(Rails.root.join("app/views/locations/panels/_#{panel[:key]}.html.erb")),
+        "no partial for the #{panel[:key]} panel"
+    end
+    assert_includes ForecastsHelper::PANELS.pluck(:key), ForecastsHelper::DEFAULT_PANEL
+  end
+
   test "forecast_temperature formats with and without a degree sign" do
     assert_equal "18°", forecast_temperature(18.0)
     assert_equal "18", forecast_temperature(18.0, degree: false)

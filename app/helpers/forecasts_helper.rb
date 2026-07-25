@@ -2,6 +2,22 @@ module ForecastsHelper
   KMH_TO_MPH = 0.621371
   COMPASS = %w[N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW].freeze
 
+  # The panel stack in DOM order — the order the forecast controller slides
+  # through. +key+ names both the partial (locations/panels/_<key>) and the
+  # data-panel attribute; +title+ is the green header and the ▲/▼ bar label.
+  PANELS = [
+    { key: "uv",          title: "UV Index" },
+    { key: "air_quality", title: "Air Quality" },
+    { key: "laundry",     title: "Laundry Index" },
+    { key: "current",     title: "Current" },
+    { key: "today",       title: "Today" },
+    { key: "tomorrow",    title: "Tomorrow" },
+    { key: "five_day",    title: "5-Day Forecast" }
+  ].freeze
+
+  # The panel the detail view opens on.
+  DEFAULT_PANEL = "current"
+
   # The four 6-hour windows of a day, with their display time ranges. Order is
   # fixed so the overlay always shows overnight → morning → afternoon → evening.
   SIX_HOUR_WINDOWS = [
@@ -10,6 +26,38 @@ module ForecastsHelper
     { key: "afternoon", from: "12:00 p.m.", to: "6:00 p.m." },
     { key: "evening",   from: "6:00 p.m.",  to: "12:00 a.m." }
   ].freeze
+
+  # The panels to render, in the order they stack in the sliding track.
+  def forecast_panels
+    PANELS
+  end
+
+  # The panel the detail view opens on.
+  def default_panel
+    DEFAULT_PANEL
+  end
+
+  # A panel's green-header title, e.g. "5-Day Forecast".
+  def panel_title(key)
+    PANELS.find { |panel| panel[:key] == key }&.fetch(:title)
+  end
+
+  # The title of the panel above (-1) or below (+1) this one — the ▲/▼ bar
+  # labels. Nil at the ends, where the arrow greys out rather than looping.
+  def panel_neighbour_title(key, step)
+    index = PANELS.index { |panel| panel[:key] == key }.to_i + step
+    return nil if index.negative?
+
+    PANELS.dig(index, :title)
+  end
+
+  # The track rendered already scrolled to the given panel, so the first paint
+  # shows it — before the (deferred) JavaScript runs. The track is exactly one
+  # panel tall, so one step down the stack is 100% of it.
+  def panel_track_style(key)
+    index = PANELS.index { |panel| panel[:key] == key }.to_i
+    "transform: translateY(-#{index * 100}%)"
+  end
 
   # The four windows for a day ("today"/"tomorrow"), each with its time labels
   # and the stored data (nil when that window has no forecast yet).

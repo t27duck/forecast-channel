@@ -335,7 +335,12 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   + Up/Down keys). The three index panels share the `.wii-index` figure/boxes
   layout; the Laundry panel colours its rating and the Air Quality panel its
   category (`AirQuality.key_for`). Panels are partials under
-  `app/views/locations/panels/` wrapped in the shared `_frame` chrome; styling
+  `app/views/locations/panels/` wrapped in the shared `_frame` chrome; their
+  order, titles and the default are one list (`ForecastsHelper::PANELS` /
+  `DEFAULT_PANEL`), which `show` also uses to render the track **already
+  scrolled** to the default panel (`panel_track_style`) with the header and
+  ▲/▼ labels filled in — so the first paint is Current with no JavaScript and
+  no flash of the panels above it. Styling
   is the `.wii-*` block in
   `application.tailwind.css`; the app nav is hidden via `content_for
   :hide_app_nav`. Detailed glossy weather icons come from `WeatherIconsHelper`
