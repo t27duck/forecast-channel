@@ -1,5 +1,8 @@
 class MapsController < ApplicationController
   allow_unauthenticated_access
+  # The globe is a visitor screen, so it waits until they've told us where they
+  # live; #markers is only data and stays open.
+  before_action :require_current_location, only: %i[show]
 
   def show
     @locations = Location.by_name

@@ -35,4 +35,16 @@ class SettingTest < ActiveSupport::TestCase
   test "convert_temperature passes through nil" do
     assert_nil Setting.new.convert_temperature(nil)
   end
+
+  test "units_for seeds the units a country actually uses" do
+    assert_equal({ temperature_unit: "fahrenheit", wind_unit: "mph" }, Setting.units_for("US"))
+    assert_equal({ temperature_unit: "fahrenheit" }, Setting.units_for("LR"))
+    assert_equal({ temperature_unit: "fahrenheit" }, Setting.units_for("KY"))
+    assert_equal({ wind_unit: "mph" }, Setting.units_for("GB"))
+  end
+
+  test "units_for leaves everywhere else on the defaults" do
+    assert_empty Setting.units_for("DE")
+    assert_empty Setting.units_for(nil)
+  end
 end

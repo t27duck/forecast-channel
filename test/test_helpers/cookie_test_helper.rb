@@ -17,6 +17,12 @@ module CookieTestHelper
     jar[name] = cookies[name.to_s]
     jar.signed[name]
   end
+
+  # Forgets a cookie, so a test can play a visitor who hasn't been here before.
+  # Rack::Test's jar matches on the string name, and drops a symbol silently.
+  def forget_cookie(name)
+    cookies.delete(name.to_s)
+  end
 end
 
 ActiveSupport.on_load(:action_dispatch_integration_test) do

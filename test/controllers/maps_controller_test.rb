@@ -1,6 +1,15 @@
 require "test_helper"
 
 class MapsControllerTest < ActionDispatch::IntegrationTest
+  setup { write_signed_cookie(:current_location_id, locations(:berlin).id) }
+
+  test "the globe waits until a closest location has been chosen" do
+    forget_cookie(:current_location_id)
+
+    get map_url
+    assert_redirected_to settings_location_path
+  end
+
   test "renders the globe container pointing at the markers feed" do
     get map_url
     assert_response :success

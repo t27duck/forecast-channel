@@ -28,4 +28,14 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     # loudly here if the credentials were rejected (form still on screen).
     assert_no_field "Username", wait: 5
   end
+
+  # The app holds a visitor on the picker until they've chosen their closest
+  # location, so most screens need one first. The cookie is signed and
+  # httponly, so a browser can only get it by going through the picker — this
+  # jumps straight to the country's list of places to keep it to two loads.
+  def choose_location(location)
+    visit settings_location_path(country: location.country)
+    click_button location.name
+    assert_selector ".settings__value", text: location.name, wait: 5
+  end
 end

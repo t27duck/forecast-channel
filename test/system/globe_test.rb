@@ -1,6 +1,8 @@
 require "application_system_test_case"
 
 class GlobeTest < ApplicationSystemTestCase
+  setup { choose_location(locations(:berlin)) } # the globe is gated on having one
+
   test "renders the globe and adds the location markers layer" do
     visit map_path
 

@@ -22,6 +22,9 @@
   --cursor-point: url("cursors/point-1-32.png") 11 2, pointer;
   --cursor-open-hand: url("cursors/open-hand-1-32.png") 16 16, grab;
   --cursor-grab: url("cursors/grab-1-32.png") 16 14, grabbing;
+  /* Height of the silver bars. Global, because every full-screen view (the
+     forecast, the globe, settings, the picker) reuses them. */
+  --chrome: clamp(40px, 7vh, 56px);
 }
 
 html,
@@ -48,7 +51,6 @@ summary,
    A vertical stack of full-screen panels that slide up/down between each other.
 --------------------------------------------------------------------------- */
 .wii {
-  --chrome: clamp(40px, 7vh, 56px);
   --panel-bg: radial-gradient(130% 90% at 32% 32%, #2f74d6 0%, #103a86 55%, #0a2360 100%);
   display: flex;
   flex-direction: column;
@@ -265,10 +267,9 @@ summary,
 }
 
 /* Map control bar ------------------------------------------------------ */
-/* The globe overlays have no .wii ancestor, so define here the custom props
+/* The globe overlays have no .wii ancestor, so define here the custom prop
    the reused .wii-top bar expects. */
 .map-view {
-  --chrome: clamp(40px, 7vh, 56px);
   --panel-bg: #0a1a3a;
   /* dark recess behind a pressed button, over space */
 }
@@ -969,15 +970,10 @@ summary,
   background: linear-gradient(#ffffff, #e4e8ec);
 }
 
+/* A .wii-bottom bar (see above) with a divider, because what sits above it here
+   is a blue row rather than the edge of a panel. */
 .settings__footer {
-  flex: none;
-  display: flex;
-  align-items: center;
-  height: clamp(40px, 7vh, 56px);
-  padding: 0 clamp(14px, 3vw, 30px);
-  background: linear-gradient(#f6f6f6, #d7d7d7);
   border-top: 1px solid #b4b4b4;
-  font-weight: 600;
 }
 
 /* ---------------------------------------------------------------------------
@@ -1048,6 +1044,43 @@ summary,
   outline: none;
 }
 
+/* The first row of the country list is an action rather than a place, so it
+   takes the Wii's green and reads apart from the blue list under it. */
+.picker__row--locate {
+  background:
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0 2px, transparent 2px 9px),
+    linear-gradient(90deg, #54c520 0%, #2f8f10 100%);
+}
+
+.picker__row--locate:hover,
+.picker__row--locate:focus-visible {
+  background: linear-gradient(90deg, #6fdc38 0%, #3fa81a 100%);
+  color: #fff;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* While the browser is asking for permission. */
+.picker__row--locate:disabled {
+  filter: saturate(0.45);
+}
+
+/* The row is hidden until the geolocate controller confirms the browser can
+   locate at all; the notice appears only after a refusal. Both need the
+   attribute selector to beat .picker__row's display. */
+.picker__row--locate[hidden],
+.picker__notice[hidden] {
+  display: none;
+}
+
+.picker__notice {
+  padding: clamp(10px, 2vh, 18px) clamp(12px, 3vw, 30px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.22);
+  background: rgba(6, 22, 60, 0.45);
+  text-align: center;
+  font-size: clamp(14px, 2.2vh, 20px);
+  color: rgba(255, 255, 255, 0.92);
+}
+
 .picker__empty {
   padding: clamp(24px, 6vh, 60px);
   text-align: center;
@@ -1055,25 +1088,9 @@ summary,
   color: rgba(255, 255, 255, 0.85);
 }
 
+/* A .wii-bottom bar with a divider and a narrower centre slot, so ▲ and ▼ sit
+   together rather than spanning a full third of the screen. */
 .picker__bar {
-  flex: none;
-  display: grid;
   grid-template-columns: 1fr clamp(160px, 22vw, 260px) 1fr;
-  align-items: center;
-  height: clamp(40px, 7vh, 56px);
-  background: linear-gradient(#f6f6f6, #d7d7d7);
   border-top: 1px solid #b4b4b4;
-}
-
-.picker__bar-slot {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding: 0 clamp(14px, 3vw, 30px);
-}
-
-.picker__bar-slot--center {
-  justify-content: center;
-  gap: clamp(24px, 6vw, 60px);
-  border-inline: 1px solid #bcbcbc;
 }

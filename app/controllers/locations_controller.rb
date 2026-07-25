@@ -1,27 +1,23 @@
 class LocationsController < ApplicationController
   allow_unauthenticated_access only: %i[show]
+  # A forecast is only worth showing once someone has told us where they live;
+  # the management screens stay reachable so the first location can be added.
+  before_action :require_current_location, only: %i[show]
   before_action :set_location, only: %i[edit update destroy refresh]
 
   def index
     @locations = Location.by_name
   end
 
-  # The Wii-style paneled forecast. Reached at /locations/:slug (a specific
-  # location) or at the root path (the current location).
+  # The Wii-style paneled forecast, at /locations/:slug. The root path redirects
+  # here for the visitor's own location (see HomeController).
   def show
-    @location = params[:slug] ? Location.find_by!(slug: params[:slug]) : current_location
-
-    if @location.nil?
-      redirect_to new_location_path, notice: "Add a location to see its forecast."
-    else
-      # Viewing your own location sends the Globe button home (centred on it);
-      # any other location's Globe button resumes the saved map view.
-      @is_current_location = @location.id == current_location&.id
-      # On the root path with no chosen location yet, ask the browser to locate.
-      @auto_locate = params[:slug].nil? && cookies.signed[:current_location_id].blank?
-      # Somewhere people actually look stays in the hourly refresh tier.
-      @location.mark_viewed!
-    end
+    @location = Location.find_by!(slug: params[:slug])
+    # Viewing your own location sends the Globe button home (centred on it);
+    # any other location's Globe button resumes the saved map view.
+    @is_current_location = @location.id == current_location.id
+    # Somewhere people actually look stays in the hourly refresh tier.
+    @location.mark_viewed!
   end
 
   # Prefilled from params when a geocoding search result is picked so the

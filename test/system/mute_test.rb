@@ -2,6 +2,8 @@ require "application_system_test_case"
 
 class MuteTest < ApplicationSystemTestCase
   test "the mute button toggles and remembers the muted state" do
+    choose_location(locations(:berlin))
+
     visit root_path
     execute_script("window.localStorage.clear()")
     visit root_path # start from a known (unmuted) state

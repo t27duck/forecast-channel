@@ -2,6 +2,7 @@ require "application_system_test_case"
 
 class ForecastDetailTest < ApplicationSystemTestCase
   setup do
+    choose_location(locations(:berlin)) # forecasts are gated on having one
     @location = Location.create!(
       name: "Testville", latitude: 30.0, longitude: -97.0, timezone: "America/Chicago",
       current_temperature: 20, current_condition_code: 2, uv_index: 6, uv_label: "High",

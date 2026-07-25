@@ -1,18 +1,12 @@
 class ApplicationController < ActionController::Base
   include Authentication
+  include CurrentLocation
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
   helper_method :current_setting
 
   private
-
-  # The user's "closest" location — a current_location_id cookie (set on the
-  # settings page) falling back to the first location. Shown at the root path.
-  def current_location
-    @current_location ||=
-      Location.find_by(id: cookies.signed[:current_location_id]) || Location.by_name.first
-  end
 
   # The visitor's display preferences (temperature and wind units), read from
   # their browser cookies so each visitor keeps their own.
@@ -21,11 +15,6 @@ class ApplicationController < ActionController::Base
       temperature_unit: cookies.signed[:temperature_unit],
       wind_unit: cookies.signed[:wind_unit]
     )
-  end
-
-  # Remembers which location is this visitor's closest.
-  def store_current_location(location)
-    store_visitor_cookie(:current_location_id, location.id)
   end
 
   # Every preference we keep for a visitor is stored the same way as the

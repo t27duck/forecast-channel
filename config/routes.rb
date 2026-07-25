@@ -38,6 +38,7 @@ Rails.application.routes.draw do
     post :refresh, on: :member
   end
 
-  # Root shows the current location's forecast; the globe lives at /map.
-  root "locations#show"
+  # The entry point: redirects to the current location's forecast (or to the
+  # picker when there isn't one yet). The globe lives at /map.
+  root "home#show"
 end

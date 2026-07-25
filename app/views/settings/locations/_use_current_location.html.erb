@@ -1,0 +1,15 @@
+<%# Pinned above the country list: hand the browser's coordinates to
+    CurrentLocationsController, which picks the nearest location we know about.
+    Hidden until the geolocate controller confirms the browser can do it. %>
+<%= form_with url: current_location_path, method: :post,
+  data: { controller: "geolocate" }, class: "picker__form" do %>
+  <%= hidden_field_tag :latitude, nil, data: { geolocate_target: "latitude" } %>
+  <%= hidden_field_tag :longitude, nil, data: { geolocate_target: "longitude" } %>
+
+  <button type="button" class="picker__row picker__row--locate" hidden
+    data-geolocate-target="button" data-action="geolocate#locate">
+    <span data-geolocate-target="label">Use My Current Location</span>
+  </button>
+
+  <p class="picker__notice" hidden data-geolocate-target="notice" role="status"></p>
+<% end %>

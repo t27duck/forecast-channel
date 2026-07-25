@@ -1,9 +1,11 @@
 class SettingsController < ApplicationController
   allow_unauthenticated_access
+  # Only #show: #update also backs the °C/°F toggle on the locations index,
+  # which has nothing to do with having chosen a closest location.
+  before_action :require_current_location, only: %i[show]
 
   def show
     @setting = current_setting
-    @current_location = current_location
   end
 
   # Stores the temperature or wind unit (whichever was submitted) in a cookie,

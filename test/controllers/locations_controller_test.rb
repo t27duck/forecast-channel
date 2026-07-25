@@ -3,17 +3,23 @@ require "test_helper"
 class LocationsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @location = locations(:berlin)
+    # Forecasts are gated on having chosen a closest location.
+    write_signed_cookie(:current_location_id, @location.id)
     sign_in_as(users(:one)) # managing locations is admin-only
   end
 
   test "forecast pages stay public when signed out" do
     sign_out
 
-    get root_url
-    assert_response :success
-
     get location_url(@location)
     assert_response :success
+  end
+
+  test "a forecast is out of reach until a location has been chosen" do
+    forget_cookie(:current_location_id)
+
+    get location_url(@location)
+    assert_redirected_to settings_location_path
   end
 
   test "managing locations requires signing in" do
@@ -96,37 +102,6 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_not_nil locations(:tokyo).reload.last_viewed_at
     assert_includes Location.hot, locations(:tokyo) # keeps it in the hourly tier
-  end
-
-  test "root shows the first location's forecast by default" do
-    get root_url
-    assert_response :success
-    assert_select "[data-controller~=forecast]"
-    assert_select ".wii-header__location", text: Location.by_name.first.name
-    assert_select "body[data-music-zone=?]", "current" # forecast music, not globe
-  end
-
-  test "root auto-locates only when no location cookie is set" do
-    get root_url
-    assert_select "[data-controller=geolocate]", true, "should ask the browser to locate on first visit"
-
-    write_signed_cookie(:current_location_id, locations(:tokyo).id)
-    get root_url
-    assert_select "[data-controller=geolocate]", false, "should not auto-locate once a location is chosen"
-  end
-
-  test "an unsigned location cookie from an older version is ignored" do
-    cookies[:current_location_id] = locations(:tokyo).id # plaintext, as the app once wrote
-
-    get root_url
-    assert_select ".wii-header__location", text: Location.by_name.first.name
-    assert_select "[data-controller=geolocate]", true, "an unverifiable cookie counts as unset"
-  end
-
-  test "root redirects to add a location when none exist" do
-    Location.delete_all
-    get root_url
-    assert_redirected_to new_location_path
   end
 
   test "index links each location to its detail view" do

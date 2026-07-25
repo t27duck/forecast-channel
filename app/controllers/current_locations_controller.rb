@@ -1,11 +1,17 @@
-# Sets the closest-location cookie from browser-provided coordinates (the
-# auto-detect on first visit), then shows that location's forecast.
+# Sets the closest-location cookie from browser-provided coordinates, posted by
+# the "Use My Current Location" row on the picker (see geolocate_controller.js).
 class CurrentLocationsController < ApplicationController
   allow_unauthenticated_access
+
   def create
     location = Location.nearest_to(params[:latitude], params[:longitude])
-    store_current_location(location) if location
 
-    redirect_to root_path
+    if location
+      store_current_location(location)
+      redirect_to settings_path
+    else
+      # Nothing to be near — back to the picker to choose by hand.
+      redirect_to settings_location_path
+    end
   end
 end

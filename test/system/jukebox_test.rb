@@ -1,6 +1,8 @@
 require "application_system_test_case"
 
 class JukeboxTest < ApplicationSystemTestCase
+  setup { choose_location(locations(:berlin)) }
+
   test "the music zone follows navigation and the player persists" do
     visit root_path
     assert_selector "#jukebox[data-controller=jukebox]", visible: :all

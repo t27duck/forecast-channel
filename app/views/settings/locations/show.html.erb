@@ -7,10 +7,12 @@
     elsif @states then "Choose the state or region closest to where you live."
     else "Choose the country closest to where you live."
     end
+  # Nil on the first step of first-time setup: there is no settings page to go
+  # back to until a location has been chosen.
   back_path =
     if @state.present? then settings_location_path(country: @country)
     elsif @country.present? then settings_location_path
-    else settings_path
+    elsif current_location then settings_path
     end
 %>
 
@@ -32,6 +34,7 @@
         <%= link_to state, settings_location_path(country: @country, state: state), class: "picker__row" %>
       <% end %>
     <% else %>
+      <%= render "settings/locations/use_current_location" %>
       <% @countries.each do |country| %>
         <%= link_to country, settings_location_path(country: country), class: "picker__row" %>
       <% end %>
@@ -41,11 +44,11 @@
     <% end %>
   </div>
 
-  <div class="picker__bar">
-    <div class="picker__bar-slot">
-      <%= link_to "Back", back_path, class: "wii-chrome-link" %>
+  <div class="wii-bottom picker__bar">
+    <div class="wii-bar__slot">
+      <%= link_to "Back", back_path, class: "wii-chrome-link" if back_path %>
     </div>
-    <div class="picker__bar-slot picker__bar-slot--center">
+    <div class="wii-bar__slot wii-bar__slot--center">
       <button type="button" class="wii-arrow" data-action="scroller#up" aria-label="Scroll up">
         <span class="wii-arrow__glyph">&#9650;</span>
       </button>
@@ -53,6 +56,6 @@
         <span class="wii-arrow__glyph">&#9660;</span>
       </button>
     </div>
-    <div class="picker__bar-slot"></div>
+    <div class="wii-bar__slot"></div>
   </div>
 </div>

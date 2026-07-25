@@ -8,7 +8,7 @@
     <div class="settings__row">
       <div class="settings__info">
         <div class="settings__label">Closest Location</div>
-        <div class="settings__value"><%= @current_location&.name || "None yet" %></div>
+        <div class="settings__value"><%= current_location.name %></div>
       </div>
       <div class="settings__control">
         <%= link_to "Change", settings_location_path, class: "settings__button" %>
@@ -40,7 +40,13 @@
     </div>
   </div>
 
-  <div class="settings__footer">
-    <%= link_to "Back", root_path, class: "wii-chrome-link" %>
+  <%# The same silver bar as the forecast screens, so "Back" is a slot-width
+      button with its label sitting where every other bar label sits. %>
+  <div class="wii-bottom settings__footer">
+    <div class="wii-bar__slot">
+      <%= link_to "Back", root_path, class: "wii-chrome-link" %>
+    </div>
+    <div class="wii-bar__slot wii-bar__slot--center"></div>
+    <div class="wii-bar__slot"></div>
   </div>
 </div>

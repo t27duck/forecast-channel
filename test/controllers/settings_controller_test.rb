@@ -1,10 +1,20 @@
 require "test_helper"
 
 class SettingsControllerTest < ActionDispatch::IntegrationTest
+  setup { write_signed_cookie(:current_location_id, locations(:berlin).id) }
+
   test "show renders the settings screen" do
     get settings_url
     assert_response :success
     assert_select ".settings__header", text: "Change Settings"
+    assert_select ".settings__value", text: locations(:berlin).name
+  end
+
+  test "show waits until a closest location has been chosen" do
+    forget_cookie(:current_location_id)
+
+    get settings_url
+    assert_redirected_to settings_location_path
   end
 
   test "update switches the temperature unit" do

@@ -13,6 +13,21 @@ class Setting
   DEFAULT_TEMPERATURE_UNIT = "celsius"
   DEFAULT_WIND_UNIT = "mph"
 
+  # The units these countries actually use day to day, keyed by ISO-2 code.
+  # Only the units worth writing are listed, so choosing a location anywhere
+  # else leaves the visitor on the defaults.
+  REGIONAL_UNITS = {
+    "US" => { temperature_unit: "fahrenheit", wind_unit: "mph" },
+    "LR" => { temperature_unit: "fahrenheit" },
+    "KY" => { temperature_unit: "fahrenheit" },
+    "GB" => { wind_unit: "mph" }
+  }.freeze
+
+  # The units to seed for someone whose closest location is in this country.
+  def self.units_for(country_code)
+    REGIONAL_UNITS.fetch(country_code, {})
+  end
+
   attr_reader :temperature_unit, :wind_unit
 
   def initialize(temperature_unit: nil, wind_unit: nil)

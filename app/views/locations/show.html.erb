@@ -3,14 +3,6 @@
 <%# Every forecast page plays the "current" track, whichever location it shows. %>
 <% content_for :music_zone, "current" %>
 
-<% if @auto_locate %>
-  <%= form_with url: current_location_path, method: :post,
-    data: { controller: "geolocate" }, class: "hidden" do %>
-    <%= hidden_field_tag :latitude, nil, data: { geolocate_target: "latitude" } %>
-    <%= hidden_field_tag :longitude, nil, data: { geolocate_target: "longitude" } %>
-  <% end %>
-<% end %>
-
 <%# The first paint must already be the default panel: the track is rendered
     pre-scrolled, the header titled and the ▲/▼ labels filled in, so nothing
     jumps when the (deferred) forecast controller connects. %>

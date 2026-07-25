@@ -59,6 +59,10 @@ location's current conditions.
   hostname `selenium`.
 - System tests need no secrets: the globe renders offline (see **Globe**), so
   `bin/rails test:system` passes on a fresh checkout with no env file at all.
+- Every visitor screen is gated on having chosen a closest location, so a system
+  test that visits one starts with `choose_location(locations(:berlin))`
+  (`ApplicationSystemTestCase`) — the cookie is signed and httponly, so a real
+  browser can only get it by going through the picker.
 - **Never let a system test play a real music track.** A browser streaming one
   of the multi-MB files holds that connection — and one of the test server's
   few threads — open for the whole track; after about four page loads nothing
@@ -146,8 +150,8 @@ location's current conditions.
   `ApplicationController` and adds a global `require_authentication`, so the app
   is **fail-closed**: every action needs a session unless it opts out with
   `allow_unauthenticated_access`. Only `LocationsController`'s management
-  actions and `SoundsController` stay protected — `LocationsController#show`
-  (the forecast/root), `MapsController`, `SettingsController`,
+  actions and `SoundsController` stay protected — `LocationsController#show`,
+  `HomeController` (the root), `MapsController`, `SettingsController`,
   `Settings::LocationsController`, `CurrentLocationsController` and
   `SessionsController` (`new`/`create`) all opt out. Sign-in is at
   `/session/new`; there's no password-reset flow. Integration tests use the
@@ -159,11 +163,22 @@ location's current conditions.
   is rejected), **httponly** and **permanent**, the same shape as the
   `session_id` cookie in `Authentication#start_new_session_for`. Reads go
   through `cookies.signed[...]`, so an unsigned value simply doesn't verify and
-  the app falls back to its default. `store_current_location` wraps it for the
-  closest-location cookie. In tests, `write_signed_cookie` /
-  `read_signed_cookie` (`test/test_helpers/cookie_test_helper.rb`) sign and
-  verify through a throwaway request's jar, since Rack::Test's own jar has no
-  `#signed`.
+  the app falls back to its default. In tests, `write_signed_cookie` /
+  `read_signed_cookie` / `forget_cookie`
+  (`test/test_helpers/cookie_test_helper.rb`) sign and verify through a
+  throwaway request's jar, since Rack::Test's own jar has no `#signed` (and
+  drops a symbol name).
+- **Current location** (`CurrentLocation` concern,
+  `app/controllers/concerns/current_location.rb`): reads the
+  `current_location_id` cookie with **no fallback** — "hasn't chosen one yet" is
+  a real state — and exposes it as a `helper_method`. `require_current_location`
+  redirects to the picker until they have; it's declared as a `before_action` on
+  exactly the visitor screens (`HomeController`, `LocationsController#show`,
+  `MapsController#show`, `SettingsController#show`) rather than being
+  fail-closed like authentication, so admin CRUD and the `/jobs` engine — which
+  also inherit `ApplicationController` — are never asked for a location.
+  `store_current_location` writes the cookie and then the regional units below,
+  so both ways of choosing (the picker and geolocation) behave the same.
 - **Setting** (`app/models/setting.rb`): a plain value object, **not** a DB
   record, holding a visitor's `temperature_unit` and `wind_unit`. Both live in
   the cookies above, so each visitor keeps their own.
@@ -172,6 +187,11 @@ location's current conditions.
   `SettingsController#update` writes the cookies, guarded by
   `Setting::TEMPERATURE_UNITS`/`WIND_UNITS`. Weather is stored canonically
   (Celsius, km/h) and converted at render time, so switching never re-fetches.
+  `Setting::REGIONAL_UNITS` (via `Setting.units_for`) maps a country code to the
+  units that country actually uses — Fahrenheit for `US`/`LR`/`KY`, mph for
+  `US`/`GB` — which `store_current_location` seeds for anyone who hasn't set
+  that unit themselves. Only differences from the defaults are listed, so
+  choosing anywhere else writes nothing.
 - **Jobs dashboard** (`/jobs`): [Mission Control — Jobs](https://github.com/rails/mission_control-jobs),
   mounted in `config/routes.rb`. Its controllers inherit the class named in
   `config/initializers/mission_control_jobs.rb` — `ApplicationController` —
@@ -183,10 +203,13 @@ location's current conditions.
 
 ### Screens
 
-- **Location detail** (`LocationsController#show`): the Wii Forecast
-  Channel-style paneled view, served at `/` for the current location and at
-  `/locations/:slug` for a specific one; redirects to add a location when none
-  exist. Seven full-screen panels — three `.wii-index` panels (UV, Air Quality,
+- **Entry point** (`HomeController#show` at `/`): redirects to the current
+  location's forecast, or — through `require_current_location` — to the picker
+  when there isn't one yet. It exists as its own controller so `/` has a home of
+  its own (a splash screen would go here) instead of `locations#show` doing
+  double duty.
+- **Location detail** (`LocationsController#show` at `/locations/:slug`): the
+  Wii Forecast Channel-style paneled view. Seven full-screen panels — three `.wii-index` panels (UV, Air Quality,
   Laundry) then Current, Today, Tomorrow, 5-Day — slide vertically, non-looping,
   via the `forecast` Stimulus controller (arrow buttons + Up/Down keys). Panels
   are partials under `app/views/locations/panels/` wrapped in the shared
@@ -202,7 +225,11 @@ location's current conditions.
   dimmed forecast, closed by Escape or another click (`sixhour` controller,
   `_six_hour` partial). Styling is the `.wii-*` block in
   `application.tailwind.css`, and the app nav is hidden via
-  `content_for :hide_app_nav`. The "Globe" button links to `/map?location=<slug>` from your own location and
+  `content_for :hide_app_nav`. The silver bar markup (`.wii-top`/`.wii-bottom`
+  plus three `.wii-bar__slot`s) is **shared** — settings and the picker use
+  `.wii-bottom` too, with a thin modifier each, so a slot-width "Back" button
+  lines up with "Locations"/"Globe" here. Bars outside `.wii` work because
+  `--chrome` is defined on `:root`. The "Globe" button links to `/map?location=<slug>` from your own location and
   plain `/map` from any other; the music zone follows the same distinction.
 - **Globe** (`MapsController#show` at `/map`): a full-bleed Mapbox globe
   (`SATELLITE_STYLE`, `projection: globe`, custom fog + star field) driven by
@@ -255,24 +282,29 @@ location's current conditions.
 - **Settings** (`SettingsController#show` at `/settings`): a Wii-style "Change
   Settings" page with Closest Location, Temperature Display and Wind Display
   rows. Temp/wind are toggles handled by `#update` (which also backs the °C/°F
-  toggle on the locations index); Closest Location opens the picker. Reached
-  from the detail view's top-right "Settings" link.
+  toggle on the locations index, and so is **not** gated on having a location);
+  Closest Location opens the picker. Reached from the detail view's top-right
+  "Settings" link.
 - **Location picker** (`Settings::LocationsController#show` at
   `/settings/location`): the Wii "choose closest location" screen — pick a
   country, then a location in it (`?country=` toggles the step). A country with
   more than `STATE_STEP_THRESHOLD` locations spread across several regions (the
   US today) gets an intermediate `?state=` step so the final city list isn't an
-  overwhelming scroll. `#update` writes the `current_location_id` cookie and
-  returns to settings. The `scroller` Stimulus controller drives the ▲/▼
-  buttons.
+  overwhelming scroll. `#update` stores the location (cookie plus regional
+  units) and returns to settings. The `scroller` Stimulus controller drives the
+  ▲/▼ buttons. This is also where **first-time setup** happens, so the country
+  step pins the geolocation row below and drops the "Back" link — until a
+  location exists there is nothing behind it.
 - **Geolocation** (`CurrentLocationsController#create` at `/current_location`):
-  on the root path with no location cookie, `LocationsController#show` marks the
-  page `@auto_locate` and renders a hidden form driven by the `geolocate`
-  Stimulus controller, which asks the browser for coordinates on load and posts
-  them. The controller picks the nearest stored location
-  (`Location.nearest_to`, Haversine) into the cookie and redirects to its
-  forecast. Denied or unavailable geolocation silently keeps the default. Needs
-  a secure origin (HTTPS/localhost) — browsers block geolocation otherwise.
+  the picker's green "Use My Current Location" row
+  (`settings/locations/_use_current_location`) posts browser coordinates, and
+  the controller stores the nearest known location (`Location.nearest_to`,
+  Haversine) and returns to settings. The `geolocate` Stimulus controller keeps
+  the row hidden until it knows the browser can locate, shows "Locating…" while
+  the prompt is up, and on refusal writes an inline `.picker__notice` rather
+  than a flash (the layout's flash strip would push these `100vh` screens down).
+  Needs a secure origin (HTTPS/localhost) — browsers block geolocation
+  otherwise, which is the path `test/system/geolocation_test.rb` exercises.
 - **Locations management** (`LocationsController`, `/locations`): CRUD, signed
   in only. "New location" searches by name (Turbo Frame proxy to the geocoding
   client) and pre-fills the form with the picked result's coordinates. Rows have
