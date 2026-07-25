@@ -93,4 +93,32 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "overcast", berlin["properties"]["icon_tomorrow"]
     assert_equal locations(:berlin).population, berlin["properties"]["population"]
   end
+
+  test "the markers feed is cached until a location changes" do
+    with_memory_cache do
+      get map_markers_url
+      cached = response.body
+
+      # update_column leaves updated_at alone, so the cache key doesn't move.
+      locations(:berlin).update_column(:current_condition_label, "Blizzard")
+      get map_markers_url
+      assert_equal cached, response.body, "should still be serving the built feed"
+
+      # A real save — as a weather refresh does — bumps updated_at and the key.
+      locations(:berlin).update!(current_condition_label: "Hail")
+      get map_markers_url
+      assert_includes response.body, "Hail"
+    end
+  end
+
+  private
+
+  # The test environment uses the null store, which never returns a hit.
+  def with_memory_cache
+    original = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+    yield
+  ensure
+    Rails.cache = original
+  end
 end

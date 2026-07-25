@@ -15,7 +15,7 @@ production:
   refresh_hot_weather:
     class: RefreshWeatherTierJob
     args: [ "hot" ]
-    schedule: every 2 hours
+    schedule: every hour
   refresh_cold_weather:
     class: RefreshWeatherTierJob
     args: [ "cold" ]

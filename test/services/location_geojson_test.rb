@@ -61,6 +61,16 @@ class LocationGeojsonTest < ActiveSupport::TestCase
     end
   end
 
+  # The globe's feed selects only COLUMNS, so anything feature/1 reads that
+  # isn't listed raises MissingAttributeError in production and nowhere else.
+  test "COLUMNS lists every column a feature reads" do
+    location = Location.create!(name: "Testville", latitude: 1.0, longitude: 2.0,
+      current_condition_code: 3, population: 100)
+    slim = Location.select(LocationGeojson::COLUMNS).find(location.id)
+
+    assert_nothing_raised { LocationGeojson.feature(slim) }
+  end
+
   test "a missing daily forecast falls back to the current icon" do
     location = Location.new(
       name: "Testville", latitude: 1.0, longitude: 2.0,

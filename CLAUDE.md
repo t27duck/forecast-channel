@@ -263,7 +263,15 @@ location's current conditions.
     (`/map/markers`, built by `LocationGeojson`) and drawn as a single **symbol
     layer**, so Mapbox's native collision (`icon/text-allow-overlap: false`)
     declutters when zoomed out and reveals more on zoom-in, with `population`
-    as the priority (`symbol-sort-key`). The controller rasterizes the SVG
+    as the priority (`symbol-sort-key`). Building the feed walks every
+    location, so the controller **caches the serialized JSON** — keyed on
+    `Location.all.cache_key` (one COUNT/MAX(updated_at) query, so a new
+    location or any weather refresh mints a new key) plus a
+    `MARKERS_FRESH_FOR` time bucket, which the day/night icons need because
+    `SolarPosition` turns over with the clock and nothing else. It also selects
+    only `LocationGeojson::COLUMNS`, keeping `five_day_forecast` and
+    `hourly_windows` — JSON columns Active Record parses on access — out of the
+    query entirely. The controller rasterizes the SVG
     glyphs in `app/javascript/lib/weather_icons.js` via `map.addImage`. The
     Current-view icon follows each city's local day/night via
     `SolarPosition.day?` (Today/Tomorrow always use the day icon). Hovering

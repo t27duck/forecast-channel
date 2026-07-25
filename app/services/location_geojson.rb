@@ -3,6 +3,18 @@
 # population, which the layer uses as a collision priority so larger cities win
 # when markers overlap.
 class LocationGeojson
+  # Every column feature/1 reads, and no more. Selecting these keeps the two
+  # largest JSON columns — five_day_forecast and hourly_windows, which the globe
+  # never shows — out of memory and, more to the point, unparsed: a `json`
+  # column on SQLite is text that Active Record parses on first access, so
+  # loading them costs real time once there are thousands of locations.
+  # location_geojson_test.rb guards that this list stays complete.
+  COLUMNS = %i[
+    id slug name latitude longitude population
+    current_temperature current_condition_code current_condition_label
+    today_forecast tomorrow_forecast
+  ].freeze
+
   def self.feature_collection(locations)
     {
       type: "FeatureCollection",
