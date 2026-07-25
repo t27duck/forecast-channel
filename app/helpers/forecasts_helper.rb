@@ -6,9 +6,9 @@ module ForecastsHelper
   # through. +key+ names both the partial (locations/panels/_<key>) and the
   # data-panel attribute; +title+ is the green header and the ▲/▼ bar label.
   PANELS = [
-    { key: "uv",          title: "UV Index" },
-    { key: "air_quality", title: "Air Quality" },
     { key: "laundry",     title: "Laundry Index" },
+    { key: "air_quality", title: "Air Quality" },
+    { key: "uv",          title: "UV Index" },
     { key: "current",     title: "Current" },
     { key: "today",       title: "Today" },
     { key: "tomorrow",    title: "Tomorrow" },
