@@ -22,4 +22,16 @@ class WeatherIconsHelperTest < ActionView::TestCase
   test "an unrecognized code renders the fallback mark" do
     assert_includes weather_icon(1234), UNKNOWN_FILL
   end
+
+  # The peeking sun's 12 o'clock ray ends exactly on y=0 where the sun is
+  # placed, so its round cap — half of stroke-width 3 — was shaved flat by the
+  # top of the viewBox until the composition was nudged inwards.
+  test "the partly-cloudy sun keeps its ray caps inside the viewBox" do
+    svg = weather_icon(GROUP_SAMPLES["partly"])
+    inset = svg.match(/<g transform="translate\(([\d.]+) ([\d.]+)\)">/)
+    assert_not_nil inset, "expected the sun and cloud to be inset from the corner"
+
+    assert_operator inset.captures.last.to_f, :>=, 1.5,
+      "the 12 o'clock ray's cap needs half a stroke width of clearance"
+  end
 end

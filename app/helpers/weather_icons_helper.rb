@@ -45,7 +45,7 @@ module WeatherIconsHelper
   def weather_icon_body(group, salt)
     case group
     when "clear" then sun(salt)
-    when "partly" then sun(salt, cx: 22, cy: 20, r: 11, rays: :upper) + cloud(salt)
+    when "partly" then partly_cloudy(salt)
     when "overcast" then cloud(salt, tint: :grey)
     when "fog" then cloud(salt, tint: :grey) + fog_lines
     when "drizzle" then cloud(salt) + drizzle_dots
@@ -58,6 +58,17 @@ module WeatherIconsHelper
     when "hail" then cloud(salt, tint: :storm) + lightning_bolt + hailstones
     else unknown_mark
     end
+  end
+
+  # The sun peeking out from behind a cloud.
+  #
+  # Nudged in from the top-left corner: at this placement the 12 o'clock ray
+  # ends exactly on y=0, so its round cap was shaved flat by the edge of the
+  # viewBox, and the 9 o'clock one cleared the left edge by half a unit. The
+  # cloud has room to spare below and to the left, so moving the pair together
+  # keeps their relationship and centres the composition a little better.
+  def partly_cloudy(salt)
+    %(<g transform="translate(2 4)">#{sun(salt, cx: 22, cy: 20, r: 11, rays: :upper)}#{cloud(salt)}</g>)
   end
 
   # A glossy sun. `rays: :upper` is for a sun peeking out from behind a cloud:
