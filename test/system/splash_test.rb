@@ -30,3 +30,14 @@ class SplashTest < ApplicationSystemTestCase
     assert_selector ".settings__header", text: "Change Settings"
   end
 end
+
+# Its own class so no location is chosen first: this is what a first-time
+# visitor, or a shared link, actually arrives at.
+class SplashWithoutALocationTest < ApplicationSystemTestCase
+  test "the loading screen plays and hands over to the picker" do
+    visit root_path
+
+    assert_selector ".splash__message", text: "One moment, please…"
+    assert_selector ".picker__prompt", text: "Choose the country closest to where you live.", wait: 15
+  end
+end

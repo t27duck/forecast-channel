@@ -179,10 +179,13 @@ location's current conditions.
   `current_location_id` cookie with **no fallback** — "hasn't chosen one yet" is
   a real state — and exposes it as a `helper_method`. `require_current_location`
   redirects to the picker until they have; it's declared as a `before_action` on
-  exactly the visitor screens (`HomeController`, `LocationsController#show`,
-  `MapsController#show`, `SettingsController#show`) rather than being
-  fail-closed like authentication, so admin CRUD and the `/jobs` engine — which
-  also inherit `ApplicationController` — are never asked for a location.
+  exactly the visitor screens (`LocationsController#show`, `MapsController#show`,
+  `SettingsController#show`) rather than being fail-closed like authentication,
+  so admin CRUD and the `/jobs` engine — which also inherit
+  `ApplicationController` — are never asked for a location. **`HomeController`
+  is deliberately not on that list**: the splash is what every arrival lands on,
+  a shared link's preview included, so it plays for everyone and hands over to
+  the picker itself (see **Splash**).
   `store_current_location` writes the cookie and then the regional units below,
   so both ways of choosing (the picker and geolocation) behave the same.
 - **Setting** (`app/models/setting.rb`): a plain value object, **not** a DB
@@ -216,8 +219,15 @@ location's current conditions.
   `prefers-reduced-motion` stills it). The `splash` Stimulus controller holds
   for `MIN_MS`, then `Turbo.visit`s the forecast with `action: "replace"` so the
   screen never enters history; a click or key press skips ahead **and** doubles
-  as the gesture the jukebox needs to start playing. First-time visitors never
-  see it — `require_current_location` sends them to the picker first.
+  as the gesture the jukebox needs to start playing.
+  - It carries **no `require_current_location`**, so it's the one visitor screen
+    that renders without a chosen location — a first-time visitor and a link
+    preview both get it. With no location the view points
+    `data-splash-url-value` at the picker instead of a forecast, and the same
+    beat plays before handing over. `@refresh` is therefore an explicit
+    `false`, never `nil`: Stimulus reads any value but `"0"`/`"false"` as true,
+    so a blank attribute would send a location-less splash off to refresh
+    weather it hasn't got.
   - The pause does real work: when the current location's weather is stale the
     view sets `data-splash-refresh-value`, and the controller fetches **the same
     URL as JSON**, which is where `#show` calls `refresh_weather!` synchronously
@@ -373,13 +383,30 @@ location's current conditions.
   caches forever, and the path comes from the blob's stable signed id, so it
   doesn't change between pages and playback never restarts on a Turbo
   navigation.
-- **App icon**: `public/icon.svg` is the source of truth — the glossy
-  sun-behind-cloud `WeatherIconsHelper` draws for "partly cloudy" on a
-  `#103a86` tile, with fatter rays so they survive at 16px.
-  `ruby script/build_favicons.rb` re-renders `public/icon.png` (512, also the
-  apple-touch-icon) and `public/favicon.ico` (16/32/48) from it. It's plain
+- **App icon and social card**: two SVGs are the source of truth, and
+  `ruby script/build_icons.rb` re-renders every raster from them. It's plain
   ruby, not `bin/rails runner`, because ruby-vips is a system gem rather than a
-  bundled one. All four `<link rel="icon">` tags live in the layout.
+  bundled one; the rasters are committed, so it's a manual step.
+  - `public/icon.svg` — the glossy sun-behind-cloud `WeatherIconsHelper` draws
+    for "partly cloudy" on a `#103a86` tile, with fatter rays so they survive at
+    16px → `public/icon.png` (512, also the apple-touch-icon) and
+    `public/favicon.ico` (16/32/48). All four `<link rel="icon">` tags live in
+    the layout.
+  - `public/og.svg` — the same mark full-bleed beside a wordmark →
+    `public/og.png` (1200×630), the OpenGraph card. The wordmark is live
+    `<text>`, so it sets in whatever sans-serif the machine running the script
+    has; **look at the result before committing it** rather than assuming, and
+    leave the right-hand margin generous because a substituted font sets wider
+    and an overflowing line is clipped, not wrapped.
+- **Link previews** (`app/views/layouts/_open_graph.html.erb`, rendered from the
+  layout's head): `og:*`, `twitter:card` and a plain `meta description`.
+  Deliberately **one card for the whole site**, not per-page — every visitor
+  screen but the splash is gated on `require_current_location` and a crawler
+  carries no cookie, so `/` is the only public page a preview ever reaches, and
+  per-location tags would be markup nothing reads. Absolute URLs come from
+  `request.base_url` (there's no `default_url_options` outside Action Mailer;
+  `config.assume_ssl` makes it `https://` in production), and `og:url` uses
+  `request.path` so a query string doesn't fragment the canonical URL.
 - **Cursors**: the Wii hand cursors in `app/assets/images/cursors/`, wired up as
   `--cursor-point` / `--cursor-open-hand` / `--cursor-grab` (with hotspots) at
   the top of `application.tailwind.css`. The CSS points at the `-32` (32×32)

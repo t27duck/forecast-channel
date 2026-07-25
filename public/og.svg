@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Forecast">
+  <!-- The link preview card, 1200x630. Same mark and same #103a86 as icon.svg —
+       the geometry is copied verbatim out of its 64-unit space so the two read
+       as one identity — but full-bleed rather than a rounded tile, and with the
+       wordmark beside it.
+
+       The wordmark is live <text>, so it renders in whichever of the fonts
+       below the machine running the build script actually has. og.png is
+       committed, so that happens once; regenerate it with
+       `ruby script/build_icons.rb` and look at the result before committing. -->
+  <defs>
+    <radialGradient id="sun" cx="42%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#fff3b0"/>
+      <stop offset="55%" stop-color="#ffd21e"/>
+      <stop offset="100%" stop-color="#ff9d00"/>
+    </radialGradient>
+    <linearGradient id="cloud" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd8ea"/>
+    </linearGradient>
+    <!-- Keeps a 1200x630 flat field from reading as dead space. -->
+    <radialGradient id="sky" cx="26%" cy="28%" r="82%">
+      <stop offset="0%" stop-color="#1a4ea8"/>
+      <stop offset="100%" stop-color="#103a86"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#sky)"/>
+
+  <g transform="translate(110 190) scale(4.6)">
+    <!-- Sun, peeking over the cloud's shoulder. Six of the eight rays, sweeping
+         from 7:30 round to 3 o'clock: only 4:30 and 6 are dropped, because
+         those are the two the cloud sits in front of. -->
+    <g stroke="#ffcf3f" stroke-width="4.6" stroke-linecap="round">
+      <line x1="12.4" y1="29.6" x2="8.5" y2="33.5"/>
+      <line x1="8.5" y1="20" x2="3" y2="20"/>
+      <line x1="12.4" y1="10.4" x2="8.5" y2="6.5"/>
+      <line x1="22" y1="6.5" x2="22" y2="1"/>
+      <line x1="31.6" y1="10.4" x2="35.5" y2="6.5"/>
+      <line x1="35.5" y1="20" x2="41" y2="20"/>
+    </g>
+    <circle cx="22" cy="20" r="11" fill="url(#sun)"/>
+    <ellipse cx="18.2" cy="15.6" rx="4.4" ry="3.1" fill="#fff7cf" opacity="0.55"/>
+
+    <!-- Cloud, in front. -->
+    <g fill="url(#cloud)">
+      <circle cx="23" cy="40" r="11"/>
+      <circle cx="38" cy="35" r="14"/>
+      <circle cx="47" cy="41" r="10"/>
+      <rect x="19" y="40" width="30" height="11" rx="5.5"/>
+    </g>
+    <ellipse cx="34" cy="27" rx="8" ry="4" fill="#ffffff" opacity="0.7"/>
+  </g>
+
+  <!-- Sized with room to spare on the right: a substituted font sets wider than
+       the one named here, and an overflowing subtitle is clipped, not wrapped. -->
+  <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+    <text x="430" y="320" font-size="112" font-weight="700" fill="#ffffff">Forecast</text>
+    <text x="434" y="380" font-size="34" font-weight="400" fill="#a9c6f5">The Wii Forecast Channel, on the web</text>
+  </g>
+</svg>

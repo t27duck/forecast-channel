@@ -12,13 +12,15 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <%= render "layouts/open_graph" %>
+
     <%= yield :head %>
 
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
     <%# Sun-behind-cloud on a Wii-blue tile; regenerate the raster pair from
-        icon.svg with `ruby script/build_favicons.rb`. %>
+        icon.svg with `ruby script/build_icons.rb`. %>
     <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="icon" href="/icon.png" type="image/png" sizes="512x512">

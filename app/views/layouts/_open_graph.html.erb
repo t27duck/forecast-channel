@@ -1,0 +1,39 @@
+<%# Link preview card. One card for the whole site rather than per-page: every
+    visitor screen but this one is gated on require_current_location, and a
+    crawler carries no cookie, so the splash at / is the only public page a
+    preview ever reaches.
+
+    Absolute URLs are required here, and request.base_url is the only host the
+    app knows — there's no default_url_options outside Action Mailer. It gives
+    https:// in production via config.assume_ssl.
+
+    og.png lives in public/ alongside the favicons; regenerate it from og.svg
+    with `ruby script/build_icons.rb`. %>
+<%
+  title = "Forecast"
+  description = "The Nintendo Wii's Forecast Channel, rebuilt for the web: " \
+    "a paneled forecast for the place you call home, and a globe showing " \
+    "conditions everywhere else."
+  # request.path, not original_url — a query string like ?location=berlin
+  # shouldn't fragment the canonical URL across previews of the same page.
+  url = request.base_url + request.path
+  image = request.base_url + "/og.png"
+%>
+<meta name="description" content="<%= description %>">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="<%= title %>">
+<meta property="og:title" content="<%= title %>">
+<meta property="og:description" content="<%= description %>">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="<%= url %>">
+<meta property="og:image" content="<%= image %>">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Forecast — a sun behind a cloud on a Wii-blue field">
+
+<%# Only the card type: Twitter falls back to the og: tags above for the title,
+    description and image, so repeating them here would just be drift waiting
+    to happen. %>
+<meta name="twitter:card" content="summary_large_image">

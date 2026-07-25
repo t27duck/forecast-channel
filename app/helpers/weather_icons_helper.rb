@@ -60,10 +60,13 @@ module WeatherIconsHelper
     end
   end
 
-  # A glossy sun. `rays: :upper` draws only the top-left rays (for peeking suns).
+  # A glossy sun. `rays: :upper` is for a sun peeking out from behind a cloud:
+  # six of the eight rays, sweeping from 7:30 round to 3 o'clock, dropping only
+  # the 4:30 and 6 o'clock ones the cloud sits in front of. Matches the mark in
+  # public/icon.svg and public/og.svg, which are drawn by hand in this space.
   def sun(salt, cx: 32, cy: 30, r: 15, rays: :all)
     id = "sun-#{salt}"
-    directions = rays == :upper ? [ 180, 225, 270, 315 ] : (0..315).step(45).to_a
+    directions = rays == :upper ? [ 135, 180, 225, 270, 315, 0 ] : (0..315).step(45).to_a
     ray_lines = directions.map { |deg|
       rad = deg * Math::PI / 180
       x1 = cx + Math.cos(rad) * (r + 3)

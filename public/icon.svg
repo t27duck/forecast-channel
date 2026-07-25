@@ -18,14 +18,17 @@
   <rect width="512" height="512" rx="64" fill="#103a86"/>
 
   <g transform="translate(60 86) scale(6.6)">
-    <!-- Sun, peeking over the cloud's shoulder: upper rays only. Shorter and
-         fatter than the panel artwork's, which washed out into the tile at
-         16px. -->
+    <!-- Sun, peeking over the cloud's shoulder. Six of the eight rays, sweeping
+         from 7:30 round to 3 o'clock: only 4:30 and 6 are dropped, because
+         those are the two the cloud sits in front of. Shorter and fatter than
+         the panel artwork's, which washed out into the tile at 16px. -->
     <g stroke="#ffcf3f" stroke-width="4.6" stroke-linecap="round">
+      <line x1="12.4" y1="29.6" x2="8.5" y2="33.5"/>
       <line x1="8.5" y1="20" x2="3" y2="20"/>
       <line x1="12.4" y1="10.4" x2="8.5" y2="6.5"/>
       <line x1="22" y1="6.5" x2="22" y2="1"/>
       <line x1="31.6" y1="10.4" x2="35.5" y2="6.5"/>
+      <line x1="35.5" y1="20" x2="41" y2="20"/>
     </g>
     <circle cx="22" cy="20" r="11" fill="url(#sun)"/>
     <ellipse cx="18.2" cy="15.6" rx="4.4" ry="3.1" fill="#fff7cf" opacity="0.55"/>

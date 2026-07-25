@@ -1,8 +1,10 @@
 # The way in: the Wii-style loading screen, which hands over to your own
-# location's forecast.
+# location's forecast — or, for someone who hasn't chosen one yet, to the
+# picker. Deliberately no require_current_location: this is the screen every
+# arrival lands on, including a shared link's preview, so it plays its beat for
+# everyone rather than being skipped by a redirect.
 class HomeController < ApplicationController
   allow_unauthenticated_access
-  before_action :require_current_location
 
   # Asked for as JSON, this does the work the screen is covering — refreshing
   # weather that has gone stale — and answers once it's done, so the splash can
@@ -14,8 +16,17 @@ class HomeController < ApplicationController
     @location = current_location
 
     respond_to do |format|
-      format.html { @refresh = @location.weather_stale? }
-      format.json { render json: { refreshed: @location.weather_stale? && @location.refresh_weather! } }
+      format.html { @refresh = stale_weather? }
+      format.json { render json: { refreshed: stale_weather? && @location.refresh_weather! } }
     end
+  end
+
+  private
+
+  # False rather than nil when nobody has chosen a location yet: Stimulus reads
+  # any value but "0"/"false" as true, so a blank attribute would send the
+  # splash off to refresh weather it hasn't got.
+  def stale_weather?
+    @location.present? && @location.weather_stale?
   end
 end

@@ -51,16 +51,22 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_equal before.to_i, locations(:berlin).reload.weather_refreshed_at.to_i
   end
 
-  test "root sends a first-time visitor to the location picker" do
+  test "the splash still plays for a first-time visitor, handing over to the picker" do
     get root_url
-    assert_redirected_to settings_location_path
+
+    assert_response :success
+    assert_select ".splash__message", text: "One moment, please…"
+    assert_select ".splash[data-splash-url-value=?]", settings_location_path
+    # Never blank: Stimulus reads anything but "0"/"false" as true, which would
+    # send a location-less splash off to refresh weather it hasn't got.
+    assert_select ".splash[data-splash-refresh-value=?]", "false"
   end
 
   test "an unsigned location cookie from an older version counts as unset" do
     cookies[:current_location_id] = locations(:tokyo).id # plaintext, as the app once wrote
 
     get root_url
-    assert_redirected_to settings_location_path
+    assert_select ".splash[data-splash-url-value=?]", settings_location_path
   end
 
   test "a location cookie pointing at a deleted location counts as unset" do
@@ -68,6 +74,27 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     locations(:tokyo).destroy
 
     get root_url
-    assert_redirected_to settings_location_path
+    assert_select ".splash[data-splash-url-value=?]", settings_location_path
+  end
+
+  # The link preview card. The splash is the only public page a crawler reaches
+  # — every other visitor screen is gated on require_current_location, and a
+  # crawler carries no cookie — so it's asserted here, without one.
+  test "the splash carries the OpenGraph card, with absolute URLs" do
+    get root_url
+
+    assert_select "meta[property='og:type'][content=?]", "website"
+    assert_select "meta[property='og:title'][content=?]", "Forecast"
+    assert_select "meta[property='og:url'][content=?]", "http://www.example.com/"
+    assert_select "meta[property='og:image'][content=?]", "http://www.example.com/og.png"
+    assert_select "meta[property='og:image:width'][content=?]", "1200"
+    assert_select "meta[name='twitter:card'][content=?]", "summary_large_image"
+    assert_select "meta[name=description]"
+  end
+
+  test "og:url drops the query string, so one page is one card" do
+    get root_url(utm_source: "slack")
+
+    assert_select "meta[property='og:url'][content=?]", "http://www.example.com/"
   end
 end
