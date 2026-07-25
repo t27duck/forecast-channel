@@ -1,6 +1,12 @@
 <% content_for :title, "Globe" %>
 <% content_for :music_zone, "globe" %>
 <% content_for :hide_app_nav, true %>
+<%# Mapbox is only needed here, so it ships as its own bundle. %>
+<% content_for :javascript do %>
+  <%# No data-turbo-track here: a tracked asset that only some pages carry makes
+      Turbo full-reload on the way in and on the way out. %>
+  <%= javascript_include_tag "globe", type: "module" %>
+<% end %>
 
 <div
   class="relative map-view"

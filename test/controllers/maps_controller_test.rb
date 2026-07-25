@@ -44,6 +44,20 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-globe-center-value]", false
   end
 
+  # Mapbox rides in its own bundle, which only this page pulls in.
+  test "the globe page loads the globe bundle on top of the main one" do
+    get map_url
+    assert_select "script[src*=?]", "/assets/globe", 1
+    assert_select "script[src*=?]", "/assets/application", 1
+  end
+
+  test "a forecast page loads the main bundle only" do
+    get location_url(locations(:berlin))
+    assert_select "script[src*=?]", "/assets/application", 1
+    assert_select "script[src*=?]", "/assets/globe", false,
+      "the forecast view must not pay for Mapbox"
+  end
+
   test "the globe selects the globe music zone" do
     get map_url
     assert_select "body[data-music-zone=?]", "globe"

@@ -22,7 +22,18 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   exporting into the shell. The two container values go through `env.secret` +
   `.kamal/secrets` (read after that ERB runs), not `env.clear`, which keeps them
   in a `0600` env file on the host rather than on the `docker run` command line.
-- Javascript: esbuild and Node 24 with Stimulus controllers
+- Javascript: esbuild and Node 24 with Stimulus controllers, minified. Every
+  top-level file in `app/javascript` is an entry point, and there are **two**:
+  `application.js` for the app, and `globe.js` for the map page alone. The split
+  exists because mapbox-gl is ~90% of the weight and only the globe wants it, so
+  every other page loads ~40KB gzipped instead of ~560KB. `globe.js` registers
+  the globe controller against `window.Stimulus` (so `maps/show` must include it
+  *after* the main bundle), which is why `controllers/index.js` deliberately
+  doesn't — a `stimulus:manifest:update` puts it back and quietly undoes the
+  split, so `test/javascript_bundles_test.rb` guards it. Note esbuild's
+  `--splitting` is **not** usable here: it emits chunk imports that Propshaft
+  digests the filenames of without rewriting the specifiers, so every chunk 404s
+  in production and the whole bundle dies.
 - CSS: Tailwind CSS
 - File uploads: Active Storage
 - Authentication: Rails auth generator with bcrypt
@@ -244,7 +255,10 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   just exported in the shell: no secrets, no network, and the same behaviour as
   CI)
   driven by the `globe` Stimulus controller (`app/javascript/controllers/
-  globe_controller.js`). Locations are served as GeoJSON from
+  globe_controller.js`), which reaches the page through this view's own bundle
+  (`app/javascript/globe.js`, included via the layout's `yield :javascript` —
+  deliberately without `data-turbo-track`, which would make Turbo full-reload
+  both entering and leaving the map). Locations are served as GeoJSON from
   `MapsController#markers` (`/map/markers`, built by `LocationGeojson`) and
   drawn as a single **symbol layer** so Mapbox's native collision
   (`icon/text-allow-overlap: false`) declutters overlapping markers when zoomed
