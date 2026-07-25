@@ -323,11 +323,13 @@ location's current conditions.
     **In system tests a bar that has slid away can't be clicked — move the
     pointer first** (`wake_chrome` in `test/system/globe_test.rb`).
 - **Settings** (`SettingsController#show` at `/settings`): a Wii-style "Change
-  Settings" page with Closest Location, Temperature Display and Wind Display
-  rows. Temp/wind are toggles handled by `#update` (which also backs the °C/°F
-  toggle on the locations index, and so is **not** gated on having a location);
-  Closest Location opens the picker. Reached from the detail view's top-right
-  "Settings" link.
+  Settings" page with Closest Location, Temperature Display, Wind Display and
+  Sound rows. Temp/wind are toggles handled by `#update` (which also backs the
+  °C/°F toggle on the locations index, and so is **not** gated on having a
+  location); Closest Location opens the picker. Sound is the odd one out — a
+  client-side toggle sharing the mute button's `localStorage` rather than a
+  cookie (see **Background music**), so it never reaches `#update` at all.
+  Reached from the detail view's top-right "Settings" link.
 - **Location picker** (`Settings::LocationsController#show` at
   `/settings/location`): the Wii "choose closest location" screen — pick a
   country, then a location in it (`?country=` toggles the step). A country with
@@ -368,10 +370,23 @@ location's current conditions.
   `content_for :music_zone`) and the time of day (day 7am–7pm, night
   otherwise), flipping at those boundaries; because it only reloads the source
   when that source *changes*, staying in one zone across navigations never
-  interrupts playback. The zone is "globe" on the map and "current" on every
-  forecast page. Autoplay starts on the first user gesture (tracks use
-  `preload="none"`). A mute button in the detail view's top bar (`mute`
-  controller, connected via an outlet) remembers the choice in `localStorage`.
+  interrupts playback. Autoplay starts on the first user gesture (tracks use
+  `preload="none"`).
+  - Zones are **opt-in**: "globe" on the map, "current" on every forecast page,
+    and anything that names no zone — the splash, settings, the picker, the
+    admin screens — is **silent**, which the layout's default (`"silent"`) makes
+    the safe case for any new page. `#trackSrc` returns null there and `refresh`
+    *pauses* rather than clearing the source, so the track keeps its position
+    and returning to a musical screen resumes mid-track instead of starting
+    over. A zone whose track was never uploaded is silent the same way, rather
+    than letting the previous screen's music run on. The gesture listener goes
+    through `refresh` too, so a click on a silent screen starts nothing.
+  - Muting lives in `localStorage` (`jukeboxMuted`) and has two UIs sharing that
+    one store, both the `mute` controller talking to the jukebox through an
+    outlet: the icon button in the detail view's top bar, and the Sound row on
+    the settings page. It is deliberately *not* a visitor cookie like the units
+    — muting has to take effect mid-track, and those cookies are httponly, so
+    JavaScript couldn't write one anyway.
 - **Sound** (`app/models/sound.rb`, `SoundsController` at `/sounds`): an
   uploaded track, one per `kind` (`current_day`/`current_night`/`globe_day`/
   `globe_night` — what the jukebox picks between), with the MP3 in Active

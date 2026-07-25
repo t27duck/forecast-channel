@@ -12,6 +12,21 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".wii-bottom a[href=?]", location_path(locations(:berlin)), text: "Back"
   end
 
+  test "show offers a Sound row wired to the jukebox" do
+    get settings_url
+
+    assert_select ".settings__row[data-controller=mute][data-mute-jukebox-outlet=?]", "#jukebox" do
+      assert_select ".settings__label", text: "Sound"
+      assert_select "[data-mute-target=label]"
+      assert_select "button[data-action=?]", "mute#toggle", text: "Change"
+    end
+  end
+
+  test "the settings screen plays no music" do
+    get settings_url
+    assert_select "body[data-music-zone=?]", "silent"
+  end
+
   test "show waits until a closest location has been chosen" do
     forget_cookie(:current_location_id)
 

@@ -33,7 +33,9 @@
     <%= yield :javascript %>
   </head>
 
-  <body class="min-h-screen bg-slate-100 text-slate-900" data-music-zone="<%= content_for(:music_zone).presence || "current" %>">
+  <%# Music is opt-in per screen: anything that doesn't name a zone is silent,
+      so settings, the picker and the splash don't inherit the forecast track. %>
+  <body class="min-h-screen bg-slate-100 text-slate-900" data-music-zone="<%= content_for(:music_zone).presence || "silent" %>">
     <%# Background music — uploaded at /sounds, persists across Turbo
         navigations (see jukebox_controller.js). A slot with no upload is blank,
         which the controller treats as "no track". %>

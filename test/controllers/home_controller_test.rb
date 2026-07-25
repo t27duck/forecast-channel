@@ -13,6 +13,13 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav", false, "the splash should hide the app nav"
   end
 
+  test "the splash plays no music" do
+    write_signed_cookie(:current_location_id, locations(:tokyo).id)
+
+    get root_url
+    assert_select "body[data-music-zone=?]", "silent"
+  end
+
   test "the splash waits for a refresh only when the weather is stale" do
     write_signed_cookie(:current_location_id, locations(:berlin).id) # refreshed 30 minutes ago
     get root_url

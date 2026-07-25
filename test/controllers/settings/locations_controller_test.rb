@@ -9,6 +9,11 @@ class Settings::LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".picker__row", text: locations(:tokyo).country  # Japan
   end
 
+  test "the picker plays no music" do
+    get settings_location_url
+    assert_select "body[data-music-zone=?]", "silent"
+  end
+
   test "the country step offers the browser's own location, the later steps don't" do
     get settings_location_url
     assert_select "form[action=?] .picker__row--locate", current_location_path,

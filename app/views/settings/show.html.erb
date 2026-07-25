@@ -38,6 +38,21 @@
           class: "settings__button" %>
       </div>
     </div>
+
+    <%# Client-side, unlike the rows above: muting has to take effect mid-track,
+        and the visitor cookies are httponly so JavaScript can't write one
+        anyway. localStorage is the single store, shared with the forecast bar's
+        mute button — this row and that button always agree. "On" is just the
+        pre-connect value; the controller corrects it from the jukebox. %>
+    <div class="settings__row" data-controller="mute" data-mute-jukebox-outlet="#jukebox">
+      <div class="settings__info">
+        <div class="settings__label">Sound</div>
+        <div class="settings__value" data-mute-target="label">On</div>
+      </div>
+      <div class="settings__control">
+        <button type="button" class="settings__button" data-action="mute#toggle">Change</button>
+      </div>
+    </div>
   </div>
 
   <%# The same silver bar as the forecast screens, so "Back" is a slot-width

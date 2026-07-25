@@ -3,8 +3,8 @@ import { Controller } from "@hotwired/stimulus"
 // Wii-style background music. Picks a track from the current zone (the forecast
 // screens vs the globe, via <body data-music-zone>) and the time of day (day
 // 7am–7pm, night otherwise), and flips at those boundaries while the app stays
-// open. Browsers block autoplay until a user gesture, so the first click/keypress
-// starts it.
+// open. Screens that name no zone are silent. Browsers block autoplay until a
+// user gesture, so the first click/keypress starts it.
 //
 // The Audio and its current source live at MODULE scope, not on the controller
 // instance: the player element is data-turbo-permanent, but Turbo moves it
@@ -42,7 +42,8 @@ export default class extends Controller {
     this.timer = setInterval(() => this.refresh(), 60_000)
 
     // Autoplay is blocked until the user interacts; start on the first gesture.
-    this.onGesture = () => this.#play()
+    // Through refresh, so a gesture on a silent screen doesn't start anything.
+    this.onGesture = () => this.refresh()
     document.addEventListener("pointerdown", this.onGesture)
     document.addEventListener("keydown", this.onGesture)
   }
@@ -57,7 +58,12 @@ export default class extends Controller {
 
   refresh() {
     const src = this.#trackSrc()
-    if (src && src !== currentSrc) {
+    // A silent screen, or a zone whose track was never uploaded. Pause rather
+    // than clear the source: the track keeps its position, so returning to a
+    // musical screen picks up where it left off instead of starting over.
+    if (!src) return audio.pause()
+
+    if (src !== currentSrc) {
       currentSrc = src
       audio.src = src
     }
@@ -68,12 +74,23 @@ export default class extends Controller {
     return audio.muted
   }
 
+  // Whether anything is actually sounding. Nothing in the app reads this; it
+  // lets a system test assert that a silent screen really is silent, which the
+  // zone attribute alone can't show.
+  get paused() {
+    return audio.paused
+  }
+
   // Flip mute, remember it, and (when unmuting) make sure playback is running.
   // Returns the new muted state so the button can update.
+  //
+  // Through refresh rather than play: the source left loaded by the last
+  // musical screen is still there, paused, so unmuting on a silent screen —
+  // the Sound row on the settings page — must not resume it.
   toggleMuted() {
     audio.muted = !audio.muted
     window.localStorage.setItem("jukeboxMuted", audio.muted ? "1" : "0")
-    if (!audio.muted) this.#play()
+    if (!audio.muted) this.refresh()
     return audio.muted
   }
 
@@ -87,12 +104,17 @@ export default class extends Controller {
     document.removeEventListener("keydown", this.onGesture)
   }
 
+  // The track for this screen, or null where music doesn't belong. Zones are
+  // opt-in (<body data-music-zone>, from content_for :music_zone), so anything
+  // that doesn't ask for music — settings, the picker, the splash, the admin
+  // screens — is silent by default rather than inheriting the forecast's track.
   #trackSrc() {
-    const onGlobe = document.body.dataset.musicZone === "globe"
+    const zone = document.body.dataset.musicZone
     const hour = new Date().getHours()
     const isDay = hour >= DAY_START_HOUR && hour < DAY_END_HOUR
 
-    if (onGlobe) return isDay ? this.globeDayValue : this.globeNightValue
-    return isDay ? this.currentDayValue : this.currentNightValue
+    if (zone === "globe") return isDay ? this.globeDayValue : this.globeNightValue
+    if (zone === "current") return isDay ? this.currentDayValue : this.currentNightValue
+    return null
   }
 }
