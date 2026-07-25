@@ -1,13 +1,20 @@
+<%# Everything host-specific in this file comes from .env.production.local, which
+    is gitignored — so no address, hostname or secret is checked in. Loading it
+    here rather than relying on the shell means `bin/kamal deploy` needs no
+    setup beyond filling the file in (copy .example.env.production.local).
+    Dotenv.load doesn't overwrite, so an exported variable still wins. %>
+<% require "dotenv"; Dotenv.load(".env.production.local") if File.exist?(".env.production.local") %>
+
 # Name of your application. Used to uniquely configure containers.
-service: forecast
+service: forecastchannel
 
 # Name of the container image (use your-user/app-name on external registries).
-image: forecast
+image: <%= ENV["KAMAL_REGISTRY_IMAGE"] %>
 
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
+    - <%= ENV["SERVER_HOST"] %>
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -20,9 +27,12 @@ servers:
 #
 # Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
 #
-# proxy:
-#   ssl: true
-#   host: app.example.com
+proxy:
+  ssl: <%= ENV["PROXY_SSL"] == "true" %>
+  host: <%= ENV["PROXY_HOST"] %>
+  run:
+    http_port: <%= ENV["PROXY_HTTP_PORT"] %>
+    https_port: <%= ENV["PROXY_HTTPS_PORT"] %>
 
 # Where you keep your container images.
 registry:
@@ -36,7 +46,11 @@ registry:
   # password:
   #   - KAMAL_REGISTRY_PASSWORD
 
-# Inject ENV variables into containers (secrets come from .kamal/secrets).
+# Inject ENV variables into containers. Both lists ultimately come from
+# .env.production.local — the clear ones read here via the ERB load at the top of
+# this file, the secret ones via .kamal/secrets, which Kamal reads afterwards.
+# Anything sensitive belongs under secret: those are uploaded to the host as a
+# 0600 --env-file, while clear values ride on the `docker run` command line.
 env:
   secret:
     - SECRET_KEY_BASE
@@ -53,7 +67,7 @@ env:
     # WEB_CONCURRENCY: 2
 
     # Match this to any external database server to configure Active Record correctly
-    # Use forecast-db for a db accessory server on same machine via local kamal docker network.
+    # Use forecastdb for a db accessory server on same machine via local kamal docker network.
     # DB_HOST: 192.168.0.2
 
     # Log everything from Rails
@@ -70,7 +84,7 @@ aliases:
 # Use a persistent storage volume for sqlite database files and local Active Storage files.
 # Recommended to change this to a mounted volume path that is backed up off server.
 volumes:
-  - "forecast_storage:/rails/storage"
+  - "forecastchannel_storage:/rails/storage"
 
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old
@@ -89,10 +103,11 @@ builder:
   #   RUBY_VERSION: ruby-4.0.6
   # secrets:
   #   - GITHUB_TOKEN
+  #   - RAILS_MASTER_KEY
 
 # Use a different ssh user than root
-# ssh:
-#   user: app
+ssh:
+  user: <%= ENV["SSH_USERNAME"] %>
 
 # Use accessory services (secrets come from .kamal/secrets).
 # accessories:

@@ -22,15 +22,13 @@ and blank templates are checked in:
 - `.example.env.development.local` → copy to `.env.development.local` for local
   work. Only `MAPBOX_TOKEN` (the globe's Mapbox access token) is needed.
 - `.example.env.production.local` → copy to `.env.production.local` for
-  deploys. It holds the host, registry and secret values; export them into your
-  shell before `bin/kamal deploy` (`set -a; source .env.production.local; set
-  +a`), because `.kamal/secrets` pulls `SECRET_KEY_BASE` and `MAPBOX_TOKEN`
-  from the environment to pass into the container (see `config/deploy.yml`).
+  deploys. It drives the whole Kamal config — see **Deployment** below.
 
 Every file is environment-scoped on purpose: there is no plain `.env`, so a
 value meant for production is never set while you're running in development or
-test. In particular the test suite sees no `MAPBOX_TOKEN` unless you put one in
-a `.env.test.local` of your own.
+test. In particular the test suite sees no `MAPBOX_TOKEN`: `test/test_helper.rb`
+clears the variable however the machine came by it, so the globe always renders
+on its offline style and no test reaches api.mapbox.com.
 
 Nothing here is required to run the app or the tests — an unset `MAPBOX_TOKEN`
 just means the globe renders without satellite imagery.
@@ -132,6 +130,46 @@ their own units. There's also a quick °C/°F toggle on the `/locations` list.
 bin/rails test          # unit + controller + service tests
 bin/rails test:system   # system tests (headless Chrome via Selenium)
 ```
+
+## Deployment
+
+Deploys are [Kamal](https://kamal-deploy.org). `config/deploy.yml` opens with an
+ERB line that loads `.env.production.local` itself, so nothing has to be
+exported into your shell first — fill the file in and deploy:
+
+```bash
+cp .example.env.production.local .env.production.local   # then fill it in
+bin/kamal setup    # first time
+bin/kamal deploy   # thereafter
+```
+
+Everything host-specific is read from that file, which is why the checked-in
+`config/deploy.yml` carries no addresses or secrets:
+
+| Variable | Used for |
+| --- | --- |
+| `SERVER_HOST` | the web server Kamal deploys to |
+| `SSH_USERNAME` | the SSH user on it |
+| `KAMAL_REGISTRY_IMAGE` | the container image name |
+| `PROXY_HOST` | the hostname kamal-proxy serves |
+| `PROXY_SSL` | `true` to auto-certify with Let's Encrypt |
+| `PROXY_HTTP_PORT` / `PROXY_HTTPS_PORT` | the ports kamal-proxy binds |
+| `SECRET_KEY_BASE` | injected into the container (`bin/rails secret` generates one) |
+| `MAPBOX_TOKEN` | injected into the container, for the globe |
+
+The last two are declared under `env.secret` and referenced from
+`.kamal/secrets`, which Kamal reads after the ERB above has loaded them — so
+they still need nothing exported, but Kamal uploads them to the host as a `0600`
+env file instead of putting them on the `docker run` command line.
+
+Check what a change renders to before deploying:
+
+```bash
+bin/kamal config
+```
+
+Because dotenv doesn't overwrite variables that are already set, anything
+exported in your shell still wins over the file.
 
 ## Background music
 

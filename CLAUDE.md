@@ -11,7 +11,13 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - Backgorund Jobs: Solid Queue
 - Caching: Solid Cache
 - WebSockets: Solid Cable
-- Deployment: Kamal
+- Deployment: Kamal — `config/deploy.yml` opens with an ERB line that
+  `Dotenv.load`s `.env.production.local`, so the server, SSH user, registry
+  image, proxy host/ports and the two container values (`SECRET_KEY_BASE`,
+  `MAPBOX_TOKEN`) all come from that one gitignored file and nothing needs
+  exporting into the shell. The two container values go through `env.secret` +
+  `.kamal/secrets` (read after that ERB runs), not `env.clear`, which keeps them
+  in a `0600` env file on the host rather than on the `docker run` command line.
 - Javascript: esbuild and Node 24 with Stimulus controllers
 - CSS: Tailwind CSS
 - File uploads: Active Storage
