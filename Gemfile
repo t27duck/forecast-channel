@@ -30,6 +30,10 @@ gem "solid_cache"
 gem "solid_queue"
 gem "solid_cable"
 
+# Web dashboard for the job queues at /jobs, behind the app's own sign-in
+# [https://github.com/rails/mission_control-jobs]
+gem "mission_control-jobs"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 

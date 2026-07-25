@@ -105,13 +105,33 @@ Cached weather is fetched from Open-Meteo and refreshed periodically:
   "Refresh all" (enqueues background jobs).
 - **Automatically**: two schedules in `config/recurring.yml` — the **hot** tier
   (the biggest cities plus anywhere viewed in the last week) refreshes hourly,
-  and everywhere else every 6 hours. Run the Solid Queue worker with `bin/jobs`
-  to process enqueued and recurring jobs.
+  and everywhere else every 6 hours. Those schedules are declared for production
+  only, so a worker you run locally won't start calling Open-Meteo by itself.
 
 Requests are **batched**: up to 50 locations are fetched per HTTP call rather
 than one call each, so a full sweep of ~200 cities takes a handful of requests
 instead of hundreds. Together with the tiers this cuts daily requests from
 roughly 4,900 to ~40, and roughly a third of the API quota.
+
+## Jobs
+
+Jobs run on [Solid Queue](https://github.com/rails/solid_queue) in development
+too, not the async adapter, so an enqueued job outlives a server restart and you
+can watch it run. Development keeps its own queue database
+(`storage/development_queue.sqlite3`) alongside the main one, the way production
+does — `bin/rails db:prepare` creates it.
+
+`bin/dev` starts a worker next to the web server; on its own it's:
+
+```bash
+bin/jobs
+```
+
+[Mission Control — Jobs](https://github.com/rails/mission_control-jobs) serves a
+dashboard at **`/jobs`** for queues, workers, and failed jobs (with retry and
+discard). It's admin-only, behind the same sign-in as location management rather
+than the HTTP basic auth the gem defaults to — signed out, `/jobs` sends you to
+the usual sign-in page. Signed in, there's a "Jobs" link in the app nav.
 
 ## Settings
 

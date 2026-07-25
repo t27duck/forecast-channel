@@ -26,6 +26,11 @@ Rails.application.routes.draw do
   # Background-music tracks (admin only).
   resources :sounds, except: %i[show]
 
+  # Solid Queue dashboard (admin only — its controllers inherit
+  # ApplicationController, so the app's sign-in guards it; see
+  # config/initializers/mission_control_jobs.rb).
+  mount MissionControl::Jobs::Engine, at: "/jobs"
+
   # Addressed by slug (Location#to_param), so the segment is :slug, not :id.
   resources :locations, param: :slug do
     get :search, on: :collection

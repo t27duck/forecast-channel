@@ -8,7 +8,11 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - Rails: 8.1
 - Database: SQLite
 - Asset Pipeline: Propshaft
-- Backgorund Jobs: Solid Queue
+- Backgorund Jobs: Solid Queue — in **development** as well as production, not
+  the async adapter, so an enqueued job survives a restart and is visible in the
+  dashboard. Development mirrors production's database layout with a second
+  `queue` database (`storage/development_queue.sqlite3`); `bin/dev` runs a
+  worker alongside the server.
 - Caching: Solid Cache
 - WebSockets: Solid Cable
 - Deployment: Kamal — `config/deploy.yml` opens with an ERB line that
@@ -37,7 +41,7 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - Seed major world cities: `bin/rails db:seed` (idempotent; see `db/seeds.rb`)
 - Build CSS: `npm run build:css`
 - Build Javascript: `npm run build`
-- Run background worker: `bin/jobs`
+- Run background worker: `bin/jobs` (also started by `bin/dev`)
 
 ## Test Commands
 
@@ -138,7 +142,19 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   `Location#mark_viewed!` from `LocationsController#show`, throttled);
   `Location.cold` is the remainder. `RefreshAllWeatherJob` still refreshes
   everything (the "Refresh all" button) and `RefreshLocationWeatherJob` still
-  does a single location. Run the worker with `bin/jobs`.
+  does a single location. Run the worker with `bin/jobs` (`bin/dev` already
+  does). Recurring tasks are declared for production only, so a development
+  worker never fires the hourly refresh at Open-Meteo on its own.
+- **Jobs dashboard** (`/jobs`): [Mission Control — Jobs]
+  (https://github.com/rails/mission_control-jobs), mounted in `config/routes.rb`.
+  Its controllers inherit the class named in
+  `config/initializers/mission_control_jobs.rb` — `ApplicationController`, whose
+  `Authentication` concern makes the app fail-closed — so the dashboard is
+  admin-only through the app's own sign-in, and the gem's HTTP basic auth is
+  switched off there. Because the engine has its own route set,
+  `Authentication#request_authentication` redirects with
+  `main_app.new_session_path`; a bare `new_session_path` raises inside the
+  engine. Linked from the app nav for signed-in admins.
 - **Setting** (`app/models/setting.rb`): a plain value object (not a DB record)
   holding a visitor's display preferences — `temperature_unit`
   (celsius/fahrenheit) and `wind_unit` (mph/kph). Both are **per-visitor**,

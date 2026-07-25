@@ -31,7 +31,12 @@ module Authentication
 
     def request_authentication
       session[:return_to_after_authenticating] = request.url
-      redirect_to new_session_path
+      # main_app, because this also guards controllers inside a mounted engine
+      # (Mission Control's /jobs dashboard inherits ApplicationController). Route
+      # helpers there resolve against the engine's routes, which know nothing of
+      # our sign-in page, so a bare new_session_path raises instead of
+      # redirecting.
+      redirect_to main_app.new_session_path
     end
 
     def after_authentication_url

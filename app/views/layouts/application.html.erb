@@ -49,6 +49,7 @@
           <%= link_to "Locations", locations_path, class: "text-sm text-slate-600 hover:text-slate-900" %>
           <% if authenticated? %>
             <%= link_to "Sounds", sounds_path, class: "text-sm text-slate-600 hover:text-slate-900" %>
+            <%= link_to "Jobs", mission_control_jobs.root_path, class: "text-sm text-slate-600 hover:text-slate-900", data: { turbo: false } %>
           <% end %>
         </div>
       </nav>
