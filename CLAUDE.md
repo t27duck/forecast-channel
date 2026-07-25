@@ -1,441 +1,344 @@
 ## Overview
 
-Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
+Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel:
+a Wii-style paneled forecast per location, plus a Mapbox globe showing every
+location's current conditions.
 
 ## Technology Stack
 
-- Ruby: 4.0
-- Rails: 8.1
-- Database: SQLite
-- Asset Pipeline: Propshaft
-- Backgorund Jobs: Solid Queue — in **development** as well as production, not
-  the async adapter, so an enqueued job survives a restart and is visible in the
-  dashboard. Development mirrors production's database layout with a second
-  `queue` database (`storage/development_queue.sqlite3`); `bin/dev` runs a
-  worker alongside the server.
-- Caching: Solid Cache
-- WebSockets: Solid Cable
-- Deployment: Kamal — `config/deploy.yml` opens with an ERB line that
-  `Dotenv.load`s `.env.production.local`, so the server, SSH user, registry
-  image, proxy host/ports and the two container values (`SECRET_KEY_BASE`,
-  `MAPBOX_TOKEN`) all come from that one gitignored file and nothing needs
-  exporting into the shell. The two container values go through `env.secret` +
-  `.kamal/secrets` (read after that ERB runs), not `env.clear`, which keeps them
-  in a `0600` env file on the host rather than on the `docker run` command line.
-- Javascript: esbuild and Node 24 with Stimulus controllers, minified. Every
-  top-level file in `app/javascript` is an entry point, and there are **two**:
-  `application.js` for the app, and `globe.js` for the map page alone. The split
-  exists because mapbox-gl is ~90% of the weight and only the globe wants it, so
-  every other page loads ~40KB gzipped instead of ~560KB. `globe.js` registers
-  the globe controller against `window.Stimulus` (so `maps/show` must include it
-  *after* the main bundle), which is why `controllers/index.js` deliberately
-  doesn't — a `stimulus:manifest:update` puts it back and quietly undoes the
-  split, so `test/javascript_bundles_test.rb` guards it. Note esbuild's
-  `--splitting` is **not** usable here: it emits chunk imports that Propshaft
-  digests the filenames of without rewriting the specifiers, so every chunk 404s
-  in production and the whole bundle dies.
-- CSS: Tailwind CSS
-- File uploads: Active Storage
-- Authentication: Rails auth generator with bcrypt
-- Secrets: dotenv, environment-scoped only (`.env.<environment>.local`; there
-  is deliberately no plain `.env`, so production values are never set in
-  development or test) — there are **no** Rails credentials (no
-  `config/credentials.yml.enc`, no `master.key`)
-- Maps: Mapbox (Documentation: https://docs.mapbox.com/mapbox-gl-js/api/)
-- Weather source: Open-Meteo (Documentation: https://open-meteo.com/en/docs and https://open-meteo.com/en/docs/geocoding-api)
+- Ruby 4.0, Rails 8.1, SQLite, Propshaft, Tailwind CSS, Active Storage
+- **Background jobs**: Solid Queue in **development** as well as production —
+  not the async adapter, so an enqueued job survives a restart and shows up in
+  the dashboard. Development mirrors production's layout with a second `queue`
+  database (`storage/development_queue.sqlite3`); `bin/dev` runs a worker
+  alongside the server.
+- **Caching / WebSockets**: Solid Cache, Solid Cable
+- **JavaScript**: esbuild + Node 24, Stimulus, minified. Every top-level file
+  in `app/javascript` is an entry point, and there are **two**:
+  `application.js` for the app and `globe.js` for the map page alone. The split
+  exists because mapbox-gl is ~90% of the weight and only the globe wants it,
+  so every other page loads ~40KB gzipped instead of ~560KB. `globe.js`
+  registers the globe controller against `window.Stimulus` (so `maps/show` must
+  include it *after* the main bundle), which is why `controllers/index.js`
+  deliberately doesn't — a `stimulus:manifest:update` puts it back and quietly
+  undoes the split, so `test/javascript_bundles_test.rb` guards it. esbuild's
+  `--splitting` is **not** usable here: it emits chunk imports whose filenames
+  Propshaft digests without rewriting the specifiers, so every chunk 404s in
+  production.
+- **Secrets**: dotenv, environment-scoped only (`.env.<environment>.local`;
+  there is deliberately no plain `.env`, so production values never leak into
+  development or test). There are **no** Rails credentials — no
+  `config/credentials.yml.enc`, no `master.key`.
+- **Deployment**: Kamal. `config/deploy.yml` opens with an ERB line that
+  `Dotenv.load`s `.env.production.local`, so server, SSH user, registry image,
+  proxy host/ports and the two container values (`SECRET_KEY_BASE`,
+  `MAPBOX_TOKEN`) all come from that one gitignored file — nothing needs
+  exporting into the shell. The container values go through `env.secret` +
+  `.kamal/secrets` (read after that ERB runs), not `env.clear`, which keeps
+  them in a `0600` env file on the host rather than on the `docker run`
+  command line.
+- **Authentication**: Rails auth generator with bcrypt
+- **External APIs**: [Mapbox](https://docs.mapbox.com/mapbox-gl-js/api/) for
+  the globe; [Open-Meteo](https://open-meteo.com/en/docs) (and its
+  [geocoding API](https://open-meteo.com/en/docs/geocoding-api)) for weather
 
 ## Build Commands
 
-- Start development server: `bin/dev` (uses Foreman with Procfile.dev)
+- Start development server: `bin/dev` (Foreman with `Procfile.dev`)
 - Start Rails only: `bin/rails server`
 - Install dependencies: `bundle install` and `npm install`
 - Seed major world cities: `bin/rails db:seed` (idempotent; see `db/seeds.rb`)
-- Build CSS: `npm run build:css`
-- Build Javascript: `npm run build`
+- Build CSS: `npm run build:css` — Build JavaScript: `npm run build`
 - Run background worker: `bin/jobs` (also started by `bin/dev`)
 
 ## Test Commands
 
-- Headless Chrome via selenium is available running in a separate container on port 45678 under the docker hostname selenium.
-- Run all tests: `bin/rails test`
-- Run system tests: `bin/rails test:system`
-- Run specific test file: `bin/rails test test/path/to/test_file.rb`
-- Run specific test method: `bin/rails test test/path/to/test_file.rb:LINE_NUMBER`
+- Run all tests: `bin/rails test` — system tests: `bin/rails test:system`
+- One file: `bin/rails test test/path/to/file.rb`; one test: append `:LINE`
+- Headless Chrome via Selenium runs in a separate container, port 45678, docker
+  hostname `selenium`.
 - System tests need no secrets: the globe renders offline (see **Globe**), so
   `bin/rails test:system` passes on a fresh checkout with no env file at all.
-- Never let a system test play a real music track. A browser streaming one of
-  the multi-MB files holds that connection — and one of the test server's few
-  threads — open for the whole track; after about four page loads nothing else
-  could be served and Turbo navigations hung at random. That's why
+- **Never let a system test play a real music track.** A browser streaming one
+  of the multi-MB files holds that connection — and one of the test server's
+  few threads — open for the whole track; after about four page loads nothing
+  else can be served and Turbo navigations hang at random. That's why
   `test/fixtures/files/track.mp3` is 58 bytes and no system test attaches a
   `Sound`.
 
 ## Domain Concepts
 
-- **Location** (`app/models/location.rb`): a place tracked on the globe. Holds
-  geocoding data (name, latitude/longitude, country, admin1/region, timezone,
-  elevation) plus cached weather. Addressed in URLs by its **slug**, not its id
-  (`to_param`; `resources :locations, param: :slug`, so controllers look it up
-  with `find_by!(slug: params[:slug])` and a numeric id 404s). The slug is
+### Data and weather
+
+- **Location** (`app/models/location.rb`): a place tracked on the globe —
+  geocoding data plus cached weather (current conditions, UV, air quality,
+  feels-like, humidity and precipitation as flat columns; today/tomorrow,
+  the 6-hour windows and the 5-day forecast as JSON columns). See
+  `db/schema.rb` for the full set. `weather_stale?` gates refresh (1-hour TTL)
+  and `refresh_weather!` fetches and stores fresh weather, plus air quality
+  best-effort.
+  Addressed in URLs by **slug**, not id (`to_param`;
+  `resources :locations, param: :slug`, so controllers use
+  `find_by!(slug: params[:slug])` and a numeric id 404s). The slug is
   `[name, admin1, country]` parameterized and joined with `-`
-  ("berlin-berlin-germany"); a `before_validation` rebuilds it whenever those
-  parts change, so renaming a location changes its URL, and a slug another row
-  already holds gains a `-2`/`-3` suffix (unique index). Ids stay internal —
-  the `current_location_id` cookie, the refresh jobs and `dom_id` all still use
-  them. Current conditions, UV, air quality
-  (`air_quality_index`/`air_quality_label`/`air_quality_pm2_5`), feels-like
-  (`current_apparent_temperature`), humidity and precipitation probability are
-  flat columns; the today/tomorrow forecasts, 6-hour windows, and 5-day forecast
-  are JSON columns (each day also carrying `sunrise`/`sunset` and apparent
-  high/low). `weather_stale?` gates
-  refresh (1-hour TTL); `refresh_weather!` fetches and stores fresh weather
-  (and, best-effort, air quality). `air_quality_name` labels the stored AQI and
-  `laundry_rating` derives the laundry index from the current conditions.
-- **WeatherCode** (`app/models/concerns/weather_code.rb`) and **UvIndex**
-  (`app/models/concerns/uv_index.rb`): the single sources of truth mapping
-  Open-Meteo WMO weather codes and UV values to human labels. `icon_group`
-  also picks the marker icon name — distinguishing drizzle, rain, `heavy_rain`,
-  `sleet` (freezing), snow, `heavy_snow`, thunder and `hail` — and, passed
-  `is_day: false`, returns the `_night` variant for clear/partly skies (a sun
-  becomes a moon). The names are shared by the flat globe glyphs
-  (`app/javascript/lib/weather_icons.js`) and the glossy detail icons
-  (`WeatherIconsHelper`).
-- **AirQuality** (`app/models/concerns/air_quality.rb`) and **LaundryIndex**
-  (`app/models/concerns/laundry_index.rb`): more index concerns. `AirQuality`
-  maps a US AQI value to its EPA category (`label_for`) and a colour key
-  (`key_for`). `LaundryIndex.rating` derives how well washing will dry from the
-  stored current conditions (warm + dry + breezy + rain-free) — a `Rating`
-  struct (`key`/`label`/`blurb`), or nil when temperature/humidity are missing;
-  a high rain chance is decisive.
-- **SolarPosition** (`app/services/solar_position.rb`): computes whether the
-  sun is above the horizon at a coordinate and instant (`day?`), from a
-  low-precision solar position — no timezone needed. Drives the globe's
-  day/night marker icons.
-- **OpenMeteo::Request** (`app/services/open_meteo/request.rb`): shared
-  `Net::HTTP` JSON GET helper for the Open-Meteo APIs. Failure-tolerant —
-  returns `nil` on non-success status or any network/parse error.
-- **OpenMeteo::GeocodingClient**: looks up places by name via the geocoding API
-  (`https://geocoding-api.open-meteo.com/v1/search`, no API key); returns `[]`
-  on blank queries and errors.
-- **OpenMeteo::ForecastClient** + **OpenMeteo::WeatherMapper**: the client
-  fetches current/hourly/daily data from the forecast API
-  (`https://api.open-meteo.com/v1/forecast`, `timezone=auto`, Celsius); the
-  mapper (pure, side-effect free) shapes the payload into Location attributes,
-  bucketing hourly data into the four 6-hour windows (overnight/morning/
-  afternoon/evening) for today and tomorrow. It also carries feels-like
-  (apparent) temperature, humidity, precipitation probability, and each day's
-  sunrise/sunset.
-- **OpenMeteo::AirQualityClient** + **OpenMeteo::AirQualityMapper**: fetch and
-  shape current air quality from the *separate* air-quality API
-  (`https://air-quality-api.open-meteo.com/v1/air-quality`, no key) — US AQI and
-  PM2.5. Same batching contract as the forecast client (comma-separated coords →
-  array in order, length-guarded).
-- **WeatherRefresher** (`app/services/weather_refresher.rb`) and
-  **AirQualityRefresher** (`app/services/air_quality_refresher.rb`): each
-  orchestrates fetch → map → `update!` for its own API (weather vs. air quality;
-  air quality is a separate endpoint, so a separate pass). Both return false /
-  skip a chunk, leaving records untouched, when the fetch fails. Callers run
-  both: `RefreshWeatherBatchJob` and `Location#refresh_weather!` (where air
-  quality is best-effort and never fails the weather refresh).
-- **Jobs / refresh tiers**: weather is fetched in **batches**, not one request
-  per location. `WeatherRefresher.call_many` slices locations into
-  `BATCH_SIZE` (50) chunks and calls `OpenMeteo::ForecastClient.fetch_many`,
-  which sends comma-separated coordinates and gets back an array of payloads in
-  the same order (`timezone=auto` still resolves per location). The array has no
-  per-location key, so a length guard fails a chunk closed rather than risk
-  mispairing. `RefreshWeatherBatchJob` refreshes one chunk (by ids, so deleted
-  locations drop out) — weather **and** air quality, via
-  `AirQualityRefresher.call_many` (a second batched request to the air-quality
-  API); `RefreshWeatherTierJob` enqueues those chunks for a tier.
-  `config/recurring.yml` runs the **hot** tier hourly and the **cold** tier every
-  6 hours — `Location.hot` is the top `HOT_CITY_COUNT` by population plus
-  anything viewed within `RECENTLY_VIEWED_WITHIN` (`last_viewed_at`, stamped by
-  `Location#mark_viewed!` from `LocationsController#show`, throttled);
-  `Location.cold` is the remainder. `RefreshAllWeatherJob` still refreshes
-  everything (the "Refresh all" button) and `RefreshLocationWeatherJob` still
-  does a single location. Run the worker with `bin/jobs` (`bin/dev` already
-  does). Recurring tasks are declared for production only, so a development
-  worker never fires the hourly refresh at Open-Meteo on its own.
-- **Jobs dashboard** (`/jobs`): [Mission Control — Jobs]
-  (https://github.com/rails/mission_control-jobs), mounted in `config/routes.rb`.
-  Its controllers inherit the class named in
-  `config/initializers/mission_control_jobs.rb` — `ApplicationController`, whose
-  `Authentication` concern makes the app fail-closed — so the dashboard is
-  admin-only through the app's own sign-in, and the gem's HTTP basic auth is
-  switched off there. Because the engine has its own route set,
-  `Authentication#request_authentication` redirects with
-  `main_app.new_session_path`; a bare `new_session_path` raises inside the
-  engine. Linked from the app nav for signed-in admins.
-- **Setting** (`app/models/setting.rb`): a plain value object (not a DB record)
-  holding a visitor's display preferences — `temperature_unit`
-  (celsius/fahrenheit) and `wind_unit` (mph/kph). Both are **per-visitor**,
-  stored in `temperature_unit`/`wind_unit` browser cookies (like the "closest
-  location" `current_location_id` cookie) so each visitor keeps their own.
-  `ApplicationController#current_setting` builds the object from those cookies
-  (unknown/missing units fall back to the defaults celsius/mph) and exposes it
-  as a `helper_method`; `SettingsController#update` writes the cookies (guarded
-  by `Setting::TEMPERATURE_UNITS`/`WIND_UNITS`) through
-  `store_visitor_cookie` (below). Weather is stored canonically
-  (Celsius, km/h) and converted at render time via `current_setting`
-  (`display_temperature`, `wind_display`), so switching never re-fetches.
+  ("berlin-berlin-germany"), rebuilt by a `before_validation` whenever those
+  parts change — so renaming a location changes its URL — and a slug another
+  row already holds gains a `-2`/`-3` suffix (unique index). Ids stay internal:
+  the `current_location_id` cookie, the refresh jobs and `dom_id` still use
+  them.
+- **Index concerns**: `WeatherCode` and `UvIndex`
+  (`app/models/concerns/`) are the single source of truth mapping Open-Meteo
+  WMO codes and UV values to human labels. `WeatherCode.icon_group` also picks
+  the marker icon name — distinguishing drizzle, rain, `heavy_rain`, `sleet`,
+  snow, `heavy_snow`, thunder and `hail` — and, passed `is_day: false`, returns
+  the `_night` variant for clear/partly skies. Those names are shared by the
+  flat globe glyphs (`app/javascript/lib/weather_icons.js`) and the glossy
+  detail icons (`WeatherIconsHelper`). `AirQuality` maps a US AQI to its EPA
+  category (`label_for`) and colour key (`key_for`); `LaundryIndex.rating`
+  derives how well washing will dry from the stored conditions (warm + dry +
+  breezy + rain-free) as a `Rating` struct, or nil when temperature/humidity
+  are missing — a high rain chance is decisive.
+- **SolarPosition** (`app/services/solar_position.rb`): whether the sun is
+  above the horizon at a coordinate and instant (`day?`), from a low-precision
+  solar position — no timezone needed. Drives the globe's day/night icons.
+- **Open-Meteo clients** (`app/services/open_meteo/`): `Request` is the shared
+  `Net::HTTP` JSON GET helper, failure-tolerant (`nil` on non-success or any
+  network/parse error). `GeocodingClient` looks up places by name.
+  `ForecastClient` + `WeatherMapper` fetch current/hourly/daily data
+  (`timezone=auto`, Celsius) and shape it into Location attributes, bucketing
+  hourly data into the four 6-hour windows (overnight/morning/afternoon/
+  evening) for today and tomorrow; the mapper is pure. `AirQualityClient` +
+  `AirQualityMapper` do the same for US AQI and PM2.5 from the *separate*
+  air-quality API. None need a key.
+- **Refreshers** (`app/services/`): `WeatherRefresher` and
+  `AirQualityRefresher` each orchestrate fetch → map → `update!` for their own
+  API. Both return false / skip a chunk, leaving records untouched, when the
+  fetch fails. Callers run both: `RefreshWeatherBatchJob` and
+  `Location#refresh_weather!`, where air quality never fails the weather
+  refresh.
+- **Jobs and refresh tiers**: weather is fetched in **batches**, not one
+  request per location. `WeatherRefresher.call_many` slices locations into
+  `BATCH_SIZE` (50) chunks for `ForecastClient.fetch_many`, which sends
+  comma-separated coordinates and gets back an array of payloads *in the same
+  order*. The array has no per-location key, so a length guard fails a chunk
+  closed rather than risk mispairing. `RefreshWeatherBatchJob` refreshes one
+  chunk by ids (so deleted locations drop out), weather **and** air quality;
+  `RefreshWeatherTierJob` enqueues the chunks for a tier. `config/recurring.yml`
+  runs the **hot** tier hourly and the **cold** tier every 6 hours —
+  `Location.hot` is the top `HOT_CITY_COUNT` by population plus anything viewed
+  within `RECENTLY_VIEWED_WITHIN` (`last_viewed_at`, stamped by
+  `mark_viewed!`), `Location.cold` the remainder. `RefreshAllWeatherJob` backs
+  the "Refresh all" button; `RefreshLocationWeatherJob` does a single location.
+  Recurring tasks are declared for production only, so a development worker
+  never fires an hourly refresh at Open-Meteo on its own.
+- **Seed data** (`db/seeds.rb`): ~300 major world cities (at least three per US
+  state) so the globe is full and the picker's state step isn't sparse.
+  Geocoding data was captured once from the Open-Meteo API and baked in
+  statically, so `bin/rails db:seed` needs no network; it's idempotent (upsert
+  by `open_meteo_id`). Add more with `script/fetch_seed_cities.rb`. Weather is
+  filled in afterwards by `RefreshAllWeatherJob`.
+
+### Session and access
+
+- **Authentication** (`Authentication` concern, `SessionsController`, `User`/
+  `Session`/`Current`): the Rails 8 auth generator, customised for a **single
+  admin** who signs in by `username` (not email). The concern is included in
+  `ApplicationController` and adds a global `require_authentication`, so the app
+  is **fail-closed**: every action needs a session unless it opts out with
+  `allow_unauthenticated_access`. Only `LocationsController`'s management
+  actions and `SoundsController` stay protected — `LocationsController#show`
+  (the forecast/root), `MapsController`, `SettingsController`,
+  `Settings::LocationsController`, `CurrentLocationsController` and
+  `SessionsController` (`new`/`create`) all opt out. Sign-in is at
+  `/session/new`; there's no password-reset flow. Integration tests use the
+  `sign_in_as` cookie helper (`test/test_helpers/`); system tests sign in
+  through the form via `ApplicationSystemTestCase`.
 - **Visitor cookies** (`ApplicationController#store_visitor_cookie`): the one
   way anything a visitor chose is written — `current_location_id`,
-  `temperature_unit`, `wind_unit`. All three are **signed** (a tampered value is
-  rejected rather than trusted), **httponly** (nothing in the browser reads
-  them; only the server does) and **permanent**, the same shape as the
+  `temperature_unit`, `wind_unit`. All three are **signed** (a tampered value
+  is rejected), **httponly** and **permanent**, the same shape as the
   `session_id` cookie in `Authentication#start_new_session_for`. Reads go
-  through `cookies.signed[...]`, so a plain unsigned value simply doesn't
-  verify and the app falls back to its default. `store_current_location` wraps
-  it for the closest-location cookie, shared by `CurrentLocationsController`
-  and `Settings::LocationsController`. In tests, `write_signed_cookie` /
+  through `cookies.signed[...]`, so an unsigned value simply doesn't verify and
+  the app falls back to its default. `store_current_location` wraps it for the
+  closest-location cookie. In tests, `write_signed_cookie` /
   `read_signed_cookie` (`test/test_helpers/cookie_test_helper.rb`) sign and
   verify through a throwaway request's jar, since Rack::Test's own jar has no
   `#signed`.
-- **Settings screen** (`SettingsController#show` at `/settings`): a Wii-style
-  "Change Settings" page with Closest Location, Temperature Display, and Wind
-  Display rows (each a "Change" control). Temp/wind are toggles handled by
-  `#update` (which also backs the °C/°F toggle on the locations index); Closest
-  Location's "Change" opens the picker. Reached from the detail view's top-right
-  "Settings" link.
-- **Geolocation** (`CurrentLocationsController#create` at `/current_location`):
-  on the root path with no location cookie set, `LocationsController#show` marks
-  the page `@auto_locate` and renders a hidden form driven by the `geolocate`
-  Stimulus controller, which asks the browser for coordinates on load and posts
-  them. The controller picks the nearest stored location (`Location.nearest_to`,
-  Haversine) into the cookie and redirects to its forecast. Denied/unavailable
-  geolocation silently keeps the default. Needs a secure origin
-  (HTTPS/localhost) — the browser blocks geolocation otherwise.
+- **Setting** (`app/models/setting.rb`): a plain value object, **not** a DB
+  record, holding a visitor's `temperature_unit` and `wind_unit`. Both live in
+  the cookies above, so each visitor keeps their own.
+  `ApplicationController#current_setting` builds it (unknown/missing units fall
+  back to celsius/mph) and exposes it as a `helper_method`;
+  `SettingsController#update` writes the cookies, guarded by
+  `Setting::TEMPERATURE_UNITS`/`WIND_UNITS`. Weather is stored canonically
+  (Celsius, km/h) and converted at render time, so switching never re-fetches.
+- **Jobs dashboard** (`/jobs`): [Mission Control — Jobs](https://github.com/rails/mission_control-jobs),
+  mounted in `config/routes.rb`. Its controllers inherit the class named in
+  `config/initializers/mission_control_jobs.rb` — `ApplicationController` —
+  so the dashboard is admin-only through the app's own fail-closed sign-in and
+  the gem's HTTP basic auth is switched off. Because the engine has its own
+  route set, `Authentication#request_authentication` redirects with
+  `main_app.new_session_path`; a bare `new_session_path` raises inside the
+  engine.
+
+### Screens
+
+- **Location detail** (`LocationsController#show`): the Wii Forecast
+  Channel-style paneled view, served at `/` for the current location and at
+  `/locations/:slug` for a specific one; redirects to add a location when none
+  exist. Seven full-screen panels — three `.wii-index` panels (UV, Air Quality,
+  Laundry) then Current, Today, Tomorrow, 5-Day — slide vertically, non-looping,
+  via the `forecast` Stimulus controller (arrow buttons + Up/Down keys). Panels
+  are partials under `app/views/locations/panels/` wrapped in the shared
+  `_frame` chrome; their order, titles and the default are one list
+  (`ForecastsHelper::PANELS` / `DEFAULT_PANEL`), which `show` also uses to
+  render the track **already scrolled** to the default panel
+  (`panel_track_style`) — so the first paint is Current with no JavaScript and
+  no flash of the panels above. `WeatherIconsHelper` draws the glossy icons;
+  `ForecastsHelper` formats temperatures, wind, local times, the feels-like
+  range and the "As of" timestamp. Current/Today/Tomorrow close with a shared
+  `_stats` strip (blank stats are dropped). Clicking Today/Tomorrow opens the
+  **6-hour overlay** — the day's four windows (from `hourly_windows`) over the
+  dimmed forecast, closed by Escape or another click (`sixhour` controller,
+  `_six_hour` partial). Styling is the `.wii-*` block in
+  `application.tailwind.css`, and the app nav is hidden via
+  `content_for :hide_app_nav`. The "Globe" button links to `/map?location=<slug>` from your own location and
+  plain `/map` from any other; the music zone follows the same distinction.
+- **Globe** (`MapsController#show` at `/map`): a full-bleed Mapbox globe
+  (`SATELLITE_STYLE`, `projection: globe`, custom fog + star field) driven by
+  the `globe` Stimulus controller, which reaches the page through its own
+  bundle (`app/javascript/globe.js`, included via the layout's
+  `yield :javascript` — deliberately without `data-turbo-track`, which would
+  make Turbo full-reload both entering and leaving the map). The page hides the
+  app nav (`content_for :hide_app_nav`).
+  - **Offline**: with no Mapbox token the controller builds the same globe on
+    `OFFLINE_STYLE` — a valid empty style plus `testMode` — so everything of
+    ours renders and nothing is fetched. `MapsHelper#mapbox_token` reads
+    `ENV["MAPBOX_TOKEN"]` (dotenv loads it from `.env.development.local`; Kamal
+    injects it in production), treating blank as none, and `test/test_helper.rb`
+    clears the variable so the suite always takes the offline path even on a
+    machine that has a token.
+  - **Markers**: served as GeoJSON from `MapsController#markers`
+    (`/map/markers`, built by `LocationGeojson`) and drawn as a single **symbol
+    layer**, so Mapbox's native collision (`icon/text-allow-overlap: false`)
+    declutters when zoomed out and reveals more on zoom-in, with `population`
+    as the priority (`symbol-sort-key`). The controller rasterizes the SVG
+    glyphs in `app/javascript/lib/weather_icons.js` via `map.addImage`. The
+    Current-view icon follows each city's local day/night via
+    `SolarPosition.day?` (Today/Tomorrow always use the day icon). Hovering
+    shows a `.globe-popup` card built from extra `LocationGeojson` properties
+    (Celsius; the controller converts using
+    `data-globe-temperature-unit-value`). Clicking opens
+    `/locations/${slug}` — **hand-built in the controller**, so `to_param`
+    doesn't reach it and both sides have to change together.
+  - **Controls**: Wii-style top and bottom bars overlaid on the globe (faint at
+    20%, 80% on hover) with zoom, pitch, "Restore", "End", and a "Next" button
+    cycling the marker icons Current → Today → Tomorrow (`WEATHER_MODES`;
+    `#applyMode` swaps the symbol layer's `icon-image` between the
+    `icon`/`icon_today`/`icon_tomorrow` properties, which fall back to the
+    current icon when that day isn't fetched). A `.map-banner` names the active
+    view. Zoom and pitch buttons disable and blank at their limits.
+  - **Camera**: `?location=<slug>` exposes `data-globe-center-value` so the
+    globe opens centred there. Otherwise the controller restores the
+    center/zoom/pitch/bearing it saved to `sessionStorage` (`globeCamera`) on
+    `moveend`. So arriving from your own location centres on it, while arriving
+    from another location resumes where you left the map.
+  - **Idle**: two seconds without mouse movement — or the pointer leaving the
+    page, which skips the wait — puts `is-idle` on `.map-view`; the CSS slides
+    both bars away, fades the banner and hides the cursor. Idling at
+    `SPIN_MAX_ZOOM` also sets the globe turning westward, one revolution per
+    `SECONDS_PER_REVOLUTION`, as chained one-second `easeTo`s queued from
+    `moveend`; while it drifts the camera isn't saved and waking `map.stop()`s
+    it. Too zoomed in, the spin stays armed. `prefers-reduced-motion` skips it.
+    **In system tests a bar that has slid away can't be clicked — move the
+    pointer first** (`wake_chrome` in `test/system/globe_test.rb`).
+- **Settings** (`SettingsController#show` at `/settings`): a Wii-style "Change
+  Settings" page with Closest Location, Temperature Display and Wind Display
+  rows. Temp/wind are toggles handled by `#update` (which also backs the °C/°F
+  toggle on the locations index); Closest Location opens the picker. Reached
+  from the detail view's top-right "Settings" link.
 - **Location picker** (`Settings::LocationsController#show` at
   `/settings/location`): the Wii "choose closest location" screen — pick a
   country, then a location in it (`?country=` toggles the step). A country with
   more than `STATE_STEP_THRESHOLD` locations spread across several regions (the
-  US today) gets an intermediate state/region step (`?state=`) so the final city
-  list isn't an overwhelming scroll; smaller countries still list cities
-  directly. Striped rows on a blue background with a prompt bubble and a
-  scrollable list (`scroller` Stimulus controller drives the ▲/▼ bar buttons).
-  `#update` writes the `current_location_id` cookie and returns to settings.
-- **Locations management UI** (`LocationsController`, `/locations`): CRUD for
-  locations. The "New location" page searches by name (Turbo Frame proxy to the
-  geocoding client) and pre-fills the form with a picked result's coordinates.
-  Rows have a "Refresh" button (synchronous) and the page has "Refresh all"
-  (enqueues the bulk job) plus a °C/°F unit toggle (`SettingsController#update`)
-  and a "Sign out" button. These management actions require signing in (see
-  Authentication); the forecast/globe/settings views are public.
-- **Authentication** (`Authentication` concern, `SessionsController`, `User`/
-  `Session`/`Current` models): the Rails 8 auth generator (bcrypt
-  `has_secure_password`), customised for a **single admin** who signs in by
-  `username` (not email). The concern is included in `ApplicationController`
-  and adds a global `require_authentication` before_action, so the app is
-  **fail-closed**: every action needs a session unless it opts out with
-  `allow_unauthenticated_access`. Only `LocationsController`'s management
-  actions stay protected — everything public opts out: `LocationsController`
-  for `:show` (the forecast/root), `MapsController`, `SettingsController`,
-  `Settings::LocationsController`, `CurrentLocationsController`, and
-  `SessionsController` (`new`/`create`). The styled sign-in page lives at
-  `/session/new`; there's no password-reset flow (single admin). Sessions are a
-  signed, httponly `session_id` cookie. In tests, integration specs use the
-  `sign_in_as` cookie helper (`test/test_helpers/`); system specs sign in
-  through the form via the helper on `ApplicationSystemTestCase`.
-- **Seed data** (`db/seeds.rb`): populates ~300 major world cities (including at
-  least three per US state) so the globe is full and the picker's state step
-  isn't sparse on a fresh database. The geocoding data (identity/coordinates
-  only, no weather) was captured once from the Open-Meteo geocoding API and
-  baked in statically, so `bin/rails db:seed` needs no network; it's idempotent
-  (upsert by `open_meteo_id`). Add more with `script/fetch_seed_cities.rb`.
-  Weather is filled in afterwards by `RefreshAllWeatherJob`.
-- **Globe** (`MapsController#show` at `/map`): a full-bleed Mapbox globe
-  (`SATELLITE_STYLE`, `projection: globe`, custom fog + star field; with no
-  Mapbox token the controller builds the same globe on `OFFLINE_STYLE` — a
-  valid empty style plus `testMode`, so everything of ours still renders and
-  nothing is fetched from Mapbox. `MapsHelper#mapbox_token` reads the token from
-  `ENV["MAPBOX_TOKEN"]` (dotenv loads it from `.env.development.local`; Kamal
-  injects it in production as a secret), treating a blank one as none;
-  `test/test_helper.rb` clears the variable, so the suite always takes the
-  offline path even on a machine that has a token — in a `.env.test.local` or
-  just exported in the shell: no secrets, no network, and the same behaviour as
-  CI)
-  driven by the `globe` Stimulus controller (`app/javascript/controllers/
-  globe_controller.js`), which reaches the page through this view's own bundle
-  (`app/javascript/globe.js`, included via the layout's `yield :javascript` —
-  deliberately without `data-turbo-track`, which would make Turbo full-reload
-  both entering and leaving the map). Locations are served as GeoJSON from
-  `MapsController#markers` (`/map/markers`, built by `LocationGeojson`) and
-  drawn as a single **symbol layer** so Mapbox's native collision
-  (`icon/text-allow-overlap: false`) declutters overlapping markers when zoomed
-  out and reveals more on zoom-in; `population` is the collision priority
-  (`symbol-sort-key`). The controller rasterizes the SVG glyphs in
-  `app/javascript/lib/weather_icons.js` via `map.addImage`; each feature's
-  `icon` (from `WeatherCode.icon_group`) picks one, with the name as a
-  halo'd `text-field` to its right. The Current-view icon follows each city's
-  local day/night: `LocationGeojson` asks `SolarPosition.day?` and, after dark,
-  a clear/partly marker shows a moon (`clear_night`/`partly_night`) instead of a
-  sun (Today/Tomorrow always use the day icon). Pointing at a marker shows a hover popup
-  (`.globe-popup`, dark Wii card) with that location's weather for the active
-  view — temperature/condition + high/low for Current, or high/low + condition
-  for Today/Tomorrow — built from extra `LocationGeojson` properties
-  (`temp`/`label`/`today_*`/`tomorrow_*`, Celsius; the controller converts using
-  `data-globe-temperature-unit-value`). Clicking a marker opens that location's
-  detail view — the feature's `slug` property, which the controller hand-builds
-  into `/locations/${slug}`, so `to_param` doesn't reach it and both sides have
-  to change together. The page hides the app nav (`content_for :hide_app_nav`) and
-  the globe fills the viewport; a Wii-style top bar (`.wii-top.map-bar`,
-  reusing the detail-view bar styling + `press` animation) is overlaid on the
-  globe with three buttons — "Zoom" (circle-minus, out), "Next" (▶, center)
-  and "Zoom" (circle-plus, in) — wired to the globe controller's
-  `zoomOut`/`next`/`zoomIn` actions. Zoom moves one Mapbox unit and each zoom
-  button disables + blanks at its limit (`#syncZoomButtons` on the `zoom`
-  event). "Next" cycles the marker icons Current → Today → Tomorrow → Current
-  (`WEATHER_MODES`, `#applyMode` swaps the symbol layer's `icon-image` between
-  the `icon`/`icon_today`/`icon_tomorrow` feature properties from
-  `LocationGeojson`, which fall back to the current icon when that day isn't
-  fetched). A green banner below the bar (`.map-banner`, `banner` target) names
-  the active view. A matching bottom bar (`.map-bar--bottom`) holds "End" (a
-  link back to the root forecast), two curved-arrow tilt buttons
-  (`globe#pitchUp`/`globe#pitchDown`, ±`PITCH_STEP`° via `easeTo`, disabling +
-  blanking at the pitch limits like the zoom buttons), and "Restore"
-  (`globe#resetPitch` back to `DEFAULT_PITCH`). Both bars are faint (20%
-  opacity) and rise to 80% on hover. `MapsController#show` accepts a
-  `?location=<slug>` param and, when present, exposes `data-globe-center-value`
-  so the globe opens centred on that location. The globe otherwise resumes the
-  view it was last left at: the controller saves center/zoom/pitch/bearing to
-  `sessionStorage` (`globeCamera`) on `moveend` and restores it on connect when
-  no focus param is given. So arriving from your own location centres on it,
-  while arriving from another location (whose "Globe" button omits the param)
-  resumes where you left the map.
-  - **Idle**: two seconds without mouse movement — or the pointer leaving the
-    page, which skips the wait — puts `is-idle` on `.map-view`, and the CSS
-    slides both bars off their edges, fades the banner out and hides the
-    cursor; any mouse movement (or key/wheel/click) takes it straight back off.
-    Idling at `SPIN_MAX_ZOOM` (2, the widest view) also sets the globe turning
-    westward, a revolution per `SECONDS_PER_REVOLUTION`: each step is a
-    one-second linear `easeTo` and the `moveend` handler queues the next, so
-    while it drifts the camera isn't saved (an unattended globe's position
-    isn't a view worth resuming) and waking `map.stop()`s it where it is. Too
-    zoomed in, the spin stays armed but idle, picking up if the view widens.
-    `prefers-reduced-motion` skips the spin. Note for system tests: a bar that
-    has slid away can't be clicked, so move the pointer first (`wake_chrome` in
-    `test/system/globe_test.rb`).
-- **App icon**: `public/icon.svg` is the source of truth — the same glossy
-  sun-behind-cloud `WeatherIconsHelper` draws for "partly cloudy", on a tile of
-  `#103a86` (the mid blue of the forecast panels' background gradient), with
-  fatter rays so they survive at 16px. `ruby script/build_favicons.rb`
-  re-renders `public/icon.png` (512, also the apple-touch-icon) and
-  `public/favicon.ico` (16/32/48) from it; the script is plain ruby, not
-  `bin/rails runner`, because ruby-vips is a system gem rather than a bundled
-  one. All four `<link rel="icon">` tags live in the layout.
-- **Cursors**: the Wii hand cursors in `app/assets/images/cursors/`, wired up as
-  the `--cursor-point` / `--cursor-open-hand` / `--cursor-grab` custom
-  properties (with hotspots) at the top of `application.tailwind.css`. The CSS
-  points at the `-32` (32x32) downscales, not the full-size art beside them:
-  Chromium refuses a bigger custom cursor the moment it would spill outside the
-  page, which brought the OS arrow back over the button bars at the screen
-  edges. Regenerate them with `Vips::Image.thumbnail(src, 32, height: 32)` if
-  the art changes. The
-  pointing hand is the cursor for the whole app — including the map's control
-  bars and markers — while the globe canvas shows the open hand, closing to the
-  fist while it's dragged. The globe controller toggles `is-pointing` (marker
-  hover) and `is-grabbing` (Mapbox `dragstart`/`dragend`) on `.map-view`; the
-  CSS under "Map control bar" does the rest.
-- **Location detail** (`LocationsController#show`): the Wii Forecast
-  Channel-style paneled view. Served at the root path `/` for the current
-  location (a `current_location_id` cookie later; the first location for now)
-  and at `/locations/:slug` for a specific one; redirects to add a location when
-  none exist. The "Globe" button links to `/map?location=<slug>` from your own
-  location (centres the globe on it) or plain `/map` from any other location
-  (resumes the saved globe view); the music zone follows the same distinction.
-  Seven full-screen panels — three "index" panels (UV Index, Air Quality,
-  Laundry Index) then Current, Today, Tomorrow, 5-Day (default Current) — slide
-  vertically (non-looping) via the `forecast` Stimulus controller (arrow buttons
-  + Up/Down keys). The three index panels share the `.wii-index` figure/boxes
-  layout; the Laundry panel colours its rating and the Air Quality panel its
-  category (`AirQuality.key_for`). Panels are partials under
-  `app/views/locations/panels/` wrapped in the shared `_frame` chrome; their
-  order, titles and the default are one list (`ForecastsHelper::PANELS` /
-  `DEFAULT_PANEL`), which `show` also uses to render the track **already
-  scrolled** to the default panel (`panel_track_style`) with the header and
-  ▲/▼ labels filled in — so the first paint is Current with no JavaScript and
-  no flash of the panels above it. Styling
-  is the `.wii-*` block in
-  `application.tailwind.css`; the app nav is hidden via `content_for
-  :hide_app_nav`. Detailed glossy weather icons come from `WeatherIconsHelper`
-  (`weather_icon`, `uv_icon`); `ForecastsHelper` formats temperatures (Wii
-  degree style), wind (`compass_direction`/`wind_display`, mph), local times
-  (`forecast_time`), the feels-like range (`apparent_range`), the "As of"
-  timestamp, and weekday abbreviations. The Current/Today/Tomorrow panels close
-  with a shared `_stats` strip (`.wii-stats` tiles) — feels-like, humidity, rain
-  chance, wind, and sunrise/sunset (blank stats are dropped). Reachable from a
-  globe marker or the locations list.
-  - **6-hour overlay:** clicking the Today/Tomorrow panel opens a breakdown of
-    the day's four 6-hour windows (overnight/morning/afternoon/evening, from
-    `hourly_windows`) over the dimmed forecast, swapping the header title to the
-    weekday; Escape or another click closes it (`sixhour` Stimulus controller,
-    `six_hour_windows`/`weekday_name` helpers, `_six_hour` partial).
+  US today) gets an intermediate `?state=` step so the final city list isn't an
+  overwhelming scroll. `#update` writes the `current_location_id` cookie and
+  returns to settings. The `scroller` Stimulus controller drives the ▲/▼
+  buttons.
+- **Geolocation** (`CurrentLocationsController#create` at `/current_location`):
+  on the root path with no location cookie, `LocationsController#show` marks the
+  page `@auto_locate` and renders a hidden form driven by the `geolocate`
+  Stimulus controller, which asks the browser for coordinates on load and posts
+  them. The controller picks the nearest stored location
+  (`Location.nearest_to`, Haversine) into the cookie and redirects to its
+  forecast. Denied or unavailable geolocation silently keeps the default. Needs
+  a secure origin (HTTPS/localhost) — browsers block geolocation otherwise.
+- **Locations management** (`LocationsController`, `/locations`): CRUD, signed
+  in only. "New location" searches by name (Turbo Frame proxy to the geocoding
+  client) and pre-fills the form with the picked result's coordinates. Rows have
+  a synchronous "Refresh"; the page has "Refresh all" (enqueues the bulk job), a
+  °C/°F toggle and "Sign out".
 
-- **Background music** (`jukebox` Stimulus controller): a `data-turbo-permanent`
-  player in the layout keeps music going across Turbo navigations. It picks a
-  track from the zone (`<body data-music-zone>`, set via `content_for
-  :music_zone`) and the time of day (day 7am–7pm, night otherwise), flipping at
-  those boundaries; because it only reloads the source when that source
-  changes, staying in one zone across navigations never interrupts playback.
-  The zone is "globe" on the map and "current" on every forecast page
-  (whichever location it shows), so leaving the globe for any location's
-  forecast switches to the "current" track. Autoplay starts on
-  the first user gesture (tracks use `preload="none"` so the large files only
-  download when playback starts). A mute button in the detail view's top-bar
-  left slot (`mute` Stimulus controller, connected to the jukebox via an outlet)
-  toggles the audio and remembers the choice in `localStorage`. The tracks
-  themselves are **Sound** records (below), not files in `public/`.
+### Media and assets
 
+- **Background music** (`jukebox` Stimulus controller): a
+  `data-turbo-permanent` player in the layout keeps music going across Turbo
+  navigations. It picks a track from the zone (`<body data-music-zone>`, set via
+  `content_for :music_zone`) and the time of day (day 7am–7pm, night
+  otherwise), flipping at those boundaries; because it only reloads the source
+  when that source *changes*, staying in one zone across navigations never
+  interrupts playback. The zone is "globe" on the map and "current" on every
+  forecast page. Autoplay starts on the first user gesture (tracks use
+  `preload="none"`). A mute button in the detail view's top bar (`mute`
+  controller, connected via an outlet) remembers the choice in `localStorage`.
 - **Sound** (`app/models/sound.rb`, `SoundsController` at `/sounds`): an
-  uploaded music track, one per `kind` (`current_day`/`current_night`/
-  `globe_day`/`globe_night` — the zone and time of day the jukebox picks
-  between), with the MP3 held by Active Storage (`has_one_attached :audio`;
-  non-MP3 uploads are rejected). `/sounds` is the admin CRUD screen (signed-in
-  only, like location management), linked from the app nav. The layout asks
-  `SoundsHelper#music_track_paths` for each kind's URL and hands them to the
-  jukebox controller; a kind with no upload renders blank, which the controller
+  uploaded track, one per `kind` (`current_day`/`current_night`/`globe_day`/
+  `globe_night` — what the jukebox picks between), with the MP3 in Active
+  Storage (`has_one_attached :audio`; non-MP3 rejected). `/sounds` is the
+  signed-in-only CRUD screen. The layout asks `SoundsHelper#music_track_paths`
+  for each kind's URL; a kind with no upload renders blank, which the controller
   treats as "no track" (the app runs fine with none). Those are
   `rails_storage_proxy_path` URLs — the proxy streams with Range support and
   caches forever, and the path comes from the blob's stable signed id, so it
   doesn't change between pages and playback never restarts on a Turbo
   navigation.
-
-## Design
-
-- Weather data cached in the database and refreshed periodically.
-- Globe view with locations/cities current forecast icons.
-- Globe uses a satilite map preferably using higher contract blues and greens if possible.
-- Globe and be zoomed out to show the whole planet with stars in space.
-- Detail view: Wii-style paneled forecast per location (built; see Domain Concepts).
-
-## Weather data stored
-- Location name and latitude/longitude
-- Current conditions: Temperature, condition name, condition icon/image, wind (speed + direction)
-- Today's and tomorrow's forecast also include wind (max speed + dominant direction)
-- Today's forcast: Temperature, condition name, condition icon/image
-- Tommorrow's forcast: Temperature, condition name, condition icon/image
-- A breakdown of the today's and tomorrow's forecast for 6 hour windows (overnight, morning, afternoon, and evening hours)
-- 5-day forecasts: High temperature, low temperature, and condition icon/image
-- Current UV index: Numeric value and label (low, moderate, high, etc.)
+- **App icon**: `public/icon.svg` is the source of truth — the glossy
+  sun-behind-cloud `WeatherIconsHelper` draws for "partly cloudy" on a
+  `#103a86` tile, with fatter rays so they survive at 16px.
+  `ruby script/build_favicons.rb` re-renders `public/icon.png` (512, also the
+  apple-touch-icon) and `public/favicon.ico` (16/32/48) from it. It's plain
+  ruby, not `bin/rails runner`, because ruby-vips is a system gem rather than a
+  bundled one. All four `<link rel="icon">` tags live in the layout.
+- **Cursors**: the Wii hand cursors in `app/assets/images/cursors/`, wired up as
+  `--cursor-point` / `--cursor-open-hand` / `--cursor-grab` (with hotspots) at
+  the top of `application.tailwind.css`. The CSS points at the `-32` (32×32)
+  downscales, **not** the full-size art beside them: Chromium refuses a bigger
+  custom cursor the moment it would spill outside the page, which brought the OS
+  arrow back over the button bars at the screen edges. Regenerate with
+  `Vips::Image.thumbnail(src, 32, height: 32)` if the art changes. The pointing
+  hand is the cursor for the whole app; the globe canvas shows the open hand,
+  closing to the fist while dragged (`is-pointing` / `is-grabbing` on
+  `.map-view`).
 
 ## Instructions
 
-- Write code in the "Rails Way" and take advantage of the functionality of the Rails framework and best practice design patterns.
-- Always read entire files. Otherwise, you don't know what you don't know, and will end up making mistakes, duplicating code that already exists, or misunderstanding the architecture.
-- Organise code into separate files wherever appropriate, and follow general coding best practices about variable naming, modularity, function complexity, file sizes, commenting, etc.
-- Code is read more often than it is written, optimize code for readability.
-- Do not carry out large refactors unless explicitly instructed to do so.
-- When doing UI & UX work, make sure designs are easy to use and follow UI / UX best practices. Pay attention to interaction patterns, micro-interactions, and are proactive about creating smooth, engaging user interfaces that delight users.
+- Write code in the "Rails Way" and take advantage of the framework and
+  best-practice design patterns.
+- Always read entire files. Otherwise you don't know what you don't know, and
+  will duplicate code that already exists or misunderstand the architecture.
+- Organise code into separate files wherever appropriate, and follow general
+  coding best practices about naming, modularity, function complexity, file
+  sizes and comments.
+- Code is read more often than it is written; optimise for readability.
+- Do not carry out large refactors unless explicitly instructed to.
+- For UI and UX work, follow best practices and pay attention to interaction
+  patterns and micro-interactions — be proactive about smooth, engaging
+  interfaces.
 
 ## Documentation Maintenance
 
-Keep `CLAUDE.md` and `README.md` updated as the project evolves. Update these files when:
-
-- Adding or removing significant dependencies (gems, JS libraries)
-- Changing the technology stack or infrastructure
-- Adding new domain concepts or models
-- Restructuring directories or namespaces
-- Adding new build, test, or deployment commands
-- Changing authentication, authorization, or API patterns
-
-When making such changes, include documentation updates in the same commit or PR.
+Keep `CLAUDE.md` and `README.md` updated as the project evolves: when adding or
+removing significant dependencies, changing the stack or infrastructure, adding
+domain concepts or models, restructuring directories, adding build/test/deploy
+commands, or changing authentication or API patterns. Include the documentation
+update in the same commit or PR.
