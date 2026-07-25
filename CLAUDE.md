@@ -337,7 +337,13 @@ location's current conditions.
   the prompt is up, and on refusal writes an inline `.picker__notice` rather
   than a flash (the layout's flash strip would push these `100vh` screens down).
   Needs a secure origin (HTTPS/localhost) — browsers block geolocation
-  otherwise, which is the path `test/system/geolocation_test.rb` exercises.
+  otherwise. `test/system/geolocation_test.rb` **stubs
+  `navigator.geolocation`** rather than relying on that: whether the test
+  server is a secure origin depends on how the suite is driven (`served_by
+  host: "rails-app"` isn't; Capybara's default `127.0.0.1`, which CI uses,
+  is), so leaving it to the browser makes the test pass here and behave
+  differently on GitHub Actions. Stubbing also gives the happy path its only
+  end-to-end coverage.
 - **Locations management** (`LocationsController`, `/locations`): CRUD, signed
   in only. "New location" searches by name (Turbo Frame proxy to the geocoding
   client) and pre-fills the form with the picked result's coordinates. Rows have
