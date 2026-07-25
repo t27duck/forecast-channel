@@ -33,7 +33,7 @@ and blank templates are checked in:
 `db:seed` loads a curated set of major world cities (geocoding data baked into
 `db/seeds.rb`, so it needs no network) so the globe is populated on a fresh
 database. It's idempotent, and only sets each city's location/metadata — their
-weather is filled in by the hourly refresh (`bin/jobs`, or "Refresh all" in the
+weather is filled in by the bi-hourly refresh (`bin/jobs`, or "Refresh all" in the
 locations UI).
 
 ## Mapbox confirtuation
@@ -76,7 +76,7 @@ Cached weather is fetched from Open-Meteo and refreshed periodically:
 - **Manually**: on `/locations`, use a row's "Refresh" button (immediate) or
   "Refresh all" (enqueues background jobs).
 - **Automatically**: two schedules in `config/recurring.yml` — the **hot** tier
-  (the biggest cities plus anywhere viewed in the last week) refreshes hourly,
+  (the biggest cities plus anywhere viewed in the last week) refreshes every 2 hours,
   and everywhere else every 6 hours.
 
 Requests are **batched**: up to 50 locations are fetched per HTTP call rather
