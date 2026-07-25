@@ -31,12 +31,18 @@ location's current conditions.
   `config/credentials.yml.enc`, no `master.key`.
 - **Deployment**: Kamal. `config/deploy.yml` opens with an ERB line that
   `Dotenv.load`s `.env.production.local`, so server, SSH user, registry image,
-  proxy host/ports and the two container values (`SECRET_KEY_BASE`,
-  `MAPBOX_TOKEN`) all come from that one gitignored file — nothing needs
-  exporting into the shell. The container values go through `env.secret` +
-  `.kamal/secrets` (read after that ERB runs), not `env.clear`, which keeps
-  them in a `0600` env file on the host rather than on the `docker run`
-  command line.
+  proxy host/ports and the container values all come from that one gitignored
+  file — nothing needs exporting into the shell. `SECRET_KEY_BASE` and
+  `MAPBOX_TOKEN` go through `env.secret` + `.kamal/secrets` (read after that
+  ERB runs), not `env.clear`, which keeps them in a `0600` env file on the host
+  rather than on the `docker run` command line. `PROXY_HOST` is injected too,
+  under `env.clear` since a hostname isn't a secret: `production.rb` sets
+  `config.hosts` from it, so the app answers only to the name it's served
+  under (blank leaves the list empty, i.e. unrestricted, so a half-configured
+  deploy degrades rather than 403s). `/up` is excluded, because kamal-proxy
+  health-checks the container directly and that request doesn't carry
+  `PROXY_HOST`. Note `.dockerignore` excludes `/.env*`, so the file itself is
+  never in the image — anything the app needs at runtime has to be injected.
 - **Authentication**: Rails auth generator with bcrypt
 - **External APIs**: [Mapbox](https://docs.mapbox.com/mapbox-gl-js/api/) for
   the globe; [Open-Meteo](https://open-meteo.com/en/docs) (and its

@@ -126,7 +126,7 @@ Everything host-specific is read from that file, which is why the checked-in
 | `SERVER_HOST` | the web server Kamal deploys to |
 | `SSH_USERNAME` | the SSH user on it |
 | `KAMAL_REGISTRY_IMAGE` | the container image name |
-| `PROXY_HOST` | the hostname kamal-proxy serves |
+| `PROXY_HOST` | the hostname kamal-proxy serves; also injected into the container, where `production.rb` makes it the only `Host` the app answers to |
 | `PROXY_SSL` | `true` to auto-certify with Let's Encrypt |
 | `PROXY_HTTP_PORT` / `PROXY_HTTPS_PORT` | the ports kamal-proxy binds |
 | `SECRET_KEY_BASE` | injected into the container (`bin/rails secret` generates one) |
