@@ -248,9 +248,14 @@ location's current conditions.
   `content_for :hide_app_nav`. The silver bar markup (`.wii-top`/`.wii-bottom`
   plus three `.wii-bar__slot`s) is **shared** — settings and the picker use
   `.wii-bottom` too, with a thin modifier each, so a slot-width "Back" button
-  lines up with "Locations"/"Globe" here. Bars outside `.wii` work because
+  lines up with "GitHub"/"Globe" here. Bars outside `.wii` work because
   `--chrome` is defined on `:root`. The "Globe" button links to `/map?location=<slug>` from your own location and
   plain `/map` from any other; the music zone follows the same distinction.
+  The bottom-left slot is an external "GitHub" link to the repository, opened
+  in a new tab so the jukebox isn't cut off. It replaced the "Locations" link,
+  so **no visitor-facing screen links to `/locations`** — every one of them
+  hides the app nav, and an admin now reaches management by URL or from
+  another admin page.
 - **Globe** (`MapsController#show` at `/map`): a full-bleed Mapbox globe
   (`SATELLITE_STYLE`, `projection: globe`, custom fog + star field) driven by
   the `globe` Stimulus controller, which reaches the page through its own

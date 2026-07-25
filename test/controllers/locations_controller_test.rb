@@ -69,6 +69,12 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".wii-arrow[hidden]", false, "the arrows must not need JavaScript to appear"
   end
 
+  test "the bottom bar sends people to the source, in a new tab" do
+    get location_url(@location)
+    assert_select ".wii-bottom a[href=?][target=_blank][rel=noopener]",
+      "https://github.com/t27duck/forecast-channel", text: "GitHub"
+  end
+
   test "the current location plays the current track and links Globe to it" do
     write_signed_cookie(:current_location_id, locations(:berlin).id)
     get location_url(locations(:berlin))

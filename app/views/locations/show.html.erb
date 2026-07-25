@@ -64,7 +64,11 @@
 
   <%# Fixed silver bottom bar — its ▼ label updates to the panel below. %>
   <div class="wii-bottom">
-    <div class="wii-bar__slot"><%= link_to "Locations", locations_path, class: "wii-chrome-link" %></div>
+    <div class="wii-bar__slot">
+      <%# Leaves the app, so it opens in a new tab and the music keeps playing. %>
+      <%= link_to "GitHub", "https://github.com/t27duck/forecast-channel",
+        class: "wii-chrome-link", target: "_blank", rel: "noopener" %>
+    </div>
     <div class="wii-bar__slot wii-bar__slot--center">
       <button type="button" class="wii-arrow" data-action="forecast#next"
         data-forecast-target="nextControl" <%= "disabled" if below.nil? %>>
