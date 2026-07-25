@@ -239,8 +239,8 @@ location's current conditions.
     another screen isn't an arrival and shouldn't replay the splash. The admin
     nav's "Forecast" link does still go to `/`.
 - **Location detail** (`LocationsController#show` at `/locations/:slug`): the
-  Wii Forecast Channel-style paneled view. Seven full-screen panels — three `.wii-index` panels (UV, Air Quality,
-  Laundry) then Current, Today, Tomorrow, 5-Day — slide vertically, non-looping,
+  Wii Forecast Channel-style paneled view. Seven full-screen panels — three `.wii-index` panels (Laundry, Air Quality,
+  UV) then Current, Today, Tomorrow, 5-Day — slide vertically, non-looping,
   via the `forecast` Stimulus controller (arrow buttons + Up/Down keys). Panels
   are partials under `app/views/locations/panels/` wrapped in the shared
   `_frame` chrome; their order, titles and the default are one list

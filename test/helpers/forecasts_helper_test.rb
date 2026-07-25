@@ -10,15 +10,15 @@ class ForecastsHelperTest < ActionView::TestCase
   end
 
   test "panel_track_style scrolls the track to the panel, one track height per step" do
-    assert_equal "transform: translateY(-0%)", panel_track_style("uv")
+    assert_equal "transform: translateY(-0%)", panel_track_style("laundry")
     assert_equal "transform: translateY(-300%)", panel_track_style("current")
     assert_equal "transform: translateY(-600%)", panel_track_style("five_day")
   end
 
   test "panel_neighbour_title stops at the ends instead of looping" do
-    assert_equal "Laundry Index", panel_neighbour_title("current", -1)
+    assert_equal "UV Index", panel_neighbour_title("current", -1)
     assert_equal "Today", panel_neighbour_title("current", 1)
-    assert_nil panel_neighbour_title("uv", -1)
+    assert_nil panel_neighbour_title("laundry", -1)
     assert_nil panel_neighbour_title("five_day", 1)
   end
 

@@ -64,7 +64,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".wii[data-active-panel=?]", "current"
     assert_select ".wii__track[style=?]", "transform: translateY(-300%)"
     assert_select ".wii-header__title", text: "Current"
-    assert_select "[data-forecast-target=prevLabel]", text: "Laundry Index"
+    assert_select "[data-forecast-target=prevLabel]", text: "UV Index"
     assert_select "[data-forecast-target=nextLabel]", text: "Today"
     assert_select ".wii-arrow[hidden]", false, "the arrows must not need JavaScript to appear"
   end
