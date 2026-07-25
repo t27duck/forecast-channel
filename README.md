@@ -16,14 +16,21 @@ bin/dev             # starts the server plus JS/CSS watchers
 
 Secrets live in the environment, not in Rails credentials (there is no
 `config/credentials.yml.enc` or `master.key`). [dotenv](https://github.com/bkeepers/dotenv)
-loads them on boot from `.env.<environment>` and then `.env`; both are
-gitignored, and blank templates are checked in:
+loads them on boot from `.env.<environment>.local`; every file is gitignored,
+and blank templates are checked in:
 
-- `.example.env.development` → copy to `.env.development` for local work. Only
-  `MAPBOX_TOKEN` (the globe's Mapbox access token) is needed.
-- `.example.env` → copy to `.env` for deploys. Kamal reads it for the host and
-  registry settings, and passes `SECRET_KEY_BASE` and `MAPBOX_TOKEN` into the
-  container as secrets (see `.kamal/secrets` and `config/deploy.yml`).
+- `.example.env.development.local` → copy to `.env.development.local` for local
+  work. Only `MAPBOX_TOKEN` (the globe's Mapbox access token) is needed.
+- `.example.env.production.local` → copy to `.env.production.local` for
+  deploys. It holds the host, registry and secret values; export them into your
+  shell before `bin/kamal deploy` (`set -a; source .env.production.local; set
+  +a`), because `.kamal/secrets` pulls `SECRET_KEY_BASE` and `MAPBOX_TOKEN`
+  from the environment to pass into the container (see `config/deploy.yml`).
+
+Every file is environment-scoped on purpose: there is no plain `.env`, so a
+value meant for production is never set while you're running in development or
+test. In particular the test suite sees no `MAPBOX_TOKEN` unless you put one in
+a `.env.test.local` of your own.
 
 Nothing here is required to run the app or the tests — an unset `MAPBOX_TOKEN`
 just means the globe renders without satellite imagery.
@@ -63,7 +70,7 @@ and a fist while you drag it. The globe needs a Mapbox access token in the
 `MAPBOX_TOKEN` environment variable:
 
 ```bash
-cp .example.env.development .env.development   # then fill in MAPBOX_TOKEN=pk....
+cp .example.env.development.local .env.development.local   # then fill in MAPBOX_TOKEN=pk....
 ```
 
 Without one the globe still builds — markers, controls and all — on an offline

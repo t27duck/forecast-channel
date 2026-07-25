@@ -16,8 +16,10 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - CSS: Tailwind CSS
 - File uploads: Active Storage
 - Authentication: Rails auth generator with bcrypt
-- Secrets: dotenv (`.env.<environment>` then `.env`) — there are **no** Rails
-  credentials (no `config/credentials.yml.enc`, no `master.key`)
+- Secrets: dotenv, environment-scoped only (`.env.<environment>.local`; there
+  is deliberately no plain `.env`, so production values are never set in
+  development or test) — there are **no** Rails credentials (no
+  `config/credentials.yml.enc`, no `master.key`)
 - Maps: Mapbox (Documentation: https://docs.mapbox.com/mapbox-gl-js/api/)
 - Weather source: Open-Meteo (Documentation: https://open-meteo.com/en/docs and https://open-meteo.com/en/docs/geocoding-api)
 
@@ -39,7 +41,7 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 - Run specific test file: `bin/rails test test/path/to/test_file.rb`
 - Run specific test method: `bin/rails test test/path/to/test_file.rb:LINE_NUMBER`
 - System tests need no secrets: the globe renders offline (see **Globe**), so
-  `bin/rails test:system` passes on a fresh checkout with no `.env` at all.
+  `bin/rails test:system` passes on a fresh checkout with no env file at all.
 - Never let a system test play a real music track. A browser streaming one of
   the multi-MB files holds that connection — and one of the test server's few
   threads — open for the whole track; after about four page loads nothing else
@@ -213,11 +215,12 @@ Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
   Mapbox token the controller builds the same globe on `OFFLINE_STYLE` — a
   valid empty style plus `testMode`, so everything of ours still renders and
   nothing is fetched from Mapbox. `MapsHelper#mapbox_token` reads the token from
-  `ENV["MAPBOX_TOKEN"]` (dotenv loads it from `.env.development`; Kamal injects
-  it in production as a secret), treating a blank one as none;
-  `config.x.mapbox_token_disabled` blanks the helper in the test environment, so
-  the suite always takes the offline path even on a machine whose `.env` has a
-  token: no secrets, no network, and the same behaviour as CI)
+  `ENV["MAPBOX_TOKEN"]` (dotenv loads it from `.env.development.local`; Kamal
+  injects it in production as a secret), treating a blank one as none;
+  `test/test_helper.rb` clears the variable, so the suite always takes the
+  offline path even on a machine that has a token — in a `.env.test.local` or
+  just exported in the shell: no secrets, no network, and the same behaviour as
+  CI)
   driven by the `globe` Stimulus controller (`app/javascript/controllers/
   globe_controller.js`). Locations are served as GeoJSON from
   `MapsController#markers` (`/map/markers`, built by `LocationGeojson`) and

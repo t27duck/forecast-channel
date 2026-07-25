@@ -19,9 +19,10 @@ require "rails/test_unit/railtie"
 Bundler.require(*Rails.groups)
 
 # Put the .env files' contents in ENV before anything reads them. The railtie is
-# what widens the search from .env to .env.<environment> (and the .local
-# variants) and hooks the load onto before_configuration, which runs as the
-# application class below is defined — earlier than any config/environments file.
+# what widens the search from .env to the .env.<environment>.local files this app
+# actually keeps its values in, and hooks the load onto before_configuration,
+# which runs as the application class below is defined — earlier than any
+# config/environments file.
 # "dotenv" first: "dotenv/rails" is the railtie alone and assumes it.
 require "dotenv"
 require "dotenv/rails"

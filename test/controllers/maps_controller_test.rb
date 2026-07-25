@@ -10,7 +10,7 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
 
   test "renders no Mapbox token in the test environment" do
     get map_url
-    # config.x.mapbox_token_disabled keeps the suite off api.mapbox.com; the
+    # test_helper clears MAPBOX_TOKEN to keep the suite off api.mapbox.com; the
     # globe controller falls back to its offline style.
     assert_select "[data-controller=globe][data-globe-token-value=?]", ""
   end

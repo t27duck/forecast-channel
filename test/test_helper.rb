@@ -1,5 +1,17 @@
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
+
+# Run the whole suite with no Mapbox token, whatever the machine had — a
+# .env.test.local, or a shell that sourced the deploy values. The globe
+# controller then takes its offline style: no style, tile or glyph request
+# leaves the browser, so the suite depends on neither a token nor the network
+# and a developer's machine tests exactly what CI (which has no token) tests.
+#
+# After the environment, so this wins over anything dotenv loaded. dotenv's
+# autorestore snapshots ENV per test *after* this point, so a test that sets the
+# token and doesn't clean up is still restored to blank.
+ENV["MAPBOX_TOKEN"] = nil
+
 require "rails/test_help"
 require_relative "test_helpers/session_test_helper"
 require_relative "test_helpers/cookie_test_helper"
