@@ -312,7 +312,10 @@ location's current conditions.
     globe opens centred there. Otherwise the controller restores the
     center/zoom/pitch/bearing it saved to `sessionStorage` (`globeCamera`) on
     `moveend`. So arriving from your own location centres on it, while arriving
-    from another location resumes where you left the map.
+    from another location resumes where you left the map. With neither — a first
+    visit straight to `/map` — it opens on `DEFAULT_CENTER`, New York at the
+    coordinates `db/seeds.rb` gives it, since `DEFAULT_ZOOM` is close enough in
+    that a nominal world centre would just be open ocean.
   - **Idle**: two seconds without mouse movement — or the pointer leaving the
     page, which skips the wait — puts `is-idle` on `.map-view`; the CSS slides
     both bars away, fades the banner and hides the cursor. Idling at

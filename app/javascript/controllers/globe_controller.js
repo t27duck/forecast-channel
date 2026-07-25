@@ -46,7 +46,10 @@ const PITCH_STEP = 15
 const DEFAULT_PITCH = 0
 
 const DEFAULT_ZOOM = 7
-const DEFAULT_CENTER = [0, 20]
+// Where the globe opens when it has nothing better to go on. New York, at the
+// coordinates db/seeds.rb gives it — somewhere with markers on it, rather than
+// the empty Atlantic the old [0, 20] put you over at this zoom.
+const DEFAULT_CENTER = [-74.00597, 40.71427]
 
 // The map remembers where it was left (per browser tab) so returning to it from
 // another location's forecast resumes the same view.
@@ -255,7 +258,7 @@ export default class extends Controller {
   }
 
   // Where the globe opens: centred on the location we came from (fresh), else
-  // the view it was left at (resumed), else a default world view.
+  // the view it was left at (resumed), else New York.
   #initialCamera() {
     if (this.hasCenterValue && this.centerValue.length === 2) {
       return { center: this.centerValue, zoom: DEFAULT_ZOOM, pitch: DEFAULT_PITCH, bearing: 0 }

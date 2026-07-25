@@ -89,6 +89,19 @@ class GlobeTest < ApplicationSystemTestCase
     assert_operator saved["zoom"], :>, 7.5
   end
 
+  test "with nothing to go on the map falls back to New York" do
+    # No ?location focus and nothing saved, so only the built-in default is left.
+    visit location_path(locations(:berlin)) # same origin, to reach sessionStorage
+    execute_script("window.sessionStorage.removeItem('globeCamera')")
+
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
+
+    center = evaluate_script("document.querySelector('[data-controller=globe]').__map.getCenter()")
+    assert_in_delta(-74.00597, center["lng"], 0.01)
+    assert_in_delta 40.71427, center["lat"], 0.01
+  end
+
   test "the map resumes the camera view it was last left at" do
     # Stand in for having left the map zoomed to a particular spot.
     # Same origin, no WebGL — just to reach sessionStorage.
