@@ -4,7 +4,7 @@ class JukeboxTest < ApplicationSystemTestCase
   setup { choose_location(locations(:berlin)) }
 
   test "the music zone follows navigation and the player persists" do
-    visit root_path
+    visit location_path(locations(:berlin)) # the forecast itself, not via the splash
     assert_selector "#jukebox[data-controller=jukebox]", visible: :all
     assert_equal "current", evaluate_script("document.body.dataset.musicZone")
 

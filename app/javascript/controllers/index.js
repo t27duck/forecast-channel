@@ -30,3 +30,6 @@ application.register("mute", MuteController)
 
 import PressController from "./press_controller"
 application.register("press", PressController)
+
+import SplashController from "./splash_controller"
+application.register("splash", SplashController)

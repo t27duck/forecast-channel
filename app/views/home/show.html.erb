@@ -1,0 +1,17 @@
+<% content_for :title, "Forecast Channel" %>
+<% content_for :hide_app_nav, true %>
+
+<div class="splash" data-controller="splash"
+  data-splash-url-value="<%= location_path(@location) %>"
+  data-splash-refresh-value="<%= @refresh %>">
+  <p class="splash__message">One moment, please&hellip;</p>
+
+  <%# Six suns with a bright pulse sweeping left to right; --i phases each one. %>
+  <div class="splash__suns" aria-hidden="true">
+    <% 6.times do |i| %>
+      <span class="splash__sun" style="--i: <%= i %>">
+        <%= weather_icon(0, size: 44, classes: "splash__sun-icon") %>
+      </span>
+    <% end %>
+  </div>
+</div>

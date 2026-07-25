@@ -56,7 +56,9 @@
   <%# Bottom bar: leave the globe, tilt it, or reset the tilt. %>
   <div class="wii-bottom map-bar map-bar--bottom" data-controller="press">
     <div class="wii-bar__slot">
-      <%= link_to "End", root_path, class: "wii-chrome-link" %>
+      <%# Straight to the forecast, not the root path: leaving the globe isn't
+          an arrival, so it shouldn't play the loading screen again. %>
+      <%= link_to "End", location_path(current_location), class: "wii-chrome-link" %>
     </div>
     <div class="wii-bar__slot">
       <button type="button" class="wii-arrow" aria-label="Increase tilt"

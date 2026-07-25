@@ -91,7 +91,8 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "the map resumes the camera view it was last left at" do
     # Stand in for having left the map zoomed to a particular spot.
-    visit root_path # same origin, no WebGL — just to reach sessionStorage
+    # Same origin, no WebGL — just to reach sessionStorage.
+    visit location_path(locations(:berlin))
     execute_script(
       "window.sessionStorage.setItem('globeCamera', " \
       "JSON.stringify({ center: [12, 48], zoom: 5.5, pitch: 0, bearing: 0 }))"

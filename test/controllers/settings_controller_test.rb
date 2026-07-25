@@ -8,6 +8,8 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".settings__header", text: "Change Settings"
     assert_select ".settings__value", text: locations(:berlin).name
+    # Straight to the forecast, so coming back doesn't replay the splash.
+    assert_select ".wii-bottom a[href=?]", location_path(locations(:berlin)), text: "Back"
   end
 
   test "show waits until a closest location has been chosen" do

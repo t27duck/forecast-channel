@@ -44,7 +44,8 @@
       button with its label sitting where every other bar label sits. %>
   <div class="wii-bottom settings__footer">
     <div class="wii-bar__slot">
-      <%= link_to "Back", root_path, class: "wii-chrome-link" %>
+      <%# The forecast directly, so coming back doesn't replay the splash. %>
+      <%= link_to "Back", location_path(current_location), class: "wii-chrome-link" %>
     </div>
     <div class="wii-bar__slot wii-bar__slot--center"></div>
     <div class="wii-bar__slot"></div>

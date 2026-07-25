@@ -36,7 +36,9 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
 
   test "overlays a bottom bar with End, tilt, and Restore controls" do
     get map_url
-    assert_select ".map-bar--bottom a.wii-chrome-link[href=?]", root_path, text: "End"
+    # Straight to the forecast, so leaving the globe doesn't replay the splash.
+    assert_select ".map-bar--bottom a.wii-chrome-link[href=?]",
+      location_path(locations(:berlin)), text: "End"
     assert_select ".map-bar--bottom .wii-arrow[data-action=?]", "globe#pitchUp"
     assert_select ".map-bar--bottom .wii-arrow[data-action=?]", "globe#pitchDown"
     assert_select ".map-bar--bottom [data-action=?]", "globe#resetPitch", text: "Restore"

@@ -203,11 +203,25 @@ location's current conditions.
 
 ### Screens
 
-- **Entry point** (`HomeController#show` at `/`): redirects to the current
-  location's forecast, or — through `require_current_location` — to the picker
-  when there isn't one yet. It exists as its own controller so `/` has a home of
-  its own (a splash screen would go here) instead of `locations#show` doing
-  double duty.
+- **Splash** (`HomeController#show` at `/`): the Forecast Channel's loading
+  screen — "One moment, please…" over six `weather_icon(0)` suns with a bright
+  pulse sweeping left to right (`.splash` in `application.tailwind.css`; the
+  cycle is exactly 6 × the per-sun stagger so the loop wraps seamlessly, and
+  `prefers-reduced-motion` stills it). The `splash` Stimulus controller holds
+  for `MIN_MS`, then `Turbo.visit`s the forecast with `action: "replace"` so the
+  screen never enters history; a click or key press skips ahead **and** doubles
+  as the gesture the jukebox needs to start playing. First-time visitors never
+  see it — `require_current_location` sends them to the picker first.
+  - The pause does real work: when the current location's weather is stale the
+    view sets `data-splash-refresh-value`, and the controller fetches **the same
+    URL as JSON**, which is where `#show` calls `refresh_weather!` synchronously
+    (like `LocationsController#refresh`) and answers when it's stored. The
+    `weather_stale?` guard doubles as the rate limit. `MAX_MS` caps how long a
+    slow API can hold the screen.
+  - The globe's "End" and settings' "Back" therefore point at
+    `location_path(current_location)`, **not** `root_path` — coming back from
+    another screen isn't an arrival and shouldn't replay the splash. The admin
+    nav's "Forecast" link does still go to `/`.
 - **Location detail** (`LocationsController#show` at `/locations/:slug`): the
   Wii Forecast Channel-style paneled view. Seven full-screen panels — three `.wii-index` panels (UV, Air Quality,
   Laundry) then Current, Today, Tomorrow, 5-Day — slide vertically, non-looping,

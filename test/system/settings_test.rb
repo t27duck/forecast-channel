@@ -18,9 +18,9 @@ class SettingsTest < ApplicationSystemTestCase
     click_button "Change", match: :first # Temperature Display row
     assert_selector ".settings__value", text: "Fahrenheit"
 
-    # Root now leads to the chosen location's forecast.
+    # Root now plays the splash and lands on the chosen location's forecast.
     visit root_path
-    assert_selector ".wii-header__location", text: locations(:tokyo).name
+    assert_selector ".wii-header__location", text: locations(:tokyo).name, wait: 15
   end
 
   test "choosing a US location switches the units to Fahrenheit and mph" do

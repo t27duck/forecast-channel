@@ -4,9 +4,10 @@ class MuteTest < ApplicationSystemTestCase
   test "the mute button toggles and remembers the muted state" do
     choose_location(locations(:berlin))
 
-    visit root_path
+    forecast = location_path(locations(:berlin))
+    visit forecast
     execute_script("window.localStorage.clear()")
-    visit root_path # start from a known (unmuted) state
+    visit forecast # start from a known (unmuted) state
 
     assert_no_selector ".wii-mute.is-muted"
 
