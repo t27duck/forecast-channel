@@ -171,10 +171,24 @@ location's current conditions.
   keep the unauthenticated `/map` and `/` subscriptions honest. Each action
   dispatches a `CustomEvent` on `window` rather than calling a controller,
   because `globe.js` is a separate bundle and neither bundle can import from the
-  other. Two streams: `Location::WEATHER_STREAM` (one for everyone, broadcast by
-  `RefreshWeatherBatchJob` when a chunk actually wrote something) and
-  `Location#weather_stream` (per location, slug-keyed like the URLs, broadcast
-  by `RefreshLocationWeatherJob`).
+  other. Three streams:
+  - `Location::WEATHER_STREAM` — one for everyone, watched by the globe.
+    Broadcast by `RefreshWeatherBatchJob` when a chunk actually wrote something,
+    and by `LocationsController`'s create/update/destroy, since the feed carries
+    each location's name, slug and coordinates as well as its weather. That's in
+    the controller rather than an `after_commit` because `db/seeds.rb` builds
+    its ~300 cities through the model and a callback would announce every one.
+  - `Location#weather_stream` — per location, slug-keyed like the URLs,
+    broadcast by `RefreshLocationWeatherJob`; the splash waits on it.
+  - `Location::INDEX_STREAM` — the management index, which gets a **Turbo page
+    refresh** (`broadcast_refresh_to`) rather than a custom signal. Same
+    constraint, different tool: the rows show temperatures in the reader's own
+    unit, so the client re-requests the page and Turbo morphs it in. It has to
+    be its own stream — a page refresh sent to `WEATHER_STREAM` would tear down
+    and rebuild the globe's whole Mapbox instance. Morphing is opted into by
+    `content_for :head` on that view alone (`turbo-refresh-method`/`-scroll`),
+    never in the layout: the Wii screens keep panel position, the header title
+    and the 6-hour overlay in JavaScript, and a morph would stomp all three.
 - **Seed data** (`db/seeds.rb`): ~300 major world cities (at least three per US
   state) so the globe is full and the picker's state step isn't sparse.
   Geocoding data was captured once from the Open-Meteo API and baked in
@@ -413,7 +427,11 @@ location's current conditions.
   in only. "New location" searches by name (Turbo Frame proxy to the geocoding
   client) and pre-fills the form with the picked result's coordinates. Rows have
   a synchronous "Refresh"; the page has "Refresh all" (enqueues the bulk job), a
-  °C/°F toggle and "Sign out".
+  °C/°F toggle and "Sign out". Because "Refresh all" fans out into a chunk per
+  `BATCH_SIZE` and leaves only an optimistic flash behind, the index subscribes
+  to `Location::INDEX_STREAM` and **morphs** each batch's rows in as they land
+  — see **Live updates** for why it's a page refresh rather than streamed rows,
+  and why the morph opt-in is scoped to this view.
 
 ### Media and assets
 

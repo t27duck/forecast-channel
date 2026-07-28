@@ -30,6 +30,11 @@ class LocationsController < ApplicationController
     @location = Location.new(location_params)
 
     if @location.save
+      # Broadcast from here rather than a model callback: db/seeds.rb builds its
+      # ~300 cities through the model, and a callback would announce every one
+      # of them. Admin CRUD is the only time a location appears or disappears
+      # while someone might be watching the globe.
+      WeatherBroadcast.locations_changed
       redirect_to locations_path, notice: "#{@location.name} was added."
     else
       render :new, status: :unprocessable_entity
@@ -41,6 +46,9 @@ class LocationsController < ApplicationController
 
   def update
     if @location.update(location_params)
+      # A rename moves the marker's label and its slug (and so the URL the globe
+      # clicks through to); a coordinate edit moves the marker itself.
+      WeatherBroadcast.locations_changed
       redirect_to locations_path, notice: "#{@location.name} was updated."
     else
       render :edit, status: :unprocessable_entity
@@ -49,6 +57,7 @@ class LocationsController < ApplicationController
 
   def destroy
     @location.destroy
+    WeatherBroadcast.locations_changed
     redirect_to locations_path, notice: "#{@location.name} was removed."
   end
 

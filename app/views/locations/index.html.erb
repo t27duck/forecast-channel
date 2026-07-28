@@ -1,5 +1,20 @@
 <% content_for :title, "Locations" %>
 
+<%# Morph rather than replace, so a refresh arriving mid-scroll swaps the rows'
+    contents in place instead of throwing the page back to the top. Scoped to
+    this screen, not the layout: the Wii screens keep panel position, the header
+    title and the 6-hour overlay in JavaScript, and morphing would stomp all
+    three. %>
+<% content_for :head do %>
+  <meta name="turbo-refresh-method" content="morph">
+  <meta name="turbo-refresh-scroll" content="preserve">
+<% end %>
+
+<%# "Refresh all" only leaves a flash behind, so watch the rows land instead.
+    A page refresh, not streamed markup: the temperatures below are rendered in
+    whichever unit this admin chose, which a broadcast can't know. %>
+<%= turbo_stream_from Location::INDEX_STREAM %>
+
 <div class="mx-auto max-w-5xl px-4 py-8">
   <div class="flex items-center justify-between mb-6">
     <div>

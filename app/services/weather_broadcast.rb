@@ -11,15 +11,26 @@
 #
 # The matching client half is app/javascript/lib/stream_actions.js.
 class WeatherBroadcast
-  # A batch of locations was refreshed: the globe re-reads its whole marker
-  # feed. `version` busts any conditional GET on /map/markers, whose response
-  # we've just invalidated.
+  # A batch of locations was refreshed.
   def self.batch_refreshed
-    Turbo::StreamsChannel.broadcast_action_to(
-      Location::WEATHER_STREAM,
-      action: :weather_refreshed,
-      attributes: { version: Time.current.to_i }
-    )
+    marker_feed_changed
+  end
+
+  # A location was added, renamed, moved or removed. The marker feed carries
+  # each location's name, slug, coordinates and population as well as its
+  # weather, so CRUD changes what the globe should be drawing just as a refresh
+  # does — and without this it wouldn't find out until the next hourly sweep.
+  def self.locations_changed
+    marker_feed_changed
+  end
+
+  # Ask the open management index to re-render itself. A Turbo page refresh
+  # rather than a custom signal, because the rows show temperatures through the
+  # visitor's own unit cookie: the client re-requests the page, so the answer is
+  # in *their* units and Turbo morphs it in without losing scroll. Turbo
+  # coalesces the refreshes a fanned-out sweep produces on its own.
+  def self.index_refreshed
+    Turbo::StreamsChannel.broadcast_refresh_to(Location::INDEX_STREAM)
   end
 
   # One location finished refreshing — what the splash is holding its beat for.
@@ -30,4 +41,17 @@ class WeatherBroadcast
       attributes: { slug: location.slug }
     )
   end
+
+  # Both reasons above are the same instruction to the globe — re-read the whole
+  # feed — so they share one signal; they're named apart at the call sites
+  # because that's where the difference is worth reading. `version` busts any
+  # conditional GET on /map/markers, whose response we've just invalidated.
+  def self.marker_feed_changed
+    Turbo::StreamsChannel.broadcast_action_to(
+      Location::WEATHER_STREAM,
+      action: :weather_refreshed,
+      attributes: { version: Time.current.to_i }
+    )
+  end
+  private_class_method :marker_feed_changed
 end

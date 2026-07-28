@@ -15,6 +15,11 @@ class Location < ApplicationRecord
   # stream for all of them, since a batch refresh isn't about any one place.
   WEATHER_STREAM = "locations:weather".freeze
 
+  # The management index's own stream. Deliberately *not* WEATHER_STREAM: what
+  # gets sent here is a Turbo page refresh, and the globe subscribes to that one
+  # — refreshing it would tear down and rebuild the whole Mapbox instance.
+  INDEX_STREAM = "locations:index".freeze
+
   RADIANS_PER_DEGREE = Math::PI / 180
   EARTH_RADIUS_KM = 6371.0
 

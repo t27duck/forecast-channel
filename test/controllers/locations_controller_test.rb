@@ -1,6 +1,8 @@
 require "test_helper"
 
 class LocationsControllerTest < ActionDispatch::IntegrationTest
+  include Turbo::Broadcastable::TestHelper
+
   setup do
     @location = locations(:berlin)
     # Forecasts are gated on having chosen a closest location.
@@ -209,5 +211,51 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
       post refresh_all_locations_url
     end
     assert_redirected_to locations_url
+  end
+
+  # An open globe would otherwise keep drawing the markers it fetched when it
+  # opened, and only notice a city appearing or vanishing at the next sweep.
+  test "adding, editing and removing a location each tell the globe" do
+    assert_turbo_stream_broadcasts Location::WEATHER_STREAM, count: 1 do
+      post locations_url, params: { location: {
+        name: "Oslo", latitude: 59.91, longitude: 10.75, country: "Norway"
+      } }
+    end
+
+    # A rename moves the marker's label *and* its slug, which is the URL the
+    # globe clicks through to.
+    assert_turbo_stream_broadcasts Location::WEATHER_STREAM, count: 1 do
+      patch location_url(@location), params: { location: { name: "Berlin Mitte" } }
+    end
+
+    # Reload first: the rename above rebuilt the slug, so the URL this object
+    # would still generate points at a location that no longer answers.
+    assert_turbo_stream_broadcasts Location::WEATHER_STREAM, count: 1 do
+      delete location_url(@location.reload)
+    end
+  end
+
+  test "a rejected create tells the globe nothing" do
+    assert_no_turbo_stream_broadcasts Location::WEATHER_STREAM do
+      post locations_url, params: { location: { name: "", latitude: "", longitude: "" } }
+    end
+  end
+
+  # The index shows temperatures in whichever unit this admin chose, so it can't
+  # be sent markup — it re-requests the page itself.
+  test "the index subscribes to its own stream and opts into morphing" do
+    get locations_url
+
+    assert_select "turbo-cable-stream-source"
+    assert_select "meta[name=turbo-refresh-method][content=?]", "morph"
+    assert_select "meta[name=turbo-refresh-scroll][content=?]", "preserve"
+  end
+
+  # Morphing the Wii screens would stomp the panel position, the header title
+  # and the 6-hour overlay, all of which live in JavaScript.
+  test "morphing stays off the forecast view" do
+    get location_url(@location)
+
+    assert_select "meta[name=turbo-refresh-method]", false
   end
 end
