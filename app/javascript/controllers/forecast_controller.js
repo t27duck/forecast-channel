@@ -26,10 +26,18 @@ export default class extends Controller {
       else if (event.key === "ArrowDown") { this.next(); event.preventDefault() }
     }
     window.addEventListener("keydown", this.onKeydown)
+
+    // A weather refresh re-requests this page and morphs the panels in, which
+    // puts the server's markup — always the default panel — back over the
+    // track. Only the position needs restoring: the bars and header are
+    // data-turbo-permanent, so the morph never reached them.
+    this.onMorph = () => this.#position()
+    document.addEventListener("turbo:morph", this.onMorph)
   }
 
   disconnect() {
     window.removeEventListener("keydown", this.onKeydown)
+    document.removeEventListener("turbo:morph", this.onMorph)
   }
 
   prev() {
@@ -41,9 +49,21 @@ export default class extends Controller {
   }
 
   #render() {
-    const active = this.panelTargets[this.index]
+    this.#position()
+    this.#chrome()
+  }
+
+  // Where the track sits — the only part a morph can disturb.
+  #position() {
     this.trackTarget.style.transform = `translateY(-${this.index * 100}%)`
-    this.element.dataset.activePanel = active?.dataset.panel
+    this.element.dataset.activePanel = this.panelTargets[this.index]?.dataset.panel
+  }
+
+  // The fixed header and bar labels. Kept apart from the position so a morph
+  // doesn't re-run it: the 6-hour overlay may have put a weekday in the title,
+  // and restoring the panel name over it would undo that.
+  #chrome() {
+    const active = this.panelTargets[this.index]
     this.titleTarget.textContent = active?.dataset.title
 
     this.#updateControl(this.prevControlTarget, this.prevLabelTarget, this.panelTargets[this.index - 1])

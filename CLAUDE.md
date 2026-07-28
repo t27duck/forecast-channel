@@ -180,6 +180,12 @@ location's current conditions.
     its ~300 cities through the model and a callback would announce every one.
   - `Location#weather_stream` — per location, slug-keyed like the URLs,
     broadcast by `RefreshLocationWeatherJob`; the splash waits on it.
+  - `Location#forecast_stream` — per location too, and **separate from
+    `weather_stream` on purpose**: what goes out here is a page refresh, and the
+    splash listens on that one, so sharing would refresh the loading screen out
+    from under itself. Broadcast per refreshed location rather than once per
+    chunk, so a forecast screen only re-requests its page when the place it's
+    showing actually moved.
   - `Location::INDEX_STREAM` — the management index, which gets a **Turbo page
     refresh** (`broadcast_refresh_to`) rather than a custom signal. Same
     constraint, different tool: the rows show temperatures in the reader's own
@@ -188,7 +194,8 @@ location's current conditions.
     and rebuild the globe's whole Mapbox instance. Morphing is opted into by
     `content_for :head` on that view alone (`turbo-refresh-method`/`-scroll`),
     never in the layout: the Wii screens keep panel position, the header title
-    and the 6-hour overlay in JavaScript, and a morph would stomp all three.
+    and the 6-hour overlay in JavaScript. The forecast view opts in too, but
+    only alongside the fences described under **Location detail**.
 - **Seed data** (`db/seeds.rb`): ~300 major world cities (at least three per US
   state) so the globe is full and the picker's state step isn't sparse.
   Geocoding data was captured once from the Open-Meteo API and baked in
@@ -310,7 +317,23 @@ location's current conditions.
   dimmed forecast, closed by Escape or another click (`sixhour` controller,
   `_six_hour` partial). Styling is the `.wii-*` block in
   `application.tailwind.css`, and the app nav is hidden via
-  `content_for :hide_app_nav`. The silver bar markup (`.wii-top`/`.wii-bottom`
+  `content_for :hide_app_nav`.
+  - **Live**: the screen subscribes to its location's `forecast_stream` and
+    **morphs** a refresh in, so a channel left on doesn't drift hours stale. The
+    morph is fenced rather than reacted to: `.wii-top`, `.wii-header` and
+    `.wii-bottom` are `data-turbo-permanent`, because everything JavaScript
+    writes over the server's markup lives in them — the panel title (or the
+    weekday the overlay swapped in), the ▲/▼ labels, and the mute icon's
+    `is-muted`, which would otherwise say the music was back on while it stayed
+    off. That leaves the panels and the "As of" stamp to update, and only two
+    things to re-assert on `turbo:morph`: the track's transform (`forecast`
+    controller — `#position`, deliberately split from `#chrome` so it can't
+    overwrite a weekday title) and the overlay's `is-open` (`sixhour`, which
+    tracks `opened` itself rather than reading the class back). Each panel and
+    6-hour zone carries an `id` so the morph matches elements instead of
+    guessing — the `_stats` strip drops blank tiles, so two renders of a panel
+    can differ in shape.
+  - The silver bar markup (`.wii-top`/`.wii-bottom`
   plus three `.wii-bar__slot`s) is **shared** — settings and the picker use
   `.wii-bottom` too, with a thin modifier each, so a slot-width "Back" button
   lines up with "GitHub"/"Globe" here. Bars outside `.wii` work because

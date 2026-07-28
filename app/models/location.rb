@@ -94,6 +94,13 @@ class Location < ApplicationRecord
     "location:#{slug}:weather"
   end
 
+  # The stream its own forecast screen watches. Separate from weather_stream
+  # because what goes out here is a Turbo page refresh, and the splash listens
+  # on that one — it would refresh the loading screen out from under itself.
+  def forecast_stream
+    "location:#{slug}:forecast"
+  end
+
   # True when weather has never been fetched or has aged past the TTL.
   def weather_stale?
     weather_refreshed_at.nil? || weather_refreshed_at < WEATHER_TTL.ago

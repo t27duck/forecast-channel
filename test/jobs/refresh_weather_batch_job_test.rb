@@ -66,6 +66,24 @@ class RefreshWeatherBatchJobTest < ActiveJob::TestCase
     assert_equal "refresh", streams.sole["action"]
   end
 
+  # Per location, so a forecast screen only re-renders for the place it's
+  # actually showing rather than for every chunk of the sweep.
+  test "tells each refreshed location's own forecast screen" do
+    locations = Location.all.to_a
+    payloads = Array.new(locations.size) { open_meteo_forecast_payload }
+
+    streams = capture_turbo_stream_broadcasts(locations(:berlin).forecast_stream) do
+      stub_air_quality do
+        stub_singleton(OpenMeteo::ForecastClient, :fetch_many, ->(_coords) { payloads }) do
+          RefreshWeatherBatchJob.perform_now(locations.map(&:id))
+        end
+      end
+    end
+
+    assert_equal 1, streams.count
+    assert_equal "refresh", streams.sole["action"]
+  end
+
   # A chunk whose fetch failed leaves every record exactly as it was, so there
   # is no news — and sending it anyway would have every open globe re-fetch a
   # feed that hasn't changed.
@@ -74,9 +92,11 @@ class RefreshWeatherBatchJobTest < ActiveJob::TestCase
 
     assert_no_turbo_stream_broadcasts Location::WEATHER_STREAM do
       assert_no_turbo_stream_broadcasts Location::INDEX_STREAM do
-        stub_air_quality do
-          stub_singleton(OpenMeteo::ForecastClient, :fetch_many, stub_fetch) do
-            RefreshWeatherBatchJob.perform_now(Location.ids)
+        assert_no_turbo_stream_broadcasts locations(:berlin).forecast_stream do
+          stub_air_quality do
+            stub_singleton(OpenMeteo::ForecastClient, :fetch_many, stub_fetch) do
+              RefreshWeatherBatchJob.perform_now(Location.ids)
+            end
           end
         end
       end

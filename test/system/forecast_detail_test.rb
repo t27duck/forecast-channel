@@ -63,4 +63,99 @@ class ForecastDetailTest < ApplicationSystemTestCase
     assert_no_selector ".wii-sixhour-zone.is-open"
     assert_selector ".wii-header__title", text: "TODAY" # restored
   end
+
+  # Weather refreshes under anyone who leaves the channel on, so the panels
+  # re-render themselves. The morph has to reach the readings without disturbing
+  # anything the reader is in the middle of.
+  test "a refresh brings new readings in without moving the reader" do
+    visit location_path(@location)
+    assert_selector ".wii[data-active-panel=current]", wait: 10
+    # Berlin is the chosen location, so these render in Celsius.
+    assert_selector ".wii-temp", text: "20"
+    assert_text "As of 3:00 p.m., 07/18"
+
+    # Somewhere other than the panel the server renders first.
+    find("body").send_keys(:down)
+    find("body").send_keys(:down)
+    assert_selector ".wii[data-active-panel=tomorrow]"
+
+    # Survives a morph but not a reload, so it also proves the page wasn't
+    # simply thrown away and rebuilt.
+    execute_script("window.__survivedTheMorph = true")
+
+    @location.update!(current_temperature: -5, weather_refreshed_at: Time.utc(2026, 7, 18, 21))
+    broadcast_refresh
+
+    assert_text "As of 4:00 p.m., 07/18", wait: 10 # the footer stamp is not permanent
+    assert_selector ".wii[data-active-panel=tomorrow]" # still where the reader was
+
+    # visible: :all — the reading that changed is on Current, which the viewport
+    # clips while the reader sits on Tomorrow.
+    assert_selector "#panel_current .wii-temp", text: "-5", visible: :all
+
+    assert_equal true, evaluate_script("window.__survivedTheMorph"),
+      "expected a morph in place, not a full page load"
+
+    # And it's really on screen once they walk back to it.
+    2.times { find("body").send_keys(:up) }
+    assert_selector ".wii[data-active-panel=current]"
+    assert_selector ".wii-temp", text: "-5"
+  end
+
+  test "a refresh leaves the header, the bars and the open overlay alone" do
+    location = Location.create!(
+      name: "Overlaytown", latitude: 35, longitude: -78, timezone: "UTC",
+      weather_refreshed_at: Time.utc(2026, 7, 16, 12),
+      today_forecast: { "date" => "2026-07-16", "high" => 20, "condition_code" => 2 },
+      hourly_windows: [ { "day" => "today", "window" => "morning", "condition_code" => 2 } ]
+    )
+    visit location_path(location)
+    assert_selector ".wii[data-active-panel=current]", wait: 10
+
+    find("body").send_keys(:down)
+    find(".wii-panel-body[data-panel=today] .wii-sixhour-zone").click
+    assert_selector ".wii-sixhour-zone.is-open"
+    assert_selector ".wii-header__title", text: "THURSDAY"
+
+    location.update!(weather_refreshed_at: Time.utc(2026, 7, 16, 13))
+    broadcast_refresh
+
+    # The overlay's class lives on an element the morph rewrites, so the
+    # controller re-asserts it; the weekday title sits in the permanent header
+    # and is never touched.
+    assert_selector ".wii-sixhour-zone.is-open", wait: 10
+    assert_selector ".wii-header__title", text: "THURSDAY"
+    assert_selector ".wii-sixhour__heading", text: "6-Hour Weather"
+
+    # Still closes afterwards, so the re-assertion didn't pin it open.
+    find("body").send_keys(:escape)
+    assert_no_selector ".wii-sixhour-zone.is-open"
+    assert_selector ".wii-header__title", text: "TODAY"
+  end
+
+  test "a refresh doesn't reset the mute button under the reader" do
+    visit location_path(@location)
+    assert_selector ".wii[data-active-panel=current]", wait: 10
+
+    find(".wii-mute").click
+    assert_selector ".wii-mute.is-muted"
+
+    broadcast_refresh
+    sleep 1
+
+    # The bar is permanent, so the server's unmuted markup never lands on it —
+    # otherwise the icon would say the music is back on while it stayed off.
+    assert_selector ".wii-mute.is-muted"
+    assert_equal "1", evaluate_script("localStorage.getItem('jukeboxMuted')")
+  end
+
+  private
+
+  # The test cable adapter records broadcasts rather than delivering them, so
+  # hand the page the element the server would have sent.
+  def broadcast_refresh
+    execute_script(
+      "window.Turbo.renderStreamMessage('<turbo-stream action=\"refresh\"></turbo-stream>')"
+    )
+  end
 end

@@ -3,6 +3,19 @@
 <%# Every forecast page plays the "current" track, whichever location it shows. %>
 <% content_for :music_zone, "current" %>
 
+<%# Weather refreshes under anyone who leaves this screen open, so it re-renders
+    itself when its own location is refreshed. A page refresh rather than
+    streamed panels: every reading below is converted through the reader's own
+    unit cookies, which a broadcast can't know. The chrome is marked
+    data-turbo-permanent so the morph reaches the panels and the "As of" stamp
+    and stops there — see the bars and header below. %>
+<%= turbo_stream_from @location.forecast_stream %>
+
+<% content_for :head do %>
+  <meta name="turbo-refresh-method" content="morph">
+  <meta name="turbo-refresh-scroll" content="preserve">
+<% end %>
+
 <%# The first paint must already be the default panel: the track is rendered
     pre-scrolled, the header titled and the ▲/▼ labels filled in, so nothing
     jumps when the (deferred) forecast controller connects. %>
@@ -12,8 +25,11 @@
 
 <div class="wii" data-controller="forecast press"
   data-forecast-default-value="<%= active %>" data-active-panel="<%= active %>">
-  <%# Fixed silver top bar — its ▲ label updates to the panel above. %>
-  <div class="wii-top">
+  <%# Fixed silver top bar — its ▲ label updates to the panel above.
+      Permanent: the ▲ label and the mute icon's state are both written by
+      JavaScript after the server rendered something else, and a morph would put
+      the server's version back — muting would silently appear to switch off. %>
+  <div class="wii-top" data-turbo-permanent>
     <div class="wii-bar__slot">
       <button type="button" class="wii-mute" aria-label="Mute or unmute the music"
         data-controller="mute" data-mute-jukebox-outlet="#jukebox" data-action="mute#toggle">
@@ -40,8 +56,11 @@
     </div>
   </div>
 
-  <%# Fixed green header — the title updates to the active panel; location stays. %>
-  <div class="wii-header">
+  <%# Fixed green header — the title updates to the active panel; location stays.
+      Permanent for the same reason: the title is whatever the reader navigated
+      to, or the weekday the 6-hour overlay swapped in, never the default the
+      server rendered. Nothing in here is weather. %>
+  <div class="wii-header" data-turbo-permanent>
     <div class="wii-header__title" data-forecast-target="title"><%= panel_title(active) %></div>
     <div class="wii-header__location"><%= @location.name %></div>
   </div>
@@ -62,8 +81,9 @@
     <% end %>
   </div>
 
-  <%# Fixed silver bottom bar — its ▼ label updates to the panel below. %>
-  <div class="wii-bottom">
+  <%# Fixed silver bottom bar — its ▼ label updates to the panel below, so it's
+      permanent like the top one. %>
+  <div class="wii-bottom" data-turbo-permanent>
     <div class="wii-bar__slot">
       <%# Leaves the app, so it opens in a new tab and the music keeps playing. %>
       <%= link_to "GitHub", "https://github.com/t27duck/forecast-channel",

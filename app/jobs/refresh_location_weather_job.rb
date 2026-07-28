@@ -13,10 +13,14 @@ class RefreshLocationWeatherJob < ApplicationJob
     # can't be the rate limit any more now the work is asynchronous: two
     # arrivals in the same second would both find stale weather and both
     # enqueue. Whoever runs second finds it fresh, and only answers.
-    location.refresh_weather! if location.weather_stale?
+    refreshed = location.weather_stale? && location.refresh_weather!
 
-    # Unconditionally: the screen waiting on this wants to know the attempt is
-    # over, not whether Open-Meteo had anything new. A failed fetch renders the
+    # Only when something actually changed: an open forecast screen re-requests
+    # its page to act on this, which is wasted work if the reading is the same.
+    WeatherBroadcast.forecast_refreshed(location) if refreshed
+
+    # This one unconditionally: the splash wants to know the attempt is over,
+    # not whether Open-Meteo had anything new. A failed fetch renders the
     # weather already stored, which is what it would have shown anyway.
     WeatherBroadcast.location_ready(location)
   end

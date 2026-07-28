@@ -33,6 +33,15 @@ class WeatherBroadcast
     Turbo::StreamsChannel.broadcast_refresh_to(Location::INDEX_STREAM)
   end
 
+  # Ask this location's own forecast screen to re-render. A page refresh again,
+  # and for the same reason as the index: the panels render temperatures and
+  # wind through the reader's own cookies. The screen protects the bits it keeps
+  # in JavaScript with data-turbo-permanent, so the morph reaches the panels and
+  # the "As of" stamp and nothing else — see locations/show.
+  def self.forecast_refreshed(location)
+    Turbo::StreamsChannel.broadcast_refresh_to(location.forecast_stream)
+  end
+
   # One location finished refreshing — what the splash is holding its beat for.
   def self.location_ready(location)
     Turbo::StreamsChannel.broadcast_action_to(

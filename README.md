@@ -87,10 +87,10 @@ instead of hundreds.
 
 A refresh **announces itself** over Action Cable, so screens already open don't
 sit on stale readings: the globe re-reads its markers when a batch lands (and
-when a location is added, renamed or removed), the management index morphs each
-batch's rows in as "Refresh all" works through them, and the splash hands over
-the moment the refresh it queued finishes rather than waiting out a timer. See
-**Live updates** below.
+when a location is added, renamed or removed), a forecast left on screen morphs
+its new readings in, the management index does the same for its rows as "Refresh
+all" works through them, and the splash hands over the moment the refresh it
+queued finishes rather than waiting out a timer. See **Live updates** below.
 
 ## Live updates
 
@@ -108,11 +108,13 @@ Instead the server says "this changed" and each client re-fetches over HTTP,
 where its own settings apply again. The two halves are
 `app/services/weather_broadcast.rb` and `app/javascript/lib/stream_actions.js`.
 
-The management index takes the same idea through Turbo's own front door — a
-page-refresh broadcast, which the browser answers by re-requesting the page and
-morphing it in. Morphing is opted into on that view alone, never in the layout:
-the Wii screens keep their panel position, header title and 6-hour overlay in
-JavaScript, and a morph would stomp all three.
+The forecast screen and the management index take the same idea through Turbo's
+own front door — a page-refresh broadcast, which the browser answers by
+re-requesting the page and morphing it in. Morphing is opted into per view, never
+in the layout, and the forecast marks its silver bars and green header
+`data-turbo-permanent` so the morph reaches the panels and the "As of" stamp and
+stops there. Everything JavaScript writes over the server's markup — the panel
+title, the ▲/▼ labels, the mute icon — lives behind that fence.
 
 ## Jobs
 

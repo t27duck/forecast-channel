@@ -6,7 +6,13 @@
   The title comes from ForecastsHelper::PANELS, the one list that also fixes the
   panels' order; data-title feeds the fixed header + silver-bar labels via the
   forecast controller.
+
+  The id is what pins each panel when a refresh morphs new readings in: the
+  stats strip drops blank tiles, so two renders of the same panel can differ in
+  shape, and without an id to match on the morph is left guessing which sibling
+  is which.
 %>
-<div class="wii-panel-body" data-panel="<%= key %>" data-title="<%= panel_title(key) %>" data-forecast-target="panel">
+<div class="wii-panel-body" id="panel_<%= key %>"
+  data-panel="<%= key %>" data-title="<%= panel_title(key) %>" data-forecast-target="panel">
   <%= yield %>
 </div>

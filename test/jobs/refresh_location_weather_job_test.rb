@@ -56,4 +56,27 @@ class RefreshLocationWeatherJobTest < ActiveJob::TestCase
       RefreshLocationWeatherJob.perform_now(location)
     end
   end
+
+  test "tells an open forecast screen when the reading actually changed" do
+    location = locations(:tokyo) # never refreshed, so stale
+    payload = open_meteo_forecast_payload
+
+    assert_turbo_stream_broadcasts location.forecast_stream, count: 1 do
+      stub_air_quality do
+        stub_singleton(OpenMeteo::ForecastClient, :fetch, ->(**) { payload }) do
+          RefreshLocationWeatherJob.perform_now(location)
+        end
+      end
+    end
+  end
+
+  # Acting on it costs the screen a whole page request, which is wasted when the
+  # reading it's already showing is the current one.
+  test "leaves the forecast screen alone when nothing was refreshed" do
+    location = locations(:berlin) # already fresh
+
+    assert_no_turbo_stream_broadcasts location.forecast_stream do
+      RefreshLocationWeatherJob.perform_now(location)
+    end
+  end
 end

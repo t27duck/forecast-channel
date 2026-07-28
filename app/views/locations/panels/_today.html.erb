@@ -1,6 +1,8 @@
 <% forecast = location.today_forecast %>
 <%= render layout: "locations/panels/frame", locals: { key: "today" } do %>
-  <div class="wii-sixhour-zone" data-controller="sixhour" data-action="click->sixhour#toggle"
+  <%# id so a refresh morph matches this element rather than rebuilding it, which
+      would drop the is-open class the controller re-asserts. %>
+  <div class="wii-sixhour-zone" id="sixhour_today" data-controller="sixhour" data-action="click->sixhour#toggle"
     data-sixhour-day-value="<%= weekday_name(forecast["date"]) %>">
     <div class="wii-conditions">
       <div class="wii-conditions__text">

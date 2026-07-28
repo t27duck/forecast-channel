@@ -251,11 +251,43 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "meta[name=turbo-refresh-scroll][content=?]", "preserve"
   end
 
-  # Morphing the Wii screens would stomp the panel position, the header title
-  # and the 6-hour overlay, all of which live in JavaScript.
-  test "morphing stays off the forecast view" do
+  # Weather refreshes under anyone who leaves the forecast open, so it
+  # re-renders itself — but the screen keeps the panel position, the header
+  # title and the 6-hour overlay in JavaScript, and a morph reaching those would
+  # stomp all three. The chrome opts out; the panels and the "As of" stamp don't.
+  test "the forecast subscribes, morphs, and fences off the chrome" do
     get location_url(@location)
 
+    assert_select "turbo-cable-stream-source"
+    assert_select "meta[name=turbo-refresh-method][content=?]", "morph"
+
+    assert_select ".wii-top[data-turbo-permanent]"
+    assert_select ".wii-header[data-turbo-permanent]"
+    assert_select ".wii-bottom[data-turbo-permanent]"
+    assert_select ".wii__track[data-turbo-permanent]", false, "the panels are the point"
+    assert_select ".wii-footerline[data-turbo-permanent]", false, "the As-of stamp has to move"
+  end
+
+  # The stats strip drops blank tiles, so two renders of a panel can differ in
+  # shape; without ids the morph has to guess which sibling is which.
+  test "each panel and 6-hour zone carries a stable id for the morph to match on" do
+    get location_url(@location)
+
+    ForecastsHelper::PANELS.each { |panel| assert_select "##{"panel_#{panel[:key]}"}" }
+    assert_select "#sixhour_today"
+    assert_select "#sixhour_tomorrow"
+  end
+
+  # Scoped per view, never in the layout: the picker and settings share the same
+  # silver bars but none of the state, and the globe would rebuild all of Mapbox.
+  test "morphing stays off every other screen" do
+    get map_url
+    assert_select "meta[name=turbo-refresh-method]", false
+
+    get settings_url
+    assert_select "meta[name=turbo-refresh-method]", false
+
+    get root_url
     assert_select "meta[name=turbo-refresh-method]", false
   end
 end

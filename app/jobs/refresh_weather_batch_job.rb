@@ -17,5 +17,9 @@ class RefreshWeatherBatchJob < ApplicationJob
     # "Refresh all" fans out into a chunk per BATCH_SIZE and then only leaves an
     # optimistic flash behind, so the index watches its rows land instead.
     WeatherBroadcast.index_refreshed
+    # Per location rather than one signal everyone acts on: a forecast screen
+    # only cares about the place it's showing, and re-rendering every open one
+    # for a chunk that didn't contain it would cost a request each time.
+    locations.each { |location| WeatherBroadcast.forecast_refreshed(location) }
   end
 end
