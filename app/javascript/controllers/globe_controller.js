@@ -2,6 +2,11 @@ import { Controller } from "@hotwired/stimulus"
 import mapboxgl from "mapbox-gl"
 import { WEATHER_ICONS } from "../lib/weather_icons"
 
+// Name only, not an import: stream_actions.js is registered by the main bundle,
+// and mapbox-gl is why this controller ships in its own. Neither bundle can
+// reach into the other, so the window event is the seam between them.
+const WEATHER_REFRESHED = "forecast:weather-refreshed"
+
 // Standard basemap config properties we switch off (roads, transit, labels).
 const HIDDEN_BASEMAP_FEATURES = [
   "showRoadsAndTransit",
@@ -76,6 +81,11 @@ const SECONDS_PER_REVOLUTION = 180
 const ICON_SIZE = 34
 const ICON_PIXEL_RATIO = 2
 
+// A refresh sweep runs in chunks of WeatherRefresher::BATCH_SIZE, so it
+// announces itself several times in quick succession. Wait this long after the
+// last one before re-reading the feed, and the whole sweep costs one fetch.
+const REFETCH_DEBOUNCE = 3000
+
 // Renders the satellite globe and plots each location as a symbol in a single
 // GeoJSON layer. Mapbox's built-in collision (icon/text "allow-overlap: false")
 // declutters overlapping markers when zoomed out and reveals more on zoom-in;
@@ -116,10 +126,12 @@ export default class extends Controller {
     this.map.on("style.load", () => this.#setupScene())
 
     this.#watchIdle()
+    this.#watchWeather()
   }
 
   disconnect() {
     this.#unwatchIdle()
+    this.#unwatchWeather()
     this.popup?.remove()
     this.map?.remove()
   }
@@ -227,6 +239,39 @@ export default class extends Controller {
 
     this.spinning = false
     this.map?.stop() // freeze where it is rather than coasting to the next step
+  }
+
+  // Live weather ---------------------------------------------------------
+  // The page subscribes to the batch-refresh stream (see maps/show); the custom
+  // Turbo Stream action turns each broadcast into this window event.
+  #watchWeather() {
+    this.onWeatherRefreshed = (event) => this.#scheduleRefetch(event.detail?.version)
+    window.addEventListener(WEATHER_REFRESHED, this.onWeatherRefreshed)
+  }
+
+  #unwatchWeather() {
+    clearTimeout(this.refetchTimer)
+    window.removeEventListener(WEATHER_REFRESHED, this.onWeatherRefreshed)
+  }
+
+  #scheduleRefetch(version) {
+    clearTimeout(this.refetchTimer)
+    this.refetchTimer = setTimeout(() => this.#refetchMarkers(version), REFETCH_DEBOUNCE)
+  }
+
+  // Swap in the rebuilt feed. Only the source's data changes: the layer reads
+  // its icon from a feature property (see #applyMode), so whichever of
+  // Current/Today/Tomorrow is on screen survives, as does the camera — which
+  // matters most when this lands on a globe that's been left spinning.
+  #refetchMarkers(version) {
+    const source = this.map?.getSource(SOURCE_ID)
+    if (!source) return
+
+    this.popup?.remove() // it holds a snapshot, so it would keep the old numbers
+    // The markers response is cached and revalidated; the version defeats a
+    // conditional GET handing back the bytes this refresh just invalidated.
+    const url = version ? `${this.markersUrlValue}?v=${version}` : this.markersUrlValue
+    source.setData(url)
   }
 
   #setPitch(target) {

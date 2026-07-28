@@ -10,6 +10,11 @@ class Location < ApplicationRecord
   # Don't rewrite last_viewed_at on every panel navigation.
   VIEW_TRACKING_INTERVAL = 10.minutes
 
+  # The stream every screen showing *many* locations subscribes to — the globe,
+  # which would otherwise sit on the markers it fetched when it opened. One
+  # stream for all of them, since a batch refresh isn't about any one place.
+  WEATHER_STREAM = "locations:weather".freeze
+
   RADIANS_PER_DEGREE = Math::PI / 180
   EARTH_RADIUS_KM = 6371.0
 
@@ -75,6 +80,13 @@ class Location < ApplicationRecord
   # Label for the currently stored weather condition code.
   def current_condition_name
     current_condition_label.presence || WeatherCode.label_for(current_condition_code)
+  end
+
+  # The stream for this one location's refresh, which the splash waits on. Keyed
+  # by slug rather than id for the same reason URLs are: ids shift whenever the
+  # database is reseeded, and a stream name outlives a single request.
+  def weather_stream
+    "location:#{slug}:weather"
   end
 
   # True when weather has never been fetched or has aged past the TTL.

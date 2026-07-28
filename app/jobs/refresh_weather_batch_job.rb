@@ -6,7 +6,11 @@ class RefreshWeatherBatchJob < ApplicationJob
 
   def perform(location_ids)
     locations = Location.where(id: location_ids).to_a
-    WeatherRefresher.call_many(locations)
+    refreshed = WeatherRefresher.call_many(locations)
     AirQualityRefresher.call_many(locations)
+
+    # Both refreshers count what they actually wrote, so a chunk whose fetch
+    # failed — leaving every record untouched — tells nobody there's news.
+    WeatherBroadcast.batch_refreshed if refreshed.positive?
   end
 end

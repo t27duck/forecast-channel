@@ -6,22 +6,36 @@
 class HomeController < ApplicationController
   allow_unauthenticated_access
 
-  # Asked for as JSON, this does the work the screen is covering — refreshing
-  # weather that has gone stale — and answers once it's done, so the splash can
-  # wait for it. Synchronously, like LocationsController#refresh: OpenMeteo
-  # requests are bounded and never raise, and the splash gives up on its own
-  # anyway. `weather_stale?` doubles as the rate limit, since a location just
-  # refreshed stays fresh for an hour.
+  # Asked for as JSON, this starts the work the screen is covering — refreshing
+  # weather that has gone stale — and answers immediately. The refresh itself
+  # runs in a job, which broadcasts when it's done; the splash subscribes before
+  # asking, and hands over on that signal rather than on a timer.
+  #
+  # Deliberately not synchronous any more: an Open-Meteo round trip held inside
+  # the request parked one of the server's few threads for its whole duration,
+  # and several people arriving at once could park most of them. `weather_stale?`
+  # still gates the work — the job checks it again, since it can no longer be
+  # the rate limit on its own once the answer stops waiting for the work.
   def show
     @location = current_location
 
     respond_to do |format|
       format.html { @refresh = stale_weather? }
-      format.json { render json: { refreshed: stale_weather? && @location.refresh_weather! } }
+      format.json { render json: { refreshing: enqueue_refresh } }
     end
   end
 
   private
+
+  # Queue the refresh, and say whether there's anything to wait for. False when
+  # the weather is already fresh, so the splash stops holding for a signal that
+  # will never come.
+  def enqueue_refresh
+    return false unless stale_weather?
+
+    RefreshLocationWeatherJob.perform_later(@location)
+    true
+  end
 
   # False rather than nil when nobody has chosen a location yet: Stimulus reads
   # any value but "0"/"false" as true, so a blank attribute would send the

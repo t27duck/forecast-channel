@@ -12,7 +12,13 @@ location's current conditions.
   the dashboard. Development mirrors production's layout with a second `queue`
   database (`storage/development_queue.sqlite3`); `bin/dev` runs a worker
   alongside the server.
-- **Caching / WebSockets**: Solid Cache, Solid Cable
+- **Caching / WebSockets**: Solid Cache, Solid Cable. Cable runs on
+  **solid_cable in development too**, with its own `cable` database
+  (`storage/development_cable.sqlite3`) — same reason as the queue: the jobs
+  that broadcast run in a separate process, and the async adapter's pubsub
+  never leaves the process that published it. There is no `app/channels/`;
+  `connection_class` defaults to `ActionCable::Connection::Base` and
+  `Turbo::StreamsChannel` is the only channel used. See **Live updates**.
 - **JavaScript**: esbuild + Node 24, Stimulus, minified. Every top-level file
   in `app/javascript` is an entry point, and there are **two**:
   `application.js` for the app and `globe.js` for the map page alone. The split
@@ -69,6 +75,14 @@ location's current conditions.
   test that visits one starts with `choose_location(locations(:berlin))`
   (`ApplicationSystemTestCase`) — the cookie is signed and httponly, so a real
   browser can only get it by going through the picker.
+- The **test cable adapter records broadcasts instead of delivering them**, so a
+  system test's browser receives nothing over the socket. Assert the server half
+  with `Turbo::Broadcastable::TestHelper` (required by name in
+  `test/test_helper.rb`); cover the client half by handing the page the element
+  the server would have sent — `Turbo.renderStreamMessage("<turbo-stream …>")`,
+  as `test/system/globe_test.rb` and `splash_test.rb` do. That exercises
+  everything but the socket itself. A `turbo-cable-stream-source` has no box, so
+  `assert_selector` needs `visible: :all`.
 - **Never let a system test play a real music track.** A browser streaming one
   of the multi-MB files holds that connection — and one of the test server's
   few threads — open for the whole track; after about four page loads nothing
@@ -138,9 +152,29 @@ location's current conditions.
   `Location.hot` is the top `HOT_CITY_COUNT` by population plus anything viewed
   within `RECENTLY_VIEWED_WITHIN` (`last_viewed_at`, stamped by
   `mark_viewed!`), `Location.cold` the remainder. `RefreshAllWeatherJob` backs
-  the "Refresh all" button; `RefreshLocationWeatherJob` does a single location.
-  Recurring tasks are declared for production only, so a development worker
-  never fires an hourly refresh at Open-Meteo on its own.
+  the "Refresh all" button; `RefreshLocationWeatherJob` does a single location
+  (enqueued by the splash). Both **broadcast when they're done** — see **Live
+  updates**. Recurring tasks are declared for production only, so a development
+  worker never fires an hourly refresh at Open-Meteo on its own.
+- **Live updates** (`app/services/weather_broadcast.rb` +
+  `app/javascript/lib/stream_actions.js`): what goes over the wire is a
+  **signal, never rendered HTML** — the one thing Turbo Streams are usually for.
+  It has to be: every weather view renders through `current_setting`, which
+  reads the visitor's own signed unit cookies, and a broadcast renders outside
+  any request with no cookies to read, so streaming markup would push the
+  server's defaults onto every listener and quietly break the °C/°F toggle. So
+  the server says "this changed" and the client re-fetches over HTTP, where its
+  cookies apply again. The transport is `turbo_stream_from` plus **custom
+  `Turbo.StreamActions`**, which means no `app/channels/`, no `consumer.js` and
+  no new npm dependency (`application.js` already imports `@hotwired/turbo-rails`,
+  which registers `<turbo-cable-stream-source>`), and the signed stream names
+  keep the unauthenticated `/map` and `/` subscriptions honest. Each action
+  dispatches a `CustomEvent` on `window` rather than calling a controller,
+  because `globe.js` is a separate bundle and neither bundle can import from the
+  other. Two streams: `Location::WEATHER_STREAM` (one for everyone, broadcast by
+  `RefreshWeatherBatchJob` when a chunk actually wrote something) and
+  `Location#weather_stream` (per location, slug-keyed like the URLs, broadcast
+  by `RefreshLocationWeatherJob`).
 - **Seed data** (`db/seeds.rb`): ~300 major world cities (at least three per US
   state) so the globe is full and the picker's state step isn't sparse.
   Geocoding data was captured once from the Open-Meteo API and baked in
@@ -229,11 +263,18 @@ location's current conditions.
     so a blank attribute would send a location-less splash off to refresh
     weather it hasn't got.
   - The pause does real work: when the current location's weather is stale the
-    view sets `data-splash-refresh-value`, and the controller fetches **the same
-    URL as JSON**, which is where `#show` calls `refresh_weather!` synchronously
-    (like `LocationsController#refresh`) and answers when it's stored. The
-    `weather_stale?` guard doubles as the rate limit. `MAX_MS` caps how long a
-    slow API can hold the screen.
+    view sets `data-splash-refresh-value` **and subscribes to that location's
+    stream**, and the controller fetches **the same URL as JSON**, where `#show`
+    enqueues `RefreshLocationWeatherJob` and answers immediately. The screen
+    then waits for the job's broadcast, so it hands over on a real completion
+    signal rather than a timer. Deliberately not synchronous: an Open-Meteo
+    round trip inside the request parked one of the server's few threads for its
+    whole duration. `weather_stale?` still gates the work, and the **job checks
+    it again** — it can't be the rate limit on its own once the answer stops
+    waiting for the work. The job calls `refresh_weather!` (not `WeatherRefresher`
+    alone) so air quality still comes along, and broadcasts whether or not the
+    fetch succeeded, since the screen is waiting to stop waiting. `MAX_MS`
+    remains the backstop if the signal is somehow missed.
   - The globe's "End" and settings' "Back" therefore point at
     `location_path(current_location)`, **not** `root_path` — coming back from
     another screen isn't an arrival and shouldn't replay the splash. The admin
@@ -316,6 +357,15 @@ location's current conditions.
     visit straight to `/map` — it opens on `DEFAULT_CENTER`, New York at the
     coordinates `db/seeds.rb` gives it, since `DEFAULT_ZOOM` is close enough in
     that a nominal world centre would just be open ocean.
+  - **Live**: the page subscribes to `Location::WEATHER_STREAM`, because a globe
+    built to be left running would otherwise sit forever on the markers it
+    fetched when it opened. On the signal the controller re-points the source at
+    the feed — `setData` with the URL plus the broadcast's `version`, which
+    defeats a conditional GET returning the bytes the refresh just invalidated —
+    and drops any open popup, which holds a snapshot. Debounced by
+    `REFETCH_DEBOUNCE`, since a sweep announces itself once per `BATCH_SIZE`
+    chunk. Only the source's data changes, so the camera and the active
+    Current/Today/Tomorrow view both survive.
   - **Idle**: two seconds without mouse movement — or the pointer leaving the
     page, which skips the wait — puts `is-idle` on `.map-view`; the CSS slides
     both bars away, fades the banner and hides the cursor. Idling at

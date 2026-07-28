@@ -1,10 +1,21 @@
-# Async adapter only works within the same process, so for manually triggering cable updates from a console,
-# and seeing results in the browser, you must do so from the web console (running inside the dev process),
-# not a terminal started via bin/rails console! Add "console" to any action or any ERB template view
-# to make the web console appear.
+# Solid Cable in development as well as production, for the same reason
+# config/environments/development.rb runs Solid Queue rather than the async
+# adapter: the jobs that broadcast run in their own process (`bin/jobs`, started
+# by `bin/dev`), and the async adapter's pubsub never leaves the process it was
+# published from — every broadcast a job made would be silently dropped. Backed
+# by its own `cable` database, like production (config/database.yml).
 development:
-  adapter: async
+  adapter: solid_cable
+  connects_to:
+    database:
+      writing: cable
+  polling_interval: 1.second
+  message_retention: 1.day
 
+# The test adapter records broadcasts instead of delivering them, which is what
+# ActionCable::TestHelper's assertions read. It follows that a system test's
+# browser receives nothing — see test/system/globe_test.rb, which dispatches the
+# stream action itself rather than waiting on a delivery that can't arrive.
 test:
   adapter: test
 
@@ -13,5 +24,5 @@ production:
   connects_to:
     database:
       writing: cable
-  polling_interval: 0.1.seconds
+  polling_interval: 1.second
   message_retention: 1.day

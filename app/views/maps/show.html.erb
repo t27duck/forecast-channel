@@ -8,6 +8,13 @@
   <%= javascript_include_tag "globe", type: "module" %>
 <% end %>
 
+<%# The globe is built to be left running — the chrome slides away, the cursor
+    hides and it turns on its own — so it can't stay on the markers it fetched
+    when it opened. This subscription lets a batch refresh tell it to re-read
+    the feed; the signal carries no markup, since the temperatures on screen are
+    converted per-visitor client-side. %>
+<%= turbo_stream_from Location::WEATHER_STREAM %>
+
 <div
   class="relative map-view"
   data-controller="globe"

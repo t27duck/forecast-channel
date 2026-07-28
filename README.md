@@ -85,6 +85,27 @@ Requests are **batched**: up to 50 locations are fetched per HTTP call rather
 than one call each, so a full sweep of ~300 cities takes a handful of requests
 instead of hundreds.
 
+A refresh **announces itself** over Action Cable, so screens already open don't
+sit on stale readings: the globe re-reads its markers when a batch lands, and
+the splash hands over the moment the refresh it queued finishes rather than
+waiting out a timer. See **Live updates** below.
+
+## Live updates
+
+Broadcasts run on [Solid Cable](https://github.com/rails/solid_cable), in
+development as well as production — the jobs that broadcast run in their own
+process, and the async adapter's pubsub never leaves the process it was
+published from. Each environment has its own `cable` database, created by
+`bin/rails db:prepare`.
+
+What travels is a **signal, not markup** — unusual for Turbo Streams, and
+deliberate. Every weather view converts temperatures and wind through the
+visitor's own cookies, and a broadcast renders with no request and no cookies to
+read, so streaming rendered HTML would push one visitor's units onto everyone.
+Instead the server says "this changed" and each client re-fetches over HTTP,
+where its own settings apply again. The two halves are
+`app/services/weather_broadcast.rb` and `app/javascript/lib/stream_actions.js`.
+
 ## Jobs
 
 Jobs run on [Solid Queue](https://github.com/rails/solid_queue).

@@ -13,6 +13,9 @@ require_relative "../config/environment"
 ENV["MAPBOX_TOKEN"] = nil
 
 require "rails/test_help"
+# Not required by the gem's railtie, so the broadcast assertions have to be
+# asked for by name before a test case can include them.
+require "turbo/broadcastable/test_helper"
 require_relative "test_helpers/session_test_helper"
 require_relative "test_helpers/cookie_test_helper"
 

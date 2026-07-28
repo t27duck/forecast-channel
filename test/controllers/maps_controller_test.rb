@@ -17,6 +17,13 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller=globe] [data-globe-target=map]"
   end
 
+  # Without this the globe would sit on the markers it fetched when it opened,
+  # which for a screen built to be left running is most of the time.
+  test "subscribes the globe to the batch-refresh stream" do
+    get map_url
+    assert_select "turbo-cable-stream-source[signed-stream-name]"
+  end
+
   test "renders no Mapbox token in the test environment" do
     get map_url
     # test_helper clears MAPBOX_TOKEN to keep the suite off api.mapbox.com; the

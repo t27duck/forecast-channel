@@ -20,6 +20,39 @@ class SplashTest < ApplicationSystemTestCase
     assert_selector ".wii-header__location", text: locations(:berlin).name, wait: 5
   end
 
+  # The refresh runs in a job now, so the screen has to be told when it's done
+  # rather than guessing. These two together pin that down: it genuinely waits,
+  # and the signal is what releases it.
+  test "the splash holds while a refresh it queued is still running" do
+    locations(:berlin).update!(weather_refreshed_at: 2.hours.ago)
+
+    visit root_path
+    assert_selector "turbo-cable-stream-source", visible: :all # listening before it asks
+
+    # Well past MIN_MS and well short of MAX_MS: nothing but the pending
+    # refresh can still be holding the screen. The job is only enqueued in the
+    # test environment, so no signal is coming.
+    sleep 3
+    assert_selector ".splash__message"
+    assert_no_selector ".wii-header__location"
+  end
+
+  test "the splash hands over as soon as the refresh lands" do
+    locations(:berlin).update!(weather_refreshed_at: 2.hours.ago)
+
+    visit root_path
+    assert_selector "turbo-cable-stream-source", visible: :all
+
+    # Standing in for the broadcast RefreshLocationWeatherJob makes; the test
+    # cable adapter records broadcasts rather than delivering them.
+    execute_script(
+      "window.Turbo.renderStreamMessage(" \
+      "'<turbo-stream action=\"weather_ready\" slug=\"#{locations(:berlin).slug}\"></turbo-stream>')"
+    )
+
+    assert_selector ".wii-header__location", text: locations(:berlin).name, wait: 4
+  end
+
   test "the splash doesn't sit in history, so Back reaches what came before it" do
     visit settings_path
     visit root_path

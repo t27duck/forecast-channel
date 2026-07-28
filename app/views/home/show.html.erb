@@ -1,6 +1,12 @@
 <% content_for :title, "Forecast Channel" %>
 <% content_for :hide_app_nav, true %>
 
+<%# Only while there's a refresh to wait on: a fresh location hands over on the
+    beat alone, and a first-time visitor has no location to subscribe to. %>
+<% if @refresh %>
+  <%= turbo_stream_from @location.weather_stream %>
+<% end %>
+
 <%# With no location chosen there's nothing to load yet, so the same beat hands
     over to the picker instead of a forecast. %>
 <div class="splash" data-controller="splash"

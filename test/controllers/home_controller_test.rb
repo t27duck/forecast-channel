@@ -30,32 +30,61 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_select ".splash[data-splash-refresh-value=?]", "true"
   end
 
-  test "root as JSON refreshes weather that has gone stale" do
+  # The refresh itself runs in a job so an Open-Meteo round trip never parks a
+  # request thread; the splash waits on the job's broadcast, not on this answer.
+  test "root as JSON queues a refresh for weather that has gone stale" do
     locations(:berlin).update!(weather_refreshed_at: 2.hours.ago)
     write_signed_cookie(:current_location_id, locations(:berlin).id)
 
-    payload = open_meteo_forecast_payload
-    stub_air_quality do
-      stub_singleton(OpenMeteo::ForecastClient, :fetch, ->(**) { payload }) do
-        get root_url(format: :json)
-      end
+    # No client stub: this must not reach Open-Meteo inside the request.
+    assert_enqueued_with job: RefreshLocationWeatherJob, args: [ locations(:berlin) ] do
+      get root_url(format: :json)
     end
 
     assert_response :success
-    assert JSON.parse(response.body)["refreshed"]
-    assert_operator locations(:berlin).reload.weather_refreshed_at, :>, 1.minute.ago
+    assert JSON.parse(response.body)["refreshing"]
   end
 
-  test "root as JSON leaves fresh weather alone, reaching nothing on the network" do
+  test "root as JSON leaves fresh weather alone, queueing nothing" do
     write_signed_cookie(:current_location_id, locations(:berlin).id)
     before = locations(:berlin).weather_refreshed_at
 
-    # No client stub: touching Open-Meteo here would raise rather than hang.
-    get root_url(format: :json)
+    assert_no_enqueued_jobs only: RefreshLocationWeatherJob do
+      get root_url(format: :json)
+    end
 
     assert_response :success
-    assert_not JSON.parse(response.body)["refreshed"]
+    assert_not JSON.parse(response.body)["refreshing"]
     assert_equal before.to_i, locations(:berlin).reload.weather_refreshed_at.to_i
+  end
+
+  test "root as JSON queues nothing when no location has been chosen" do
+    assert_no_enqueued_jobs only: RefreshLocationWeatherJob do
+      get root_url(format: :json)
+    end
+
+    assert_response :success
+    assert_not JSON.parse(response.body)["refreshing"]
+  end
+
+  # The splash can only hand over on the job's signal if it's listening for it,
+  # and only while there's something to listen for.
+  test "the splash subscribes to its location's stream only when refreshing" do
+    write_signed_cookie(:current_location_id, locations(:berlin).id)
+
+    get root_url
+    assert_select "turbo-cable-stream-source", false, "fresh weather has nothing to wait for"
+
+    locations(:berlin).update!(weather_refreshed_at: 2.hours.ago)
+    get root_url
+    assert_select "turbo-cable-stream-source"
+  end
+
+  test "a location-less splash subscribes to nothing" do
+    get root_url
+
+    assert_response :success
+    assert_select "turbo-cable-stream-source", false
   end
 
   test "the splash still plays for a first-time visitor, handing over to the picker" do

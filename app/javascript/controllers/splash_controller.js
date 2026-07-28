@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { WEATHER_READY } from "../lib/stream_actions"
 
 const MIN_MS = 1600 // let the suns sweep at least once
 const MAX_MS = 6000 // never hold anyone hostage to a slow weather service
@@ -26,15 +27,31 @@ export default class extends Controller {
   disconnect() {
     document.removeEventListener("pointerdown", this.skip)
     document.removeEventListener("keydown", this.skip)
+    window.removeEventListener(WEATHER_READY, this.onReady)
     this.timers?.forEach(clearTimeout)
   }
 
-  // Same URL as this page: the JSON representation refreshes stale weather and
-  // answers when it's stored. A failure is still an answer — the forecast page
-  // renders whatever it has.
+  // Same URL as this page: the JSON representation queues the refresh and
+  // answers straight away, so what we're actually waiting for is the job
+  // finishing — which arrives as a broadcast on the stream the page subscribed
+  // to (see home/show). Listen before asking, so a quick job can't answer into
+  // the gap. If the signal is missed anyway, MAX_MS is still the backstop it
+  // always was.
   #refreshWeather() {
-    return fetch(window.location.pathname, { headers: { Accept: "application/json" } })
-      .catch(() => {})
+    return new Promise((resolve) => {
+      this.onReady = () => resolve()
+      window.addEventListener(WEATHER_READY, this.onReady, { once: true })
+
+      fetch(window.location.pathname, { headers: { Accept: "application/json" } })
+        .then((response) => response.json())
+        // Nothing was queued after all — the weather went fresh between
+        // rendering this page and asking. Don't wait for a signal nobody is
+        // going to send.
+        .then((body) => { if (!body.refreshing) resolve() })
+        // A failure is still an answer: the forecast page renders whatever it
+        // already has, which is what it would have shown regardless.
+        .catch(() => resolve())
+    })
   }
 
   #wait(ms) {

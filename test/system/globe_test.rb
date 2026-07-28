@@ -183,6 +183,42 @@ class GlobeTest < ApplicationSystemTestCase
     assert_in_delta stopped, longitude.call, 0.05, "expected the spin to stop on wake"
   end
 
+  # The globe fetches its markers once, when it opens, and is built to be left
+  # running for hours — so a refresh has to reach it without a reload.
+  test "a weather broadcast makes the globe re-read its markers" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    watch_marker_data
+    before = evaluate_script("#{map_handle}.getZoom()")
+
+    # The test cable adapter records broadcasts instead of delivering them (see
+    # config/cable.yml), so hand the page the element the server would have
+    # sent. Everything downstream of the socket is the real thing: the custom
+    # action in stream_actions.js, the window event that crosses from the main
+    # bundle into this one, and the controller's debounced re-fetch.
+    broadcast_weather_refreshed(version: 4242)
+
+    assert_equal true, wait_until(seconds: 10) { marker_data.any? },
+      "expected the globe to re-read the markers feed"
+    assert_equal "#{map_markers_path}?v=4242", marker_data.sole,
+      "expected the re-fetch to carry the version, so a cached response can't win"
+    assert_in_delta before, evaluate_script("#{map_handle}.getZoom()"), 0.01,
+      "expected the camera to be left alone"
+  end
+
+  # A sweep runs in chunks, so it announces itself several times over.
+  test "a burst of broadcasts costs one re-fetch" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    watch_marker_data
+    3.times { |i| broadcast_weather_refreshed(version: i) }
+
+    assert_equal true, wait_until(seconds: 10) { marker_data.any? }
+    assert_equal 1, marker_data.size, "expected the burst to be coalesced"
+  end
+
   test "the idle globe stays put when it is zoomed in" do
     visit map_path
     assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
@@ -220,6 +256,30 @@ class GlobeTest < ApplicationSystemTestCase
     "document.querySelector('[data-controller=globe]').__map"
   end
 
+  # Feed the page a broadcast the way Turbo would once it came off the socket.
+  def broadcast_weather_refreshed(version:)
+    execute_script(
+      "window.Turbo.renderStreamMessage(" \
+      "'<turbo-stream action=\"weather_refreshed\" version=\"#{version}\"></turbo-stream>')"
+    )
+  end
+
+  # Record what the marker source is asked to load. Mapbox fetches a GeoJSON URL
+  # from its worker, so the request never reaches the window's resource timing —
+  # the source itself is the observable edge of our code.
+  def watch_marker_data
+    execute_script(<<~JS)
+      window.__markerData = []
+      const source = #{map_handle}.getSource('locations')
+      const setData = source.setData.bind(source)
+      source.setData = (data) => { window.__markerData.push(data); return setData(data) }
+    JS
+  end
+
+  def marker_data
+    evaluate_script("window.__markerData") || []
+  end
+
   def style(selector, property)
     evaluate_script("getComputedStyle(document.querySelector('#{selector}')).#{property}")
   end
@@ -228,9 +288,11 @@ class GlobeTest < ApplicationSystemTestCase
     evaluate_script("document.querySelector('#{selector}').getBoundingClientRect().#{side}")
   end
 
-  # Polls the block until it returns truthy or Capybara's default wait elapses.
-  def wait_until
-    Timeout.timeout(Capybara.default_max_wait_time) do
+  # Polls the block until it returns truthy or the wait elapses. Anything
+  # waiting on the marker re-fetch needs longer than Capybara's default, since
+  # the controller deliberately sits on a burst of broadcasts before acting.
+  def wait_until(seconds: Capybara.default_max_wait_time)
+    Timeout.timeout(seconds) do
       loop do
         result = yield
         return result if result
