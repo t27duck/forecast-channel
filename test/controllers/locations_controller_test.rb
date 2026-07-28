@@ -261,11 +261,24 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-cable-stream-source"
     assert_select "meta[name=turbo-refresh-method][content=?]", "morph"
 
-    assert_select ".wii-top[data-turbo-permanent]"
-    assert_select ".wii-header[data-turbo-permanent]"
-    assert_select ".wii-bottom[data-turbo-permanent]"
-    assert_select ".wii__track[data-turbo-permanent]", false, "the panels are the point"
-    assert_select ".wii-footerline[data-turbo-permanent]", false, "the As-of stamp has to move"
+    assert_select ".wii-top[data-forecast-frozen]"
+    assert_select ".wii-header[data-forecast-frozen]"
+    assert_select ".wii-bottom[data-forecast-frozen]"
+    assert_select ".wii__track[data-forecast-frozen]", false, "the panels are the point"
+    assert_select ".wii-footerline[data-forecast-frozen]", false, "the As-of stamp has to move"
+
+    # The neighbouring idea, and the wrong one: it survives *navigations*, keyed
+    # by id, keeping the old copy — which would strand the previous city's name
+    # in the header. Freezing a morph is all that's wanted. (The jukebox in the
+    # layout is a genuine permanent element, hence scoping this to the screen.)
+    assert_select ".wii [data-turbo-permanent]", false,
+      "the forecast should freeze morphs, not preserve elements across visits"
+
+    # A permanent element is matched across renders by its id, so one without an
+    # id can't work — and Hotwire Dev Tools warns about it in the console. The
+    # jukebox in the layout is the only one we keep, and it has an id.
+    assert_select "[data-turbo-permanent]:not([id])", false,
+      "a permanent element without an id is matched by nothing"
   end
 
   # The stats strip drops blank tiles, so two renders of a panel can differ in

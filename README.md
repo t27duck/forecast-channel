@@ -111,10 +111,13 @@ where its own settings apply again. The two halves are
 The forecast screen and the management index take the same idea through Turbo's
 own front door — a page-refresh broadcast, which the browser answers by
 re-requesting the page and morphing it in. Morphing is opted into per view, never
-in the layout, and the forecast marks its silver bars and green header
-`data-turbo-permanent` so the morph reaches the panels and the "As of" stamp and
-stops there. Everything JavaScript writes over the server's markup — the panel
-title, the ▲/▼ labels, the mute icon — lives behind that fence.
+in the layout, and the forecast fences its silver bars and green header out of
+the morph — by cancelling `turbo:before-morph-element`, not with
+`data-turbo-permanent`, which would also preserve them across navigations and
+strand the previous city's name in the header. So the morph reaches the panels
+and the "As of" stamp and stops there, and everything JavaScript writes over the
+server's markup — the panel title, the ▲/▼ labels, the mute icon — sits behind
+that fence.
 
 ## Jobs
 

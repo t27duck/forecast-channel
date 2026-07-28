@@ -27,16 +27,24 @@ export default class extends Controller {
     }
     window.addEventListener("keydown", this.onKeydown)
 
-    // A weather refresh re-requests this page and morphs the panels in, which
-    // puts the server's markup — always the default panel — back over the
-    // track. Only the position needs restoring: the bars and header are
-    // data-turbo-permanent, so the morph never reached them.
+    // Hold the chrome out of a refresh morph. Turbo asks before each element,
+    // and a cancelled answer skips that element and everything under it — so
+    // the bars and header keep the state JavaScript put there (see
+    // locations/show for what, and why data-turbo-permanent is the wrong tool).
+    this.onBeforeMorph = (event) => {
+      if (event.target.hasAttribute("data-forecast-frozen")) event.preventDefault()
+    }
+    document.addEventListener("turbo:before-morph-element", this.onBeforeMorph)
+
+    // What the morph does still reach is the panels, whose markup always
+    // arrives scrolled to the default. Only the position needs putting back.
     this.onMorph = () => this.#position()
     document.addEventListener("turbo:morph", this.onMorph)
   }
 
   disconnect() {
     window.removeEventListener("keydown", this.onKeydown)
+    document.removeEventListener("turbo:before-morph-element", this.onBeforeMorph)
     document.removeEventListener("turbo:morph", this.onMorph)
   }
 

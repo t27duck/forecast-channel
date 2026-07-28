@@ -149,12 +149,11 @@ class ForecastDetailTest < ApplicationSystemTestCase
     assert_equal "1", evaluate_script("localStorage.getItem('jukeboxMuted')")
   end
 
-  # The chrome is data-turbo-permanent so a *morph* leaves it alone, and it
-  # deliberately carries no id — which is what keeps it out of the id-keyed
-  # permanent-element machinery a normal Turbo navigation uses. Give these
-  # elements ids and Turbo would keep the *old* ones here, so walking from one
-  # forecast to another would leave the previous city's name in the header.
-  test "walking to another forecast still re-renders the permanent chrome" do
+  # The chrome is held out of a refresh *morph* only. Reaching for
+  # data-turbo-permanent instead would preserve it across navigations too, and
+  # Turbo keeps the old copy — so walking from one forecast to another would
+  # leave the previous city's name in the header.
+  test "walking to another forecast still re-renders the frozen chrome" do
     elsewhere = Location.create!(
       name: "Otherton", latitude: 10, longitude: 20, timezone: "UTC",
       current_temperature: 5, current_condition_code: 0,

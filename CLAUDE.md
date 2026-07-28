@@ -321,9 +321,11 @@ location's current conditions.
   - **Live**: the screen subscribes to its location's `forecast_stream` and
     **morphs** a refresh in, so a channel left on doesn't drift hours stale. The
     morph is fenced rather than reacted to: `.wii-top`, `.wii-header` and
-    `.wii-bottom` are `data-turbo-permanent`, because everything JavaScript
-    writes over the server's markup lives in them — the panel title (or the
-    weekday the overlay swapped in), the ▲/▼ labels, and the mute icon's
+    `.wii-bottom` carry `data-forecast-frozen`, and the `forecast` controller
+    cancels `turbo:before-morph-element` for them — a cancelled answer skips
+    that element and its whole subtree. They're fenced because everything
+    JavaScript writes over the server's markup lives in them: the panel title
+    (or the weekday the overlay swapped in), the ▲/▼ labels, and the mute icon's
     `is-muted`, which would otherwise say the music was back on while it stayed
     off. That leaves the panels and the "As of" stamp to update, and only two
     things to re-assert on `turbo:morph`: the track's transform (`forecast`
@@ -332,13 +334,15 @@ location's current conditions.
     tracks `opened` itself rather than reading the class back). Each panel and
     6-hour zone carries an `id` so the morph matches elements instead of
     guessing — the `_stats` strip drops blank tiles, so two renders of a panel
-    can differ in shape. The permanent chrome, by contrast, carries **no id, on
-    purpose**: Turbo has two mechanisms, and a morph honours the bare attribute
-    (`MorphingPageRenderer` overrides `preservingPermanentElements` to a no-op)
-    while an ordinary navigation matches `[id][data-turbo-permanent]` and keeps
-    the *old* element — so an id here would carry the previous city's name in
-    the header when you walk from one forecast to another. There's a system
-    test for it, because the attribute reads like it wants an id.
+    can differ in shape.
+  - **Not `data-turbo-permanent`**, which is the neighbouring idea and the wrong
+    one. That marks an element as surviving *navigations*: Turbo matches it by
+    `id` and keeps the **old** copy, so the header would strand the previous
+    city's name when you walk from one forecast to another (system test:
+    "walking to another forecast still re-renders the frozen chrome"). It also
+    can't work without an `id`, which Hotwire Dev Tools warns about in the
+    console — a test asserts no `[data-turbo-permanent]:not([id])` renders. The
+    jukebox is the app's only genuine permanent element, and it has one.
   - The silver bar markup (`.wii-top`/`.wii-bottom`
   plus three `.wii-bar__slot`s) is **shared** — settings and the picker use
   `.wii-bottom` too, with a thin modifier each, so a slot-width "Back" button

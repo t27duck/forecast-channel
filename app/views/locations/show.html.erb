@@ -26,18 +26,19 @@
 <div class="wii" data-controller="forecast press"
   data-forecast-default-value="<%= active %>" data-active-panel="<%= active %>">
   <%# Fixed silver top bar — its ▲ label updates to the panel above.
-      Permanent: the ▲ label and the mute icon's state are both written by
-      JavaScript after the server rendered something else, and a morph would put
-      the server's version back — muting would silently appear to switch off.
+      Frozen against a refresh morph: the ▲ label and the mute icon's state are
+      both written by JavaScript over what the server rendered, and a morph
+      would put the server's version back — muting would silently appear to
+      switch off.
 
-      And deliberately with **no id**, unlike the panels below. Turbo has two
-      separate mechanisms here: a morph honours the bare attribute
-      (MorphingPageRenderer overrides preservingPermanentElements to a no-op),
-      while an ordinary navigation matches `[id][data-turbo-permanent]` and
-      keeps the *old* element. Adding an id would therefore hold this bar — and
-      the header's location name — over from the previous city when you walk
-      from one forecast to another. Covered by a system test. %>
-  <div class="wii-top" data-turbo-permanent>
+      Not `data-turbo-permanent`, which is the neighbouring idea and the wrong
+      one. That marks an element as surviving *navigations*, keyed by id, and
+      Turbo keeps the **old** copy — so this bar and the header's location name
+      would carry over from the previous city when you walk from one forecast to
+      another (there's a system test for that). What's wanted is narrower: skip
+      this subtree during a morph, and behave normally the rest of the time.
+      The forecast controller vetoes it via turbo:before-morph-element. %>
+  <div class="wii-top" data-forecast-frozen>
     <div class="wii-bar__slot">
       <button type="button" class="wii-mute" aria-label="Mute or unmute the music"
         data-controller="mute" data-mute-jukebox-outlet="#jukebox" data-action="mute#toggle">
@@ -65,12 +66,10 @@
   </div>
 
   <%# Fixed green header — the title updates to the active panel; location stays.
-      Permanent for the same reason: the title is whatever the reader navigated
-      to, or the weekday the 6-hour overlay swapped in, never the default the
-      server rendered. Nothing in here is weather — but the location name *does*
-      change between forecasts, which is exactly why this carries no id either
-      (see the top bar). %>
-  <div class="wii-header" data-turbo-permanent>
+      Frozen for the same reason: the title is whatever the reader navigated to,
+      or the weekday the 6-hour overlay swapped in, never the default the server
+      rendered. Nothing in here is weather. %>
+  <div class="wii-header" data-forecast-frozen>
     <div class="wii-header__title" data-forecast-target="title"><%= panel_title(active) %></div>
     <div class="wii-header__location"><%= @location.name %></div>
   </div>
@@ -92,8 +91,8 @@
   </div>
 
   <%# Fixed silver bottom bar — its ▼ label updates to the panel below, so it's
-      permanent like the top one. %>
-  <div class="wii-bottom" data-turbo-permanent>
+      frozen like the top one. %>
+  <div class="wii-bottom" data-forecast-frozen>
     <div class="wii-bar__slot">
       <%# Leaves the app, so it opens in a new tab and the music keeps playing. %>
       <%= link_to "GitHub", "https://github.com/t27duck/forecast-channel",
