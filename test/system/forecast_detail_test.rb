@@ -149,6 +149,29 @@ class ForecastDetailTest < ApplicationSystemTestCase
     assert_equal "1", evaluate_script("localStorage.getItem('jukeboxMuted')")
   end
 
+  # The chrome is data-turbo-permanent so a *morph* leaves it alone, and it
+  # deliberately carries no id — which is what keeps it out of the id-keyed
+  # permanent-element machinery a normal Turbo navigation uses. Give these
+  # elements ids and Turbo would keep the *old* ones here, so walking from one
+  # forecast to another would leave the previous city's name in the header.
+  test "walking to another forecast still re-renders the permanent chrome" do
+    elsewhere = Location.create!(
+      name: "Otherton", latitude: 10, longitude: 20, timezone: "UTC",
+      current_temperature: 5, current_condition_code: 0,
+      weather_refreshed_at: Time.utc(2026, 7, 18, 20)
+    )
+
+    visit location_path(@location)
+    assert_selector ".wii-header__location", text: "Testville", wait: 10
+
+    # A Turbo visit, not a fresh browser load — that's the path that consults
+    # the permanent-element map.
+    execute_script("window.Turbo.visit('#{location_path(elsewhere)}')")
+
+    assert_selector ".wii-header__location", text: "Otherton", wait: 10
+    assert_no_selector ".wii-header__location", text: "Testville"
+  end
+
   private
 
   # The test cable adapter records broadcasts rather than delivering them, so

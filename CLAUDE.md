@@ -332,7 +332,13 @@ location's current conditions.
     tracks `opened` itself rather than reading the class back). Each panel and
     6-hour zone carries an `id` so the morph matches elements instead of
     guessing — the `_stats` strip drops blank tiles, so two renders of a panel
-    can differ in shape.
+    can differ in shape. The permanent chrome, by contrast, carries **no id, on
+    purpose**: Turbo has two mechanisms, and a morph honours the bare attribute
+    (`MorphingPageRenderer` overrides `preservingPermanentElements` to a no-op)
+    while an ordinary navigation matches `[id][data-turbo-permanent]` and keeps
+    the *old* element — so an id here would carry the previous city's name in
+    the header when you walk from one forecast to another. There's a system
+    test for it, because the attribute reads like it wants an id.
   - The silver bar markup (`.wii-top`/`.wii-bottom`
   plus three `.wii-bar__slot`s) is **shared** — settings and the picker use
   `.wii-bottom` too, with a thin modifier each, so a slot-width "Back" button

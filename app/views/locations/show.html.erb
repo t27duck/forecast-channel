@@ -28,7 +28,15 @@
   <%# Fixed silver top bar — its ▲ label updates to the panel above.
       Permanent: the ▲ label and the mute icon's state are both written by
       JavaScript after the server rendered something else, and a morph would put
-      the server's version back — muting would silently appear to switch off. %>
+      the server's version back — muting would silently appear to switch off.
+
+      And deliberately with **no id**, unlike the panels below. Turbo has two
+      separate mechanisms here: a morph honours the bare attribute
+      (MorphingPageRenderer overrides preservingPermanentElements to a no-op),
+      while an ordinary navigation matches `[id][data-turbo-permanent]` and
+      keeps the *old* element. Adding an id would therefore hold this bar — and
+      the header's location name — over from the previous city when you walk
+      from one forecast to another. Covered by a system test. %>
   <div class="wii-top" data-turbo-permanent>
     <div class="wii-bar__slot">
       <button type="button" class="wii-mute" aria-label="Mute or unmute the music"
@@ -59,7 +67,9 @@
   <%# Fixed green header — the title updates to the active panel; location stays.
       Permanent for the same reason: the title is whatever the reader navigated
       to, or the weekday the 6-hour overlay swapped in, never the default the
-      server rendered. Nothing in here is weather. %>
+      server rendered. Nothing in here is weather — but the location name *does*
+      change between forecasts, which is exactly why this carries no id either
+      (see the top bar). %>
   <div class="wii-header" data-turbo-permanent>
     <div class="wii-header__title" data-forecast-target="title"><%= panel_title(active) %></div>
     <div class="wii-header__location"><%= @location.name %></div>
