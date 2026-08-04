@@ -153,6 +153,14 @@ class LocationTest < ActiveSupport::TestCase
     assert_not_includes Location.hot, forgotten
   end
 
+  test "most_populous takes the biggest cities, as many as it is asked for" do
+    big = Location.create!(name: "Metropolis", latitude: 1, longitude: 1, population: 90_000_000)
+    small = Location.create!(name: "Smallville", latitude: 2, longitude: 2, population: 100)
+
+    assert_equal [ big ], Location.most_populous(1)
+    assert_includes Location.most_populous, small # defaults to the whole hot tier
+  end
+
   test "hot and cold partition every location" do
     assert_equal Location.count, Location.hot.count + Location.cold.count
   end

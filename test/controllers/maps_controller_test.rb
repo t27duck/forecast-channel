@@ -41,7 +41,7 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav a", { text: "Forecast", count: 0 } # app header removed here
   end
 
-  test "overlays a bottom bar with End, tilt, and Restore controls" do
+  test "overlays a bottom bar with End, tilt, Restore and Tour controls" do
     get map_url
     # Straight to the forecast, so leaving the globe doesn't replay the splash.
     assert_select ".map-bar--bottom a.wii-chrome-link[href=?]",
@@ -49,6 +49,26 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".map-bar--bottom .wii-arrow[data-action=?]", "globe#pitchUp"
     assert_select ".map-bar--bottom .wii-arrow[data-action=?]", "globe#pitchDown"
     assert_select ".map-bar--bottom [data-action=?]", "globe#resetPitch", text: "Restore"
+    assert_select ".map-bar--bottom .wii-tour[data-action=?]", "globe#toggleTour"
+  end
+
+  # The tour flies between the biggest cities; sorting them by longitude is what
+  # walks it eastward around the world instead of criss-crossing it.
+  test "hands the globe its tour itinerary in longitude order" do
+    get map_url
+    expected = [ locations(:berlin), locations(:tokyo) ].map { |location|
+      { "slug" => location.slug, "lng" => location.longitude.to_f, "lat" => location.latitude.to_f }
+    }
+
+    stops = JSON.parse(css_select("[data-globe-tour-value]").first["data-globe-tour-value"])
+    assert_equal expected, stops
+  end
+
+  test "the Tour button is disabled when there is nowhere to tour" do
+    Location.where.not(id: locations(:berlin).id).delete_all
+
+    get map_url
+    assert_select ".map-bar--bottom .wii-tour[disabled]"
   end
 
   test "centres the globe on the location passed from its forecast" do

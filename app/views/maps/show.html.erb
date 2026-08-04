@@ -21,6 +21,7 @@
   data-globe-token-value="<%= mapbox_token %>"
   data-globe-markers-url-value="<%= map_markers_path %>"
   data-globe-temperature-unit-value="<%= current_setting.temperature_unit %>"
+  data-globe-tour-value="<%= tour_stops_value(@tour_stops) %>"
   <% if @focus %>data-globe-center-value="<%= [ @focus.longitude.to_f, @focus.latitude.to_f ].to_json %>"<% end %>
 >
   <div data-globe-target="map" class="h-screen w-full bg-[#030a1b]"></div>
@@ -60,7 +61,7 @@
   <%# Green banner naming what the marker icons currently represent. %>
   <div class="map-banner" data-globe-target="banner">Current Weather</div>
 
-  <%# Bottom bar: leave the globe, tilt it, or reset the tilt. %>
+  <%# Bottom bar: leave the globe, tilt it, reset the tilt, or set it touring. %>
   <div class="wii-bottom map-bar map-bar--bottom" data-controller="press">
     <div class="wii-bar__slot">
       <%# Straight to the forecast, not the root path: leaving the globe isn't
@@ -91,6 +92,17 @@
     </div>
     <div class="wii-bar__slot">
       <button type="button" class="wii-chrome-link" data-action="globe#resetPitch">Restore</button>
+    </div>
+    <div class="wii-bar__slot">
+      <%# Play/stop share one button, the way the mute icon carries its own state
+          (see locations/show). Nothing to tour with fewer than two stops. %>
+      <button type="button" class="wii-arrow wii-tour" aria-label="Tour the world's cities"
+        aria-pressed="false" data-action="globe#toggleTour" data-globe-target="tourButton"
+        <%= "disabled" if @tour_stops.size < 2 %>>
+        <span class="wii-arrow__label">Tour</span>
+        <span class="wii-arrow__glyph wii-tour__play" aria-hidden="true">&#9654;</span>
+        <span class="wii-arrow__glyph wii-tour__stop" aria-hidden="true">&#9632;</span>
+      </button>
     </div>
   </div>
 

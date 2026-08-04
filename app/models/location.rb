@@ -33,7 +33,9 @@ class Location < ApplicationRecord
     numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
 
   scope :by_name, -> { order(:name) }
-  scope :most_populous, -> { where.not(population: nil).order(population: :desc).limit(HOT_CITY_COUNT) }
+  scope :most_populous, ->(limit = HOT_CITY_COUNT) {
+    where.not(population: nil).order(population: :desc).limit(limit)
+  }
   scope :recently_viewed, -> { where(last_viewed_at: RECENTLY_VIEWED_WITHIN.ago..) }
   scope :hot, -> { where(id: hot_ids) }
   scope :cold, -> { where.not(id: hot_ids) }

@@ -11,10 +11,18 @@ class MapsController < ApplicationController
   # This is how late a sunrise or sunset can show on the globe.
   MARKERS_FRESH_FOR = 15.minutes
 
+  # How many cities the "Tour" button flies between. Enough that a loop isn't
+  # obviously repeating, few enough that each hop is a short one.
+  TOUR_STOP_COUNT = 15
+
   def show
     @locations = Location.by_name
     # When arriving from a location's forecast, centre the globe on it.
     @focus = Location.find_by(slug: params[:location])
+    # The biggest cities, put in route order: sorting by longitude walks the
+    # tour eastward around the world rather than criss-crossing it. Two readable
+    # steps rather than one clever query, on fifteen rows.
+    @tour_stops = Location.most_populous(TOUR_STOP_COUNT).sort_by(&:longitude)
   end
 
   # GeoJSON feed of locations for the globe's symbol layer. Every visitor gets

@@ -77,6 +77,15 @@ const IDLE_AFTER = 2000
 const SPIN_MAX_ZOOM = 2
 const SECONDS_PER_REVOLUTION = 180
 
+// "Tour" flies the globe from city to city — the attract mode for the zoom the
+// globe actually opens at, where the idle drift above deliberately doesn't run.
+// Each stop is a flight of TOUR_FLY_MS, then its weather card for TOUR_DWELL_MS.
+const TOURING_CLASS = "is-touring"
+const TOUR_ZOOM = 5
+const TOUR_PITCH = 40
+const TOUR_FLY_MS = 4000
+const TOUR_DWELL_MS = 3500
+
 // Icons display at ICON_SIZE px, rasterized at 2x (pixelRatio) for crispness.
 const ICON_SIZE = 34
 const ICON_PIXEL_RATIO = 2
@@ -91,8 +100,10 @@ const REFETCH_DEBOUNCE = 3000
 // declutters overlapping markers when zoomed out and reveals more on zoom-in;
 // population is used as the priority so larger cities win a collision.
 export default class extends Controller {
-  static values = { token: String, markersUrl: String, center: Array, temperatureUnit: String }
-  static targets = ["map", "zoomIn", "zoomOut", "banner", "pitchUp", "pitchDown"]
+  static values = {
+    token: String, markersUrl: String, center: Array, temperatureUnit: String, tour: Array
+  }
+  static targets = ["map", "zoomIn", "zoomOut", "banner", "pitchUp", "pitchDown", "tourButton"]
 
   connect() {
     // No token (CI, or a checkout with no MAPBOX_TOKEN set): build the globe on
@@ -127,25 +138,33 @@ export default class extends Controller {
 
     this.#watchIdle()
     this.#watchWeather()
+    this.#watchTour()
   }
 
   disconnect() {
     this.#unwatchIdle()
     this.#unwatchWeather()
+    this.#unwatchTour()
     this.popup?.remove()
     this.map?.remove()
   }
 
-  // The overlaid zoom bar buttons — one Mapbox zoom unit per press.
+  // The overlaid zoom bar buttons — one Mapbox zoom unit per press. Taking the
+  // camera anywhere by hand ends a running tour, which would only fly out of it
+  // again at the next stop.
   zoomIn() {
+    this.#stopTour()
     this.map?.zoomIn()
   }
 
   zoomOut() {
+    this.#stopTour()
     this.map?.zoomOut()
   }
 
-  // Cycle the marker icons: Current -> Today -> Tomorrow -> Current.
+  // Cycle the marker icons: Current -> Today -> Tomorrow -> Current. Unlike the
+  // camera controls this leaves a tour running — it changes what the markers
+  // show, not where the globe is looking, and the tour's card follows it.
   next() {
     this.modeIndex = (this.modeIndex + 1) % WEATHER_MODES.length
     this.#applyMode()
@@ -153,15 +172,24 @@ export default class extends Controller {
 
   // The bottom-bar tilt controls.
   pitchUp() {
+    this.#stopTour()
     this.#setPitch(this.map ? this.map.getPitch() + PITCH_STEP : DEFAULT_PITCH)
   }
 
   pitchDown() {
+    this.#stopTour()
     this.#setPitch(this.map ? this.map.getPitch() - PITCH_STEP : DEFAULT_PITCH)
   }
 
   resetPitch() {
+    this.#stopTour()
     this.#setPitch(DEFAULT_PITCH)
+  }
+
+  // The bottom bar's play/stop button.
+  toggleTour() {
+    if (this.touring) this.#stopTour()
+    else this.#startTour()
   }
 
   // Idle chrome ---------------------------------------------------------
@@ -216,6 +244,9 @@ export default class extends Controller {
   // the steps join into one continuous turn.
   #startSpin() {
     if (this.spinning || !this.map) return
+    // A tour is already flying the camera, and the two share the moveend chain
+    // below: arming the spin would capture it and strand the tour at its stop.
+    if (this.touring) return
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return
 
     this.spinning = true
@@ -239,6 +270,119 @@ export default class extends Controller {
 
     this.spinning = false
     this.map?.stop() // freeze where it is rather than coasting to the next step
+  }
+
+  // Tour -----------------------------------------------------------------
+  // The stops are the biggest cities in longitude order (see MapsController),
+  // so the tour walks eastward around the world. Unlike the idle spin this one
+  // is asked for, so it survives the mouse moving — that only brings the chrome
+  // back so the button is reachable. Escape, a gesture on the globe or any of
+  // the camera buttons hand control back.
+  #watchTour() {
+    this.onTourKey = (event) => {
+      if (event.key === "Escape") this.#stopTour()
+    }
+    document.addEventListener("keydown", this.onTourKey)
+  }
+
+  #unwatchTour() {
+    clearTimeout(this.tourTimer)
+    document.removeEventListener("keydown", this.onTourKey)
+  }
+
+  #startTour() {
+    if (!this.map || this.tourValue.length < 2) return
+
+    this.touring = true
+    this.#syncTourButton()
+    this.#stopSpin() // it may have been left drifting
+    this.tourWeather = this.#loadTourWeather() // in flight before the first stop
+
+    // Join the route at the first stop east of the current view, so the opening
+    // hop is as short as the ones that follow it. `wrap`, because a globe left
+    // spinning reports a longitude that has run well past 180.
+    const here = this.map.getCenter().wrap().lng
+    const next = this.tourValue.findIndex((stop) => stop.lng > here)
+    this.tourIndex = next === -1 ? 0 : next
+
+    this.#flyToStop()
+  }
+
+  #stopTour() {
+    if (!this.touring) return
+
+    clearTimeout(this.tourTimer)
+    this.touring = false
+    this.#syncTourButton()
+    this.popup?.remove()
+    this.map?.stop() // land where it is rather than finishing the flight
+    this.#saveCamera() // nothing was saved while touring; keep where it ended
+  }
+
+  #flyToStop() {
+    const stop = this.tourValue[this.tourIndex]
+    if (!stop || !this.map) return
+
+    this.popup?.remove() // the card belongs to the city we're leaving
+    // Deliberately not `essential: true`: Mapbox skips a non-essential camera
+    // animation for a visitor who asked for reduced motion and jumps there
+    // instead, which is the right tour for them — every stop and every card,
+    // without the swoop.
+    this.map.flyTo({
+      center: [ stop.lng, stop.lat ],
+      zoom: TOUR_ZOOM,
+      pitch: TOUR_PITCH,
+      bearing: 0,
+      duration: TOUR_FLY_MS
+    })
+  }
+
+  // Arrived (via the moveend chain, as the spin does): show the city's weather,
+  // hold it, then move on.
+  #holdThenAdvance() {
+    this.#showTourPopup()
+
+    clearTimeout(this.tourTimer)
+    this.tourTimer = setTimeout(() => {
+      this.tourIndex = (this.tourIndex + 1) % this.tourValue.length
+      this.#flyToStop()
+    }, TOUR_DWELL_MS)
+  }
+
+  // The cards come from the marker feed rather than from the itinerary, so they
+  // show what the last refresh wrote rather than what was true when the page was
+  // rendered. Fetched here rather than read back out of the map with
+  // querySourceFeatures: what Mapbox has parsed into source tiles depends on the
+  // style having loaded the glyphs for the layer's labels, which the token-less
+  // offline style never does — that lookup finds nothing on a globe with no
+  // Mapbox account behind it.
+  async #loadTourWeather(url = this.markersUrlValue) {
+    try {
+      const { features } = await (await fetch(url)).json()
+      return new Map(features.map((feature) => [ feature.properties.slug, feature ]))
+    } catch {
+      return null // no cards, but the tour itself still flies
+    }
+  }
+
+  // A stop with no feature — one deleted since, or a feed that didn't load —
+  // simply gets no card: #showPopup ignores a missing feature.
+  async #showTourPopup() {
+    const index = this.tourIndex
+    const stop = this.tourValue[index]
+    if (!this.touring || !stop) return
+
+    const features = await this.tourWeather
+    if (!this.touring || this.tourIndex !== index) return // moved on while waiting
+
+    this.#showPopup(features?.get(stop.slug))
+  }
+
+  #syncTourButton() {
+    if (!this.hasTourButtonTarget) return
+
+    this.tourButtonTarget.classList.toggle(TOURING_CLASS, Boolean(this.touring))
+    this.tourButtonTarget.setAttribute("aria-pressed", String(Boolean(this.touring)))
   }
 
   // Live weather ---------------------------------------------------------
@@ -272,6 +416,13 @@ export default class extends Controller {
     // conditional GET handing back the bytes this refresh just invalidated.
     const url = version ? `${this.markersUrlValue}?v=${version}` : this.markersUrlValue
     source.setData(url)
+
+    // A tour is parked on a city with its card open; put it back, with the new
+    // numbers, once it has read the rebuilt feed too.
+    if (this.touring) {
+      this.tourWeather = this.#loadTourWeather(url)
+      this.#showTourPopup()
+    }
   }
 
   #setPitch(target) {
@@ -352,6 +503,7 @@ export default class extends Controller {
     this.#addMarkersLayer()
     this.#enableNavigation()
     this.#trackDragCursor()
+    this.#watchTourGestures()
     this.#applyMode() // sync icons/banner with the current view
 
     // Disable the +/- buttons at the zoom limits (and keep them in sync).
@@ -366,11 +518,12 @@ export default class extends Controller {
     // Persist the initial camera too: arriving via ?location centres the globe
     // without firing a move, so without this an unpanned visit would never be
     // saved and a later plain /map visit would fall back to the world view.
-    // The idle spin is the exception: it keeps the turn going instead, since
-    // where an unattended globe happened to drift to isn't a view worth
-    // resuming — the last place the viewer left it is.
+    // The idle spin and the tour are the exceptions: each chains its own next
+    // move from here instead, since where an unattended globe happened to get
+    // to isn't a view worth resuming — the last place the viewer left it is.
     map.on("moveend", () => {
       if (this.spinning) this.#spinStep()
+      else if (this.touring) this.#holdThenAdvance()
       else this.#saveCamera()
     })
     this.#saveCamera()
@@ -438,6 +591,18 @@ export default class extends Controller {
     map.on("mouseleave", LAYER_ID, () => {
       this.element.classList.remove(POINTING_CLASS)
       this.popup.remove()
+    })
+  }
+
+  // Taking hold of the globe — dragging, scrolling to zoom, right-dragging to
+  // rotate — ends a tour and hands the camera back. Mapbox tags a camera event
+  // it started with the DOM event behind it, and the tour's own flyTo carries
+  // none, so this can't stop the tour it's watching.
+  #watchTourGestures() {
+    [ "dragstart", "zoomstart", "rotatestart", "pitchstart" ].forEach((type) => {
+      this.map.on(type, (event) => {
+        if (event.originalEvent) this.#stopTour()
+      })
     })
   }
 

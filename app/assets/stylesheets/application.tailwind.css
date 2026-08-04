@@ -293,7 +293,7 @@ summary,
 
 /* Reuses the silver .wii-top/.wii-bottom bars as faint overlays on the globe:
    the top bar is Zoom / Next / Zoom, the bottom bar is End / tilt / tilt /
-   Restore. */
+   Restore / Tour. */
 .map-bar {
   position: absolute;
   left: 0;
@@ -310,11 +310,25 @@ summary,
 
 .map-bar--bottom {
   bottom: 0;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
 }
 
 .map-bar--bottom .wii-bar__slot+.wii-bar__slot {
   border-left: 1px solid #bcbcbc;
+}
+
+/* One button for both halves of the tour, the way .wii-mute carries its own
+   on/off state: ▶ while the globe is yours, ■ while it's touring. */
+.wii-tour__stop {
+  display: none;
+}
+
+.wii-tour.is-touring .wii-tour__play {
+  display: none;
+}
+
+.wii-tour.is-touring .wii-tour__stop {
+  display: block;
 }
 
 .map-bar:hover {

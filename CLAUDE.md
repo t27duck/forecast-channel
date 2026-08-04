@@ -422,6 +422,35 @@ location's current conditions.
     it. Too zoomed in, the spin stays armed. `prefers-reduced-motion` skips it.
     **In system tests a bar that has slid away can't be clicked — move the
     pointer first** (`wake_chrome` in `test/system/globe_test.rb`).
+  - **Tour**: the bottom bar's "Tour" button (▶/■, one button carrying its own
+    state like the jukebox's mute icon) flies the globe city to city — the
+    attract mode for the zoom it actually opens at, where the idle spin
+    deliberately does nothing. The itinerary is `MapsController`'s
+    `Location.most_populous(TOUR_STOP_COUNT)` **sorted by longitude**, which is
+    what walks the tour eastward around the world instead of criss-crossing it;
+    it joins the route at the first stop east of the current view. Each stop is
+    a `flyTo` then its weather card for `TOUR_DWELL_MS`, chained from `moveend`
+    — the same seam as the spin, so `#saveCamera` stays out of the way and only
+    where the tour was *stopped* is remembered. Two consequences worth knowing:
+    `#startSpin` has to yield to a running tour (arming the spin would capture
+    that `moveend` branch and strand it), and the `flyTo` is deliberately **not**
+    `essential`, so Mapbox jumps rather than swoops for a visitor who asked for
+    reduced motion — every stop and card, no animation.
+    - The stops carry only slug and coordinates
+      (`MapsHelper#tour_stops_value`): coordinates because a city on the far
+      side of the globe is in no loaded tile, and the slug so the card is read
+      from the marker feed on arrival and shows what the last refresh wrote.
+      That lookup is our own `fetch`, **not** `querySourceFeatures` — what
+      Mapbox has parsed into source tiles depends on the style's glyphs having
+      loaded, which the token-less offline style never does, so that lookup
+      finds nothing on a globe with no Mapbox account behind it (and in the
+      whole test suite).
+    - Unlike the spin, a tour was asked for, so mouse movement doesn't end it —
+      it only brings the chrome back, or Stop could never be reached without
+      ending the tour on the way. Escape, a gesture on the globe (told apart
+      from the tour's own camera moves by Mapbox's `originalEvent`) or any of
+      the camera buttons hand control back. "Next" doesn't: it changes what the
+      markers show, not where the globe looks, and the card follows it.
 - **Settings** (`SettingsController#show` at `/settings`): a Wii-style "Change
   Settings" page with Closest Location, Temperature Display, Wind Display and
   Sound rows. Temp/wind are toggles handled by `#update` (which also backs the

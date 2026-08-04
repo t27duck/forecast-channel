@@ -3,6 +3,9 @@ require "application_system_test_case"
 class GlobeTest < ApplicationSystemTestCase
   setup { choose_location(locations(:berlin)) } # the globe is gated on having one
 
+  # Every fixture city with a population, which is the whole tour itinerary.
+  CITIES = [ "Berlin", "Tokyo" ].freeze
+
   test "renders the globe and adds the location markers layer" do
     visit map_path
 
@@ -219,6 +222,85 @@ class GlobeTest < ApplicationSystemTestCase
     assert_equal 1, marker_data.size, "expected the burst to be coalesced"
   end
 
+  # Tour mode: the attract mode for the zoom the globe actually opens at, where
+  # the idle drift above deliberately does nothing. Two fixture cities, so the
+  # route is Berlin -> Tokyo -> Berlin.
+  test "the Tour button flies the globe from one city to the next" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    wake_chrome
+    find(".map-bar .wii-tour").click
+    assert_selector ".wii-tour.is-touring"
+    assert_selector ".map-bar .wii-tour[aria-pressed=true]"
+
+    # It lands on a stop and opens that city's card from the live marker feed...
+    assert_selector ".globe-popup .gp__name", wait: 15
+    showing = find(".globe-popup .gp__name").text
+    assert_includes CITIES, showing
+
+    # ...holds it, then moves on by itself.
+    assert_selector ".globe-popup .gp__name", text: other_city(showing), wait: 20
+  end
+
+  # The idle spin stops dead on any mouse movement. A tour was asked for, so it
+  # doesn't — waking only brings the chrome back, or the Stop button could never
+  # be reached without ending the tour on the way.
+  test "moving the mouse leaves a running tour alone" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    wake_chrome
+    find(".map-bar .wii-tour").click
+    assert_selector ".globe-popup .gp__name", wait: 15
+    showing = find(".globe-popup .gp__name").text
+
+    wake_chrome
+    assert_selector ".wii-tour.is-touring"
+    assert_selector ".globe-popup .gp__name", text: other_city(showing), wait: 20
+  end
+
+  test "stopping the tour leaves the globe where the tour got to" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
+
+    wake_chrome
+    parked = saved_camera
+    find(".map-bar .wii-tour").click
+    assert_selector ".globe-popup", wait: 15
+
+    # Where an unattended globe got to isn't a view worth resuming, so a tour
+    # writes nothing while it runs — only where it was stopped.
+    assert_equal parked, saved_camera, "expected the tour not to save its own hops"
+
+    wake_chrome # the chrome slides away while it tours
+    find(".map-bar .wii-tour").click
+    assert_no_selector ".wii-tour.is-touring"
+    assert_no_selector ".globe-popup"
+
+    longitude = -> { evaluate_script("#{map_handle}.getCenter().lng") }
+    stopped = longitude.call
+    assert_in_delta stopped, saved_camera["center"].first, 0.01,
+      "expected the stopped view to be saved"
+    sleep 1.5 # long enough for another hop, had it not stopped
+    assert_in_delta stopped, longitude.call, 0.01
+  end
+
+  test "taking hold of the globe ends the tour" do
+    visit map_path
+    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+
+    wake_chrome
+    find(".map-bar .wii-tour").click
+    assert_selector ".globe-popup", wait: 15
+
+    # Mapbox tags a camera event it started with the DOM event behind it; the
+    # tour's own flyTo carries none, which is what tells the two apart.
+    execute_script("#{map_handle}.fire('dragstart', { originalEvent: {} })")
+    assert_no_selector ".wii-tour.is-touring"
+    assert_no_selector ".globe-popup"
+  end
+
   test "the idle globe stays put when it is zoomed in" do
     visit map_path
     assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
@@ -254,6 +336,15 @@ class GlobeTest < ApplicationSystemTestCase
 
   def map_handle
     "document.querySelector('[data-controller=globe]').__map"
+  end
+
+  # The tour's next stop, given the one it is showing.
+  def other_city(showing)
+    CITIES.find { |name| name != showing }
+  end
+
+  def saved_camera
+    evaluate_script("JSON.parse(window.sessionStorage.getItem('globeCamera') || 'null')")
   end
 
   # Feed the page a broadcast the way Turbo would once it came off the socket.
