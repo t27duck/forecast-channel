@@ -5,9 +5,13 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+  # The install manifest, from app/views/pwa/manifest.json.erb (linked in the
+  # layout's head). Rails::PwaController inherits Rails::ApplicationController —
+  # *not* this app's ApplicationController — so neither the fail-closed
+  # require_authentication nor require_current_location applies to it. That's
+  # what makes it reachable at all: a browser fetches the manifest before anyone
+  # has signed in or chosen a location. test/integration/pwa_test.rb pins it.
+  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
 
   resource :session
 

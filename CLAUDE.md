@@ -577,15 +577,45 @@ location's current conditions.
   bundled one; the rasters are committed, so it's a manual step.
   - `public/icon.svg` — the glossy sun-behind-cloud `WeatherIconsHelper` draws
     for "partly cloudy" on a `#103a86` tile, with fatter rays so they survive at
-    16px → `public/icon.png` (512, also the apple-touch-icon) and
-    `public/favicon.ico` (16/32/48). All four `<link rel="icon">` tags live in
-    the layout.
+    16px → `public/icon.png` (512), `public/icon-192.png` (the size Android asks
+    for on a home screen), `public/apple-touch-icon.png` (180),
+    `public/icon-maskable.png` and `public/favicon.ico` (16/32/48). All four
+    `<link rel="icon">` tags live in the layout.
+  - The **maskable** variant is its own file rather than `icon.png` declared
+    twice, which is what the generated manifest did. A launcher crops a maskable
+    icon to its own silhouette — most aggressively a circle — and guarantees
+    only the middle 80%, so the full-bleed tile would have lost the sun's rays
+    and the cloud's shoulder. `render_maskable` shrinks the tile into that safe
+    zone and re-centres it on more of the same `#103a86`, so the padding is
+    seamless and the rounded corners simply disappear. **Look at it under a
+    circular mask before committing**, the way the `og.png` note below says to.
   - `public/og.svg` — the same mark full-bleed beside a wordmark →
     `public/og.png` (1200×630), the OpenGraph card. The wordmark is live
     `<text>`, so it sets in whatever sans-serif the machine running the script
     has; **look at the result before committing it** rather than assuming, and
     leave the right-hand margin generous because a substituted font sets wider
     and an overflowing line is clipped, not wrapped.
+- **Progressive web app** (`app/views/pwa/`, routed in `config/routes.rb`,
+  linked from the layout's head): the app installs to a home screen and launches
+  standalone. The load-bearing fact is that `Rails::PwaController` inherits
+  `Rails::ApplicationController`, **not** this app's `ApplicationController` —
+  so neither the fail-closed `require_authentication` nor
+  `require_current_location` applies, which is the only reason a browser can
+  fetch the manifest before anyone has signed in or chosen a location.
+  `test/integration/pwa_test.rb` pins that, with a negative control in the same
+  test so it can't pass vacuously if the app were ever opened up.
+  - `start_url` is `/`, the splash — not merely because it's the front door, but
+    because `HomeController#show` checks `weather_stale?`, enqueues
+    `RefreshLocationWeatherJob` and waits on the broadcast, so **every launch
+    from the icon is a freshness check** for free.
+  - `theme_color`/`background_color` are both `#103a86`, matching the layout's
+    `<meta name="theme-color">` (they have to stay in step) and the middle stop
+    of `.wii`'s `--panel-bg`, so the launch splash, the status bar and the icon
+    are one blue and the handover into `.splash` reads as a continuation.
+  - `scope` is `/` so the forecast's external GitHub link opens in the browser
+    rather than inside the app frame — the same reason it's `target="_blank"`.
+  - No `orientation`: every screen is flex + `clamp()` and reflows, and locking
+    a screen someone glances at is user-hostile.
 - **Link previews** (`app/views/layouts/_open_graph.html.erb`, rendered from the
   layout's head): `og:*`, `twitter:card` and a plain `meta description`.
   Deliberately **one card for the whole site**, not per-page — every visitor

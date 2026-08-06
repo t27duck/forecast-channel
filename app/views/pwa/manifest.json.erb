@@ -1,22 +1,52 @@
+<%#
+  The install manifest, served at /manifest.json by Rails::PwaController — see
+  config/routes.rb for why that controller reaches this at all.
+
+  Notes on the values that were a decision rather than a default:
+
+  * start_url is the splash, and for a better reason than "it's the app's front
+    door". HomeController#show checks weather_stale? and enqueues
+    RefreshLocationWeatherJob, then waits on that job's broadcast — so every
+    launch from the home screen is a freshness check, for free.
+  * theme_color and background_color are both #103a86, icon.svg's tile blue and
+    the middle stop of .wii's --panel-bg. One colour for both means the launch
+    splash, the status bar and the icon are the same blue, and the handover into
+    .splash's gradient reads as a continuation rather than a flash. It must stay
+    in step with the layout's <meta name="theme-color">.
+  * No orientation. Every Wii screen is flex + clamp() and reflows; landscape
+    arguably suits a 4:3-derived design better than portrait does; and locking a
+    screen someone glances at is user-hostile.
+  * scope has to be "/" so the forecast's external GitHub link opens in the
+    browser instead of inside the app frame — which is also what keeps the
+    jukebox playing (see locations/show).
+  * The maskable icon is its own file, not icon.png wearing a second purpose:
+    the tile is full-bleed, so a circular mask would crop the sun's rays.
+    script/build_icons.rb renders it inset into the safe zone.
+  * No SVG entry. Chromium's manifest handling of SVG icons is unreliable and
+    Safari uses the apple-touch-icon link instead, so PNGs are the whole story.
+%>
 {
-  "name": "Forecast",
-  "icons": [
-    {
-      "src": "/icon.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    },
-    {
-      "src": "/icon.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
-    }
-  ],
+  "id": "/",
+  "name": "Forecast Channel",
+  "short_name": "Forecast",
+  "description": "The Wii Forecast Channel on the web: your local forecast panel by panel, and a globe of the world's weather.",
   "start_url": "/",
-  "display": "standalone",
   "scope": "/",
-  "description": "Forecast.",
-  "theme_color": "red",
-  "background_color": "red"
+  "display": "standalone",
+  "theme_color": "#103a86",
+  "background_color": "#103a86",
+  "categories": [ "weather" ],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Globe",
+      "short_name": "Globe",
+      "url": "/map",
+      "icons": [ { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" } ]
+    }
+  ]
 }
