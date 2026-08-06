@@ -200,7 +200,13 @@ export default class extends Controller {
     this.onWake = () => this.#wake()
     this.onPointerLeave = () => this.#idle()
 
-    document.addEventListener("mousemove", this.onWake)
+    // pointermove, not mousemove: a finger produces no mouse movement, so on a
+    // phone the only thing keeping the bars up would be pointerdown — which
+    // fires once at the start of a pan and then not again, so two seconds into
+    // a drag the chrome would slide away and #startSpin would set the globe
+    // easing west against the finger. Pointer events cover mouse, pen and touch
+    // in one listener.
+    document.addEventListener("pointermove", this.onWake, { passive: true })
     document.addEventListener("pointerdown", this.onWake)
     document.addEventListener("keydown", this.onWake)
     document.addEventListener("wheel", this.onWake, { passive: true })
@@ -211,7 +217,7 @@ export default class extends Controller {
 
   #unwatchIdle() {
     clearTimeout(this.idleTimer)
-    document.removeEventListener("mousemove", this.onWake)
+    document.removeEventListener("pointermove", this.onWake)
     document.removeEventListener("pointerdown", this.onWake)
     document.removeEventListener("keydown", this.onWake)
     document.removeEventListener("wheel", this.onWake)

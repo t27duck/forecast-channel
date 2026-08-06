@@ -24,7 +24,7 @@
   data-globe-tour-value="<%= tour_stops_value(@tour_stops) %>"
   <% if @focus %>data-globe-center-value="<%= [ @focus.longitude.to_f, @focus.latitude.to_f ].to_json %>"<% end %>
 >
-  <div data-globe-target="map" class="h-screen w-full bg-[#030a1b]"></div>
+  <div data-globe-target="map" class="map-canvas bg-[#030a1b]"></div>
 
   <%# Wii-style control bar overlaid on the globe; faint until hovered. %>
   <div class="wii-top map-bar map-bar--top" data-controller="press">

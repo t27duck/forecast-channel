@@ -2,8 +2,20 @@
 <html>
   <head>
     <title><%= content_for(:title) || "Forecast" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%# viewport-fit=cover lets the full-screen Wii views run under the notch and
+        the home indicator; the --safe-* custom properties then pad the bars back
+        into the visible area. Without it those insets are all reported as 0.
+        Deliberately no maximum-scale/user-scalable: pinch-zoom stays available
+        (see .wii's touch-action, which keeps it on purpose). %>
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <%# The blue of icon.svg's tile and the middle stop of .wii's --panel-bg.
+        Must stay in step with the manifest's theme_color/background_color. %>
+    <meta name="theme-color" content="#103a86">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <%# Pairs with viewport-fit=cover: content runs under the status bar, whose
+        text goes white over the blue. %>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Forecast">
     <meta name="application-name" content="Forecast">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="turbo-prefetch" content="false">

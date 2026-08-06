@@ -413,9 +413,14 @@ location's current conditions.
     `REFETCH_DEBOUNCE`, since a sweep announces itself once per `BATCH_SIZE`
     chunk. Only the source's data changes, so the camera and the active
     Current/Today/Tomorrow view both survive.
-  - **Idle**: two seconds without mouse movement — or the pointer leaving the
-    page, which skips the wait — puts `is-idle` on `.map-view`; the CSS slides
-    both bars away, fades the banner and hides the cursor. Idling at
+  - **Idle**: two seconds without **pointer** movement — or the pointer leaving
+    the page, which skips the wait — puts `is-idle` on `.map-view`; the CSS
+    slides both bars away, fades the banner and hides the cursor. `pointermove`
+    rather than `mousemove` because a finger produces no mouse movement: the
+    only other wake event a touch device fires is `pointerdown`, which arrives
+    once at the start of a pan and not again, so the chrome would slide away and
+    the spin start *mid-drag*, easing the globe west against the finger. Idling
+    at
     `SPIN_MAX_ZOOM` also sets the globe turning westward, one revolution per
     `SECONDS_PER_REVOLUTION`, as chained one-second `easeTo`s queued from
     `moveend`; while it drifts the camera isn't saved and waking `map.stop()`s
@@ -565,6 +570,26 @@ location's current conditions.
   hand is the cursor for the whole app; the globe canvas shows the open hand,
   closing to the fist while dragged (`is-pointing` / `is-grabbing` on
   `.map-view`).
+- **Mobile viewport**: the five full-screen views (`.wii`, `.settings`,
+  `.picker`, `.splash`, `.map-canvas`) are fixed frames, not documents, so they
+  each carry `height: 100vh` **followed by `100dvh`** — the pair, not one or the
+  other, since the first is the fallback. `dvh` is safe precisely because
+  nothing in them scrolls: the URL bar never retracts, so the value never moves.
+  Everything *else* stays on `vh` on purpose — `--chrome` and the dozens of
+  `clamp(…vh…)` sizes would otherwise reflow type and resize bars as a browser
+  animated its chrome. The layout asks for `viewport-fit=cover`, without which
+  `env(safe-area-inset-*)` is reported as 0; `:root` names the four insets as
+  `--safe-*`, and each bar grows by its own inset and pads that much away, so
+  the silver runs under the status bar and home indicator while the buttons stay
+  a full `--chrome` tall. `overscroll-behavior: none` is set on `html` (only the
+  root propagates it to the viewport), scoped by `:has()` so the admin CRUD
+  screens keep ordinary scrolling; `.picker__list`, the one thing that does
+  scroll, contains its own. `.wii` takes `touch-action: pinch-zoom` — claiming
+  the vertical gesture for the swipe controller while deliberately *keeping*
+  zoom, which `none` would remove from a screen sized entirely in `clamp()`s.
+  The globe's bars get `@media (hover: none) { opacity: 0.8 }`, since their
+  `:hover` rule never fires on a phone and the whole control surface would
+  otherwise sit at a fifth opacity forever.
 
 ## Instructions
 
