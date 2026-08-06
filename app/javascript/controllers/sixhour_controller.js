@@ -43,6 +43,12 @@ export default class extends Controller {
   }
 
   close() {
+    // Both zones listen for the forecast controller's dismiss, so this is
+    // called on the closed one too — and without the guard that zone would
+    // restore the title it saved the *last* time it was open, writing a stale
+    // weekday over the header.
+    if (!this.opened) return
+
     this.opened = false
     this.element.classList.remove("is-open")
     if (this.title && this.savedTitle) this.title.textContent = this.savedTitle

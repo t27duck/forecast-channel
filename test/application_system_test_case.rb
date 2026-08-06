@@ -1,6 +1,14 @@
 require "test_helper"
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
+  # One browser at a time. Rails only parallelizes past 50 tests, so this was
+  # already how the suite ran — but it was true by accident, and the run that
+  # crossed the threshold turned every test into
+  # "Could not start a new session. No nodes support the capabilities in the
+  # request": the development Selenium container is a single node, and twelve
+  # processes all asking it for a browser at once is more than it serves.
+  parallelize workers: 1
+
   if ENV["CAPYBARA_SERVER_PORT"]
     served_by host: "rails-app", port: ENV["CAPYBARA_SERVER_PORT"]
 
@@ -37,5 +45,30 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     visit settings_location_path(country: location.country)
     click_button location.name
     assert_selector ".settings__value", text: location.name, wait: 5
+  end
+
+  # A finger drag, as a W3C Actions touch pointer, centred on +selector+ and
+  # travelling +by+ pixels (negative is up / left). A real input device rather
+  # than synthesised events, so the browser produces the whole
+  # pointerdown/pointermove/pointerup sequence *and* the synthetic click that
+  # follows it — and that click is the half the swipe controller has to
+  # suppress, so faking the sequence would skip the interesting part.
+  #
+  # +axis+ is :vertical or :horizontal. Note the swipe controller ignores a
+  # mouse pointer, so a test wanting to prove that uses `page.driver.browser
+  # .action` directly rather than this.
+  def swipe(selector, by:, axis: :vertical)
+    finger = Selenium::WebDriver::Interactions.pointer(:touch, name: "finger")
+    target = find(selector).native
+    offset = ->(fraction) { axis == :vertical ? [ 0, (by * fraction).round ] : [ (by * fraction).round, 0 ] }
+
+    # `device:` wants the name, not the device — ActionBuilder looks it up by
+    # string and silently falls back to a fresh mouse pointer without one.
+    page.driver.browser.action(devices: [ finger ])
+      .move_to(target, *offset.call(-0.5), device: finger.name)
+      .pointer_down(:left, device: finger.name)
+      .move_to(target, *offset.call(0.5), device: finger.name, duration: 0.15)
+      .pointer_up(:left, device: finger.name)
+      .perform
   end
 end

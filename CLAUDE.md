@@ -68,7 +68,12 @@ location's current conditions.
 - Run all tests: `bin/rails test` — system tests: `bin/rails test:system`
 - One file: `bin/rails test test/path/to/file.rb`; one test: append `:LINE`
 - Headless Chrome via Selenium runs in a separate container, port 45678, docker
-  hostname `selenium`.
+  hostname `selenium`. That container is a **single node**, so
+  `ApplicationSystemTestCase` pins `parallelize workers: 1`. Rails only
+  parallelizes past 50 tests, so this was already how the suite ran — but by
+  accident, and the run that crossed the threshold turned every test into
+  "Could not start a new session. No nodes support the capabilities in the
+  request".
 - System tests need no secrets: the globe renders offline (see **Globe**), so
   `bin/rails test:system` passes on a fresh checkout with no env file at all.
 - Every visitor screen is gated on having chosen a closest location, so a system
@@ -303,7 +308,8 @@ location's current conditions.
 - **Location detail** (`LocationsController#show` at `/locations/:slug`): the
   Wii Forecast Channel-style paneled view. Seven full-screen panels — three `.wii-index` panels (Laundry, Air Quality,
   UV) then Current, Today, Tomorrow, 5-Day — slide vertically, non-looping,
-  via the `forecast` Stimulus controller (arrow buttons + Up/Down keys). Panels
+  via the `forecast` Stimulus controller (arrow buttons + Up/Down keys +
+  swipe — see **Swipe** below). Panels
   are partials under `app/views/locations/panels/` wrapped in the shared
   `_frame` chrome; their order, titles and the default are one list
   (`ForecastsHelper::PANELS` / `DEFAULT_PANEL`), which `show` also uses to
@@ -315,9 +321,38 @@ location's current conditions.
   `_stats` strip (blank stats are dropped). Clicking Today/Tomorrow opens the
   **6-hour overlay** — the day's four windows (from `hourly_windows`) over the
   dimmed forecast, closed by Escape or another click (`sixhour` controller,
-  `_six_hour` partial). Styling is the `.wii-*` block in
-  `application.tailwind.css`, and the app nav is hidden via
+  `_six_hour` partial) — **or by the first attempt to move**, whichever way it's
+  made: `forecast#prev`/`#next` run `#dismissOverlay` first, which dispatches
+  `forecast:dismiss` on `window` and returns without moving. That's central
+  rather than per-input because otherwise the overlay slides off screen still
+  open and strands its weekday in the frozen header. Both zones listen for the
+  dismiss, so `sixhour#close` guards on `opened` — without it the *closed* zone
+  would restore the title it saved the last time it was open. Styling is the
+  `.wii-*` block in `application.tailwind.css`, and the app nav is hidden via
   `content_for :hide_app_nav`.
+  - **Swipe** (`swipe` Stimulus controller): a generic behaviour composed onto
+    `.wii` (`data-controller="forecast press swipe"`) that reads Pointer Events
+    and dispatches `swipe:up`/`swipe:down`/`swipe:left`/`swipe:right`, wired to
+    `forecast#next`/`#prev` declaratively. The mapping is to the *transform*,
+    not to "next/previous": a finger moving up drags the track up, revealing the
+    panel below. **Touch and pen only** — a mouse drag across a panel is as
+    likely a slip as an instruction, and the desktop already has buttons and
+    keys. Deliberately no `setPointerCapture`: it would retarget pointer events,
+    and `click`'s target derives from the pointerdown/pointerup targets, so
+    every click could be reported against `.wii` instead of the button under the
+    finger — the same trap `press_controller`'s click-not-`pointerdown` comment
+    is about. `pointerup`/`pointercancel` go on `window` instead, so a finger
+    leaving the element still ends the gesture. A qualifying swipe **swallows
+    the compatibility click** with a one-shot capture-phase listener on
+    `window`, or every swipe across Today would also open its 6-hour overlay;
+    that listener is torn down on a zero timer, not after a grace period, since
+    the click arrives before the browser yields and a longer window would eat a
+    real tap (a system test proves both directions). `.wii` carries
+    `touch-action: pinch-zoom` so the browser doesn't claim the gesture first.
+    Tested via a W3C Actions **touch** pointer (`swipe` in
+    `ApplicationSystemTestCase`) rather than synthesised events, so the browser
+    produces the synthetic click that's half of what's under test — note
+    `device:` takes the device's *name*, not the device.
   - **Live**: the screen subscribes to its location's `forecast_stream` and
     **morphs** a refresh in, so a channel left on doesn't drift hours stale. The
     morph is fenced rather than reacted to: `.wii-top`, `.wii-header` and

@@ -23,7 +23,10 @@
 <% above = panel_neighbour_title(active, -1) %>
 <% below = panel_neighbour_title(active, 1) %>
 
-<div class="wii" data-controller="forecast press"
+<%# Swipe maps to the transform rather than to "next/previous": a finger moving
+    up drags the track up, which brings the panel below into view. %>
+<div class="wii" data-controller="forecast press swipe"
+  data-action="swipe:up->forecast#next swipe:down->forecast#prev"
   data-forecast-default-value="<%= active %>" data-active-panel="<%= active %>">
   <%# Fixed silver top bar — its ▲ label updates to the panel above.
       Frozen against a refresh morph: the ▲ label and the mute icon's state are

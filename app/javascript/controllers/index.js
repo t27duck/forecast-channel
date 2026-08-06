@@ -19,6 +19,9 @@ application.register("sixhour", SixhourController)
 import ScrollerController from "./scroller_controller"
 application.register("scroller", ScrollerController)
 
+import SwipeController from "./swipe_controller"
+application.register("swipe", SwipeController)
+
 import GeolocateController from "./geolocate_controller"
 application.register("geolocate", GeolocateController)
 

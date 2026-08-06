@@ -49,11 +49,28 @@ export default class extends Controller {
   }
 
   prev() {
+    if (this.#dismissOverlay()) return
     if (this.index > 0) { this.index--; this.#render() }
   }
 
   next() {
+    if (this.#dismissOverlay()) return
     if (this.index < this.panelTargets.length - 1) { this.index++; this.#render() }
+  }
+
+  // While the 6-hour breakdown is up, the first move backs out of it instead of
+  // sliding it off screen still open — which would also strand its weekday in
+  // the frozen header, over a panel it has nothing to do with. The ▼ label
+  // still names the next panel, so a move that only closes the overlay reads
+  // as a step back rather than as nothing happening; a second one goes.
+  //
+  // Here rather than in each caller so the rule is the same whichever way the
+  // reader moves: the ▲/▼ buttons, the arrow keys, or a swipe.
+  #dismissOverlay() {
+    if (!this.element.querySelector(".wii-sixhour-zone.is-open")) return false
+
+    this.dispatch("dismiss", { target: window }) // → "forecast:dismiss"
+    return true
   }
 
   #render() {

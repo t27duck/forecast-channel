@@ -64,6 +64,47 @@ class ForecastDetailTest < ApplicationSystemTestCase
     assert_selector ".wii-header__title", text: "TODAY" # restored
   end
 
+  # Moving with the overlay up used to slide it off screen still open, leaving
+  # its weekday in the frozen header over a panel it had nothing to do with.
+  test "the first move backs out of the 6-hour breakdown rather than carrying it along" do
+    location = Location.create!(
+      name: "Overlaytown", latitude: 35, longitude: -78, timezone: "UTC",
+      weather_refreshed_at: Time.utc(2026, 7, 16, 12),
+      today_forecast: { "date" => "2026-07-16", "high" => 20, "condition_code" => 2 },
+      tomorrow_forecast: { "date" => "2026-07-17", "high" => 22, "condition_code" => 2 },
+      hourly_windows: [
+        { "day" => "today", "window" => "morning", "condition_code" => 2 },
+        { "day" => "tomorrow", "window" => "morning", "condition_code" => 2 }
+      ]
+    )
+    visit location_path(location)
+    assert_selector ".wii[data-active-panel=current]", wait: 10
+
+    find("body").send_keys(:down)
+    find(".wii-panel-body[data-panel=today] .wii-sixhour-zone").click
+    assert_selector ".wii-sixhour-zone.is-open"
+    assert_selector ".wii-header__title", text: "THURSDAY"
+
+    # Closes the overlay and stays put.
+    find("body").send_keys(:down)
+    assert_no_selector ".wii-sixhour-zone.is-open"
+    assert_selector ".wii[data-active-panel=today]"
+    assert_selector ".wii-header__title", text: "TODAY"
+
+    # The next one moves, as usual.
+    find("body").send_keys(:down)
+    assert_selector ".wii[data-active-panel=tomorrow]"
+    assert_selector ".wii-header__title", text: "TOMORROW"
+
+    # Tomorrow's zone was listening for that dismiss too. It was never open, so
+    # it must not have restored a title of its own over the header.
+    find(".wii-panel-body[data-panel=tomorrow] .wii-sixhour-zone").click
+    assert_selector ".wii-header__title", text: "FRIDAY"
+    find("body").send_keys(:up)
+    assert_no_selector ".wii-sixhour-zone.is-open"
+    assert_selector ".wii-header__title", text: "TOMORROW"
+  end
+
   # Weather refreshes under anyone who leaves the channel on, so the panels
   # re-render themselves. The morph has to reach the readings without disturbing
   # anything the reader is in the middle of.
