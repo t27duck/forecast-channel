@@ -51,4 +51,58 @@ class PwaTest < ActionDispatch::IntegrationTest
     assert_select "link[rel=manifest][href=?]", pwa_manifest_path(format: :json)
     assert_select "meta[name=theme-color][content=?]", "#103a86"
   end
+
+  test "the service worker is served to a visitor with no session and no chosen location" do
+    get pwa_service_worker_url
+    assert_response :success
+    assert_includes %w[text/javascript application/javascript], response.media_type
+
+    # The template is ERB — if it were ever renamed back to a plain .js the raw
+    # handler would serve the tags instead of running them.
+    assert_no_match(/<%/, response.body)
+  end
+
+  # The path the registration hardcodes. Rename the route and this fails, rather
+  # than every visitor quietly going unregistered.
+  test "the service worker is at the path the registration asks for" do
+    assert_equal "/service-worker", pwa_service_worker_path
+  end
+
+  test "the service worker names the current build" do
+    get pwa_service_worker_url
+
+    version = ApplicationController.helpers.service_worker_version
+    assert_includes response.body, version
+    assert_includes response.body, "forecast-assets-"
+  end
+
+  # A worker the browser is told to hold on to is a deploy nobody can push
+  # through. Rails revalidates by default; this is here so it stays that way.
+  test "the service worker is revalidated rather than held" do
+    get pwa_service_worker_url
+
+    cache_control = response.headers["Cache-Control"].to_s
+    assert_includes cache_control, "max-age=0"
+    assert_includes cache_control, "must-revalidate"
+  end
+
+  # Nothing else ever parses this file: esbuild bundles app/javascript, not
+  # app/views, and a worker that won't parse fails at registration with nothing
+  # on screen to show for it. Node is already a hard dependency (it builds the
+  # bundles), so lean on it.
+  test "the service worker is syntactically valid JavaScript" do
+    get pwa_service_worker_url
+
+    Tempfile.create([ "service-worker", ".js" ]) do |file|
+      file.write(response.body)
+      file.flush
+
+      output = `node --check #{Shellwords.escape(file.path)} 2>&1`
+      assert_predicate $?, :success?, "service worker doesn't parse:\n#{output}"
+    end
+  end
+
+  test "the offline fallback page the worker caches is really there" do
+    assert Rails.root.join("public", "offline.html").exist?
+  end
 end

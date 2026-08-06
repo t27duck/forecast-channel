@@ -13,6 +13,14 @@ Rails.application.routes.draw do
   # has signed in or chosen a location. test/integration/pwa_test.rb pins it.
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
 
+  # The offline cache, from app/views/pwa/service-worker.js.erb — same story as
+  # the manifest above, and registered by app/javascript/lib/pwa.js. Served from
+  # the root, without an extension, so its scope covers the whole app; the
+  # format has to be declared here instead, or the request asks for :html and
+  # the .js.erb template doesn't match.
+  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker,
+    defaults: { format: :js }
+
   resource :session
 
   resource :map, only: [ :show ]

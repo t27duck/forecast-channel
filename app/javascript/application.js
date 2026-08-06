@@ -2,4 +2,5 @@
 import "@hotwired/turbo-rails"
 // After turbo-rails, which is what defines the Turbo global they register on.
 import "./lib/stream_actions"
+import "./lib/pwa"
 import "./controllers"

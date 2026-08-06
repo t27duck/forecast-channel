@@ -2,6 +2,10 @@
 
 Forecast is a web-based implementation of the Nintendo Wii's Forecast Channel.
 
+It installs: add it to a phone's home screen and it launches standalone into
+the channel's loading screen, panels move with a swipe, and the forecast you
+last looked at still reads with no network.
+
 ### Disclaimers
 
 1. This is a personal experiement in agentic coding. Clude Opus is the primary model used.

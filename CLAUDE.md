@@ -616,6 +616,53 @@ location's current conditions.
     rather than inside the app frame — the same reason it's `target="_blank"`.
   - No `orientation`: every screen is flex + `clamp()` and reflows, and locking
     a screen someone glances at is user-hostile.
+  - **Service worker** (`app/views/pwa/service-worker.js.erb`, registered by
+    `app/javascript/lib/pwa.js`): the forecast you last looked at still renders
+    with no network; anything genuinely new lands on `public/offline.html`
+    (standalone with inline CSS, like the other `public/*.html` error pages, so
+    it can't fail to fetch anything at the one moment it exists for). Assets
+    (`/assets/*` and the public icons) are **cache-first**, safe because
+    Propshaft digests are immutable; `/` and `/locations/<slug>` are
+    **network-first**. Three things it would be easy to get wrong:
+    - The fetch handler is **opt-in per URL**, and that's the safety property to
+      preserve. `/settings`, `/settings/location`, `/locations` (index),
+      `/sounds`, `/session`, `/jobs`, `/map`, `/map/markers`, `/up`,
+      `/rails/active_storage/*` — and anything added later — are untouched until
+      somebody deliberately lists them. The form screens are out because a
+      cached page carries a stale CSRF token, the audio proxy because it serves
+      Range requests and multi-MB bodies. `/map` is out on purpose: its tiles
+      come from api.mapbox.com and its markers from the deliberately-uncached
+      feed, so offline it would be a bare globe with no weather on it.
+    - **Turbo Drive fetches pages, it doesn't navigate to them** — that
+      request's `mode` is `"cors"`, not `"navigate"` — so the predicate matches
+      the `Accept` header too, or every move inside the app would miss.
+    - **A redirected response is never cached.** `/locations/<slug>` redirects
+      to the picker without the location cookie, and replaying a redirected
+      response from a worker throws outright rather than degrading.
+    - The route sets `defaults: { format: :js }`: the path is extensionless so
+      the worker's scope covers the whole app, which leaves the request asking
+      for `:html` and the `.js.erb` template not matching.
+  - `PwaHelper#service_worker_version` names the cache generation, derived from
+    Propshaft's digested paths for `application.js`/`.css` — so it turns over
+    exactly when a cached asset goes stale, and an ERB-only deploy doesn't throw
+    a good cache away. Both cache names carry it, so `activate` evicts the whole
+    previous generation in one line. It's available inside `app/views/pwa/*`
+    because `Rails::ApplicationController` inherits straight from
+    `ActionController::Base`, which is what earns it `helper :all`.
+  - Registration is **skipped when `navigator.webdriver`**, and the
+    `"serviceWorker" in navigator` check doesn't cover it: a worker needs a
+    secure context, and the suite is driven both over plain http to `rails-app`
+    (where it's undefined) and against CI's `127.0.0.1` (where it isn't) — the
+    same split `geolocation_test.rb` works around. Registered, it would claim
+    the origin and serve one example's HTML to another from a cache that knows
+    nothing about the database being rolled back in between: not a failing test,
+    an intermittent one that reads like a Turbo morph bug. Gating on production
+    instead would be worse the other way — the worker would only ever run where
+    it can't be debugged. In **development** it does register, and stays
+    workable by construction (`skipWaiting` + `clients.claim`, the version
+    following the asset digests, pages network-first). The one thing to know:
+    with `bin/dev` stopped, `/` and the last forecast still load from cache and
+    can look convincingly like a running server.
 - **Link previews** (`app/views/layouts/_open_graph.html.erb`, rendered from the
   layout's head): `og:*`, `twitter:card` and a plain `meta description`.
   Deliberately **one card for the whole site**, not per-page — every visitor

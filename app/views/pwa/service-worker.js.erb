@@ -1,0 +1,130 @@
+<%#
+  Keeps the channel readable with no network: the forecast you last looked at
+  still renders, and anything genuinely new lands on public/offline.html.
+
+  The fetch handler is **opt-in per URL**, which is the safety property to keep.
+  Only /assets/*, the public icons, / and /locations/<slug> are touched.
+  /settings, /settings/location, /locations (the admin index), /sounds,
+  /session, /jobs, /map, /map/markers, /up, /rails/active_storage/* — and any
+  route added after this was written — go straight to the network, unchanged,
+  until somebody deliberately adds them below. The form-bearing screens are out
+  because a cached page carries a stale CSRF token; the Active Storage audio
+  proxy is out because it serves Range requests and multi-MB bodies.
+
+  /map is excluded on purpose rather than by omission. Its style and tiles come
+  from api.mapbox.com and its markers from /map/markers, which is deliberately
+  uncached (the refresh broadcast cache-busts it). Offline you'd get whatever
+  imagery mapbox-gl still had with no weather on it at all, which is worse than
+  an honest offline page — and the globe is the one screen built to be left
+  running while online.
+%>
+// Rendered from app/views/pwa/service-worker.js.erb. Interpolated, because a
+// byte-identical worker is discarded by the browser and never reinstalls.
+const VERSION = "<%= service_worker_version %>"
+const ASSET_CACHE = `forecast-assets-${VERSION}`
+const PAGE_CACHE = `forecast-pages-${VERSION}`
+const CACHES = [ ASSET_CACHE, PAGE_CACHE ]
+
+const OFFLINE_PAGE = "/offline.html"
+
+// Digested by Propshaft, so their contents can never change under a given name.
+const ASSET_PREFIX = "/assets/"
+const ICONS = [
+  "/icon.svg", "/icon.png", "/icon-192.png", "/icon-maskable.png",
+  "/apple-touch-icon.png", "/favicon.ico"
+]
+
+// The splash, because start_url is "/" — offline, the installed app opens there
+// and its controller hands over to the forecast, so without it the launcher
+// lands on the offline page and never reaches the forecast that *is* cached.
+const CACHEABLE_PAGES = [ "/" ]
+// /locations/new and /locations/search are admin form screens, not forecasts.
+const NOT_SLUGS = [ "new", "search" ]
+
+// Only the offline page is precached. An addAll that fails aborts the whole
+// installation, and there's nothing else worth that risk: the worker installs
+// after a page has already loaded, so by the second navigation — splash to
+// forecast, which every arrival makes — the bundles and the forecast are in.
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(PAGE_CACHE)
+      .then((cache) => cache.add(OFFLINE_PAGE))
+      .then(() => self.skipWaiting())
+  )
+})
+
+// The cache names carry VERSION, so a deploy evicts the whole previous
+// generation here rather than needing per-entry expiry.
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((names) => Promise.all(
+        names.filter((name) => !CACHES.includes(name)).map((name) => caches.delete(name))
+      ))
+      .then(() => self.clients.claim())
+  )
+})
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request
+
+  if (request.method !== "GET") return
+  if (new URL(request.url).origin !== self.location.origin) return
+  // Never intercept a ranged response — the music proxy streams that way.
+  if (request.headers.has("range")) return
+
+  const path = new URL(request.url).pathname
+
+  if (isAsset(path)) event.respondWith(cacheFirst(request))
+  else if (isPage(path) && wantsHtml(request)) event.respondWith(networkFirst(request))
+})
+
+function isAsset(path) {
+  return path.startsWith(ASSET_PREFIX) || ICONS.includes(path)
+}
+
+function isPage(path) {
+  if (CACHEABLE_PAGES.includes(path)) return true
+
+  const slug = path.match(/^\/locations\/([^/]+)$/)?.[1]
+  return Boolean(slug) && !NOT_SLUGS.includes(slug)
+}
+
+// Turbo Drive fetches a page rather than navigating to it, and that request's
+// mode is "cors", not "navigate" — so keying on the mode alone would miss every
+// move inside the app, the splash's handover included.
+function wantsHtml(request) {
+  return request.mode === "navigate" || (request.headers.get("accept") || "").includes("text/html")
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request)
+  if (cached) return cached
+
+  const response = await fetch(request)
+  if (storable(response)) (await caches.open(ASSET_CACHE)).put(request, response.clone())
+  return response
+}
+
+async function networkFirst(request) {
+  const cache = await caches.open(PAGE_CACHE)
+
+  try {
+    const response = await fetch(request)
+    if (storable(response)) cache.put(request, response.clone())
+    return response
+  } catch {
+    // ignoreSearch so ?location=... doesn't hide an otherwise identical page.
+    return (await cache.match(request, { ignoreSearch: true })) ||
+      (await cache.match(OFFLINE_PAGE)) ||
+      Response.error()
+  }
+}
+
+// A redirect is the one thing that must never go in: /locations/<slug> redirects
+// to the picker when the location cookie is missing, and replaying a redirected
+// response from a service worker throws outright ("Response served by service
+// worker has redirected") instead of degrading.
+function storable(response) {
+  return response.ok && !response.redirected && response.type === "basic"
+}
