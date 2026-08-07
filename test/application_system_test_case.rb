@@ -9,10 +9,14 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # processes all asking it for a browser at once is more than it serves.
   parallelize workers: 1
 
+  # The window every test starts in. Named because a test that resizes to a
+  # phone has to put it back — the browser is shared for the whole run.
+  SCREEN_SIZE = [ 1400, 1400 ].freeze
+
   if ENV["CAPYBARA_SERVER_PORT"]
     served_by host: "rails-app", port: ENV["CAPYBARA_SERVER_PORT"]
 
-    driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ], options: {
+    driven_by :selenium, using: :headless_chrome, screen_size: SCREEN_SIZE, options: {
       browser: :remote,
       url: "http://#{ENV["SELENIUM_HOST"]}:4444"
     }
@@ -20,7 +24,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     # Locally and in CI, Chrome runs headless with no GPU. Mapbox needs a WebGL
     # context to build the globe at all, and recent Chrome won't fall back to
     # its software renderer without this flag.
-    driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ] do |options|
+    driven_by :selenium, using: :headless_chrome, screen_size: SCREEN_SIZE do |options|
       options.add_argument("--enable-unsafe-swiftshader")
     end
   end

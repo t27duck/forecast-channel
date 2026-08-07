@@ -23,22 +23,39 @@
   --cursor-open-hand: url("cursors/open-hand-1-32.png") 16 16, grab;
   --cursor-grab: url("cursors/grab-1-32.png") 16 14, grabbing;
   /* Height of the silver bars. Global, because every full-screen view (the
-     forecast, the globe, settings, the picker) reuses them. */
-  --chrome: clamp(40px, 7vh, 56px);
+     forecast, the globe, settings, the picker) reuses them. The floor is 44px,
+     the smallest comfortable touch target. */
+  --chrome: clamp(44px, 7vmin, 56px);
 
   /* The notch/home-indicator margins, zero on everything that hasn't got them.
      Only usable because the layout asks for `viewport-fit=cover`; without it
-     the browser insets the viewport itself and these are all 0.
-
-     Note what *doesn't* move to a dynamic unit: --chrome above and every
-     clamp(...vh...) below stay on vh on purpose. vh is the large viewport,
-     which never changes, so a URL bar sliding in and out can't reflow type or
-     resize a bar. Only the four full-screen heights become dvh — see .wii. */
+     the browser insets the viewport itself and these are all 0. */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
 }
+
+/* ---------------------------------------------------------------------------
+   Sizing
+   Every size below scales with **vmin**, the smaller of the two viewport
+   dimensions, not with vh.
+
+   The screens are fixed frames that never scroll, so everything on them is
+   sized relative to the viewport. vh was the obvious choice and is right on a
+   landscape screen, where the height *is* the smaller dimension — but turn a
+   phone upright and it becomes the larger one, and type sized off an 844px
+   height overflows a 390px width. That's precisely what happened: the
+   temperature ran off the left edge and the index panels' readings spilled out
+   of their own boxes over the box beside them.
+
+   vmin is exactly the rule this design wants — "scale with whichever dimension
+   is tighter". On any landscape viewport vmin *is* vh, so nothing about the
+   desktop rendering changed; in portrait it follows the width instead.
+
+   The four full-screen heights stay on vh (with dvh over them), because those
+   want the viewport height and nothing else.
+--------------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------------------
    Mobile viewport
@@ -84,7 +101,8 @@ summary,
   flex-direction: column;
   /* dvh, with vh as the fallback for browsers that don't know it. Nothing in
      here scrolls, so the URL bar never retracts and dvh stays pinned at the
-     small viewport — the screen simply always fits, with no jump. */
+     small viewport — the screen simply always fits, with no jump. (The sizes
+     inside are vmin, not vh — see Sizing above.) */
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
@@ -127,7 +145,7 @@ summary,
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: clamp(14px, 3vh, 34px) clamp(16px, 3.5vw, 44px) clamp(4px, 1vh, 12px);
+  padding: clamp(14px, 3vmin, 34px) clamp(16px, 3.5vw, 44px) clamp(4px, 1vmin, 12px);
   /* Landscape only: a notch on the long edge would otherwise sit over the
      temperature. Wider of the two wins, so portrait is untouched. */
   padding-inline: max(clamp(16px, 3.5vw, 44px), var(--safe-left))
@@ -151,7 +169,7 @@ summary,
   background: linear-gradient(#f6f6f6, #d7d7d7);
   color: #2a2a2a;
   font-weight: 600;
-  font-size: clamp(13px, 1.8vh, 17px);
+  font-size: clamp(13px, 1.8vmin, 17px);
 }
 
 /* Each bar grows by its own inset and pads that much away, so the silver runs
@@ -191,7 +209,7 @@ summary,
   gap: 8px;
   width: 100%;
   height: 100%;
-  padding: clamp(4px, 1vh, 9px) clamp(10px, 2vw, 22px);
+  padding: clamp(4px, 1vmin, 9px) clamp(10px, 2vw, 22px);
   background: none;
   border: 0;
   cursor: var(--cursor-point);
@@ -302,8 +320,8 @@ summary,
 
 .wii-mute__icon {
   display: block;
-  width: clamp(20px, 3.2vh, 28px);
-  height: clamp(20px, 3.2vh, 28px);
+  width: clamp(20px, 3.2vmin, 28px);
+  height: clamp(20px, 3.2vmin, 28px);
 }
 
 .wii-mute__slash {
@@ -414,8 +432,8 @@ summary,
 .wii-zoom__icon,
 .wii-pitch__icon {
   display: block;
-  width: clamp(20px, 3.2vh, 28px);
-  height: clamp(20px, 3.2vh, 28px);
+  width: clamp(20px, 3.2vmin, 28px);
+  height: clamp(20px, 3.2vmin, 28px);
 }
 
 /* Hover popup: the pointed-at marker's weather, over the globe. */
@@ -477,14 +495,14 @@ summary,
   top: var(--chrome);
   right: 0;
   z-index: 10;
-  padding: clamp(3px, 0.8vh, 7px) clamp(16px, 3vw, 34px);
+  padding: clamp(3px, 0.8vmin, 7px) clamp(16px, 3vw, 34px);
   background: linear-gradient(90deg, #12630c, #1f7d12);
   box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3);
   border-bottom-left-radius: 6px;
   color: #fff;
   font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
   font-weight: 800;
-  font-size: clamp(15px, 2.4vh, 24px);
+  font-size: clamp(15px, 2.4vmin, 24px);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -527,7 +545,7 @@ summary,
   display: flex;
   align-items: center;
   gap: clamp(8px, 1.5vw, 16px);
-  height: clamp(44px, 8vh, 66px);
+  height: clamp(44px, 8vmin, 66px);
   padding: 0 clamp(12px, 2.5vw, 26px);
   background: linear-gradient(#1f7d12, #12630c);
   box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.25);
@@ -537,7 +555,7 @@ summary,
 .wii-header__title {
   color: #fff;
   font-weight: 800;
-  font-size: clamp(20px, 3.6vh, 34px);
+  font-size: clamp(20px, 3.6vmin, 34px);
   text-transform: uppercase;
   text-shadow: 0 2px 2px rgba(0, 0, 0, 0.35);
   white-space: nowrap;
@@ -549,13 +567,13 @@ summary,
   align-items: center;
   justify-content: flex-end;
   padding: 0 clamp(14px, 2vw, 28px);
-  height: clamp(30px, 5.4vh, 46px);
+  height: clamp(30px, 5.4vmin, 46px);
   border-radius: 9999px;
   background: linear-gradient(#43b326, #2f8f1c);
   box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -2px 3px rgba(0, 0, 0, 0.2);
   color: #fff;
   font-weight: 700;
-  font-size: clamp(18px, 3.2vh, 30px);
+  font-size: clamp(18px, 3.2vmin, 30px);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -564,14 +582,14 @@ summary,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: clamp(22px, 3.6vh, 30px);
+  height: clamp(22px, 3.6vmin, 30px);
   background: linear-gradient(90deg, rgb(111, 183, 239), 80%, #a01528);
   margin-bottom: 8px;
 }
 
 .wii-credit {
   padding-left: clamp(6px, 1.2vw, 14px);
-  font-size: clamp(11px, 1.6vh, 14px);
+  font-size: clamp(11px, 1.6vmin, 14px);
   font-weight: 600;
   text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.35);
   color: rgba(255, 255, 255, 0.85);
@@ -582,7 +600,7 @@ summary,
   /* border-top-left-radius: 6px; */
   /* border-bottom-left-radius: 6px; */
   /* background: linear-gradient(90deg, #6b1020, #a01528); */
-  font-size: clamp(12px, 1.8vh, 15px);
+  font-size: clamp(12px, 1.8vmin, 15px);
   font-weight: 700;
   text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.35);
   color: #fff;
@@ -598,7 +616,7 @@ summary,
   align-items: center;
   gap: clamp(12px, 3vw, 40px);
   min-height: 0;
-  padding-bottom: clamp(16px, 5vh, 56px);
+  padding-bottom: clamp(16px, 5vmin, 56px);
 }
 
 .wii-conditions__text,
@@ -613,7 +631,7 @@ summary,
 
 .wii-temp {
   font-weight: 800;
-  font-size: clamp(64px, 18vh, 168px);
+  font-size: clamp(64px, 18vmin, 168px);
   line-height: 0.95;
   letter-spacing: -0.02em;
 }
@@ -629,9 +647,9 @@ summary,
 }
 
 .wii-condition {
-  margin-top: clamp(4px, 1.4vh, 14px);
+  margin-top: clamp(4px, 1.4vmin, 14px);
   font-weight: 600;
-  font-size: clamp(20px, 4vh, 44px);
+  font-size: clamp(20px, 4vmin, 44px);
   max-width: 14em;
   text-align: center;
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
@@ -644,7 +662,7 @@ summary,
 /* Grow the icon to fill its half's vertical space, always fitting the column
    width, so it's big on a large monitor and never overflows on a small one. */
 .wii-conditions__icon .weather-icon {
-  width: min(82%, 46vh);
+  width: min(82%, 46vmin);
   max-width: 420px;
   height: auto;
 }
@@ -666,7 +684,7 @@ summary,
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  padding: clamp(4px, 0.9vh, 9px) clamp(8px, 1vw, 14px);
+  padding: clamp(4px, 0.9vmin, 9px) clamp(8px, 1vw, 14px);
   border-radius: 8px;
   background: rgba(4, 16, 44, 0.32);
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.14);
@@ -674,7 +692,7 @@ summary,
 }
 
 .wii-stat__label {
-  font-size: clamp(10px, 1.5vh, 14px);
+  font-size: clamp(10px, 1.5vmin, 14px);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -682,7 +700,7 @@ summary,
 }
 
 .wii-stat__value {
-  font-size: clamp(15px, 2.3vh, 22px);
+  font-size: clamp(15px, 2.3vmin, 22px);
   font-weight: 800;
   text-align: center;
 }
@@ -697,25 +715,37 @@ summary,
   min-height: 0;
 }
 
+/* The graphic is rendered at a fixed size by WeatherIconsHelper, which on a
+   phone claimed a third of the row and left the reading beside it too little to
+   sit in. Overriding the attribute here lets it give way; the viewBox keeps it
+   square. The ceiling is the size the helper asks for, so nothing wider than a
+   phone sees any change. */
 .wii-index__figure {
   flex: none;
+  width: clamp(56px, 22vmin, 110px);
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+}
+
+.wii-index__figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .wii-index__panel {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: clamp(6px, 1.4vh, 14px);
+  gap: clamp(6px, 1.4vmin, 14px);
 }
 
 .wii-index__heading {
-  padding: clamp(4px, 1vh, 10px) clamp(12px, 2vw, 22px);
+  padding: clamp(4px, 1vmin, 10px) clamp(12px, 2vw, 22px);
   border-radius: 6px;
   background: rgba(4, 16, 44, 0.55);
   text-align: center;
   font-weight: 700;
-  font-size: clamp(16px, 2.6vh, 26px);
+  font-size: clamp(16px, 2.6vmin, 26px);
 }
 
 .wii-index__boxes {
@@ -735,26 +765,28 @@ summary,
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: clamp(90px, 20vh, 150px);
+  min-height: clamp(90px, 20vmin, 150px);
   border-radius: 8px;
   background: rgba(120, 165, 225, 0.32);
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.25);
   font-weight: 800;
 }
 
+/* The floor has to hold three digits — an AQI of 155 is an ordinary reading,
+   not an edge case — in a box that's a third of the row on a phone. */
 .wii-index__value {
-  font-size: clamp(48px, 11vh, 92px);
+  font-size: clamp(40px, 11vmin, 92px);
 }
 
 .wii-index__label {
   padding: 0 clamp(8px, 2vw, 20px);
-  font-size: clamp(24px, 5vh, 48px);
+  font-size: clamp(24px, 5vmin, 48px);
 }
 
 /* A caption under the boxes (PM2.5 reading, laundry advice). */
 .wii-index__note {
   text-align: center;
-  font-size: clamp(13px, 2vh, 19px);
+  font-size: clamp(13px, 2vmin, 19px);
   opacity: 0.85;
 }
 
@@ -817,12 +849,12 @@ summary,
 
 .wii-day__name {
   width: 100%;
-  padding: clamp(4px, 1vh, 10px) 0;
+  padding: clamp(4px, 1vmin, 10px) 0;
   background: rgba(4, 16, 44, 0.55);
   text-align: center;
   color: #fff;
   font-weight: 800;
-  font-size: clamp(16px, 2.8vh, 30px);
+  font-size: clamp(16px, 2.8vmin, 30px);
 }
 
 /* The Wii tints weekend days gold. */
@@ -838,21 +870,21 @@ summary,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(2px, 0.8vh, 8px);
-  padding-bottom: clamp(10px, 4vh, 48px);
+  gap: clamp(2px, 0.8vmin, 8px);
+  padding-bottom: clamp(10px, 4vmin, 48px);
   min-height: 0;
 }
 
 .wii-day__icon {
   display: flex;
   align-items: center;
-  margin-bottom: clamp(4px, 1.4vh, 16px);
+  margin-bottom: clamp(4px, 1.4vmin, 16px);
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
 }
 
 /* Grow the day's icon with the panel, always fitting its narrow column. */
 .wii-day__icon .weather-icon {
-  width: min(90%, 18vh);
+  width: min(90%, 18vmin);
   max-width: 172px;
   height: auto;
 }
@@ -860,7 +892,7 @@ summary,
 .wii-day__high,
 .wii-day__low {
   font-weight: 800;
-  font-size: clamp(26px, 5.8vh, 58px);
+  font-size: clamp(26px, 5.8vmin, 58px);
   line-height: 1.05;
 }
 
@@ -877,7 +909,7 @@ summary,
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(16px, 2.6vh, 24px);
+  font-size: clamp(16px, 2.6vmin, 24px);
   color: rgba(255, 255, 255, 0.8);
 }
 
@@ -901,7 +933,7 @@ summary,
   display: none;
   flex-direction: column;
   /* Keep the title and boxes clear of the screen edges. */
-  padding: clamp(8px, 1.6vh, 16px) clamp(22px, 4.5vw, 64px) clamp(12px, 2.4vh, 24px);
+  padding: clamp(8px, 1.6vmin, 16px) clamp(22px, 4.5vw, 64px) clamp(12px, 2.4vmin, 24px);
   background: rgba(9, 30, 74, 0.95);
 }
 
@@ -912,7 +944,7 @@ summary,
 .wii-sixhour__heading {
   flex: none;
   font-weight: 700;
-  font-size: clamp(18px, 2.8vh, 28px);
+  font-size: clamp(18px, 2.8vmin, 28px);
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -935,7 +967,7 @@ summary,
 
 .wii-sixhour__icon {
   width: 100%;
-  height: clamp(96px, 24vh, 160px);
+  height: clamp(96px, 24vmin, 160px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -945,7 +977,7 @@ summary,
 
 .wii-sixhour__nodata {
   font-weight: 800;
-  font-size: clamp(28px, 5vh, 44px);
+  font-size: clamp(28px, 5vmin, 44px);
   letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.85);
 }
@@ -954,9 +986,9 @@ summary,
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: clamp(6px, 1.4vh, 14px);
+  padding-top: clamp(6px, 1.4vmin, 14px);
   font-weight: 600;
-  font-size: clamp(14px, 2.2vh, 22px);
+  font-size: clamp(14px, 2.2vmin, 22px);
   line-height: 1.25;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
@@ -988,7 +1020,7 @@ summary,
   padding-inline: var(--safe-left) var(--safe-right);
   background: linear-gradient(#54c520, #34a010);
   font-weight: 700;
-  font-size: clamp(18px, 3vh, 30px);
+  font-size: clamp(18px, 3vmin, 30px);
   text-shadow: 0 2px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -1017,14 +1049,14 @@ summary,
 
 .settings__label {
   font-weight: 600;
-  font-size: clamp(15px, 2.2vh, 22px);
+  font-size: clamp(15px, 2.2vmin, 22px);
   color: rgba(255, 255, 255, 0.9);
 }
 
 .settings__value {
-  margin-top: clamp(2px, 0.8vh, 8px);
+  margin-top: clamp(2px, 0.8vmin, 8px);
   font-weight: 700;
-  font-size: clamp(22px, 3.6vh, 40px);
+  font-size: clamp(22px, 3.6vmin, 40px);
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -1042,14 +1074,14 @@ summary,
 .settings__button {
   display: inline-block;
   min-width: clamp(150px, 20vw, 230px);
-  padding: clamp(8px, 1.4vh, 14px) clamp(14px, 2vw, 26px);
+  padding: clamp(8px, 1.4vmin, 14px) clamp(14px, 2vw, 26px);
   border: 1px solid #9aa0a6;
   border-radius: 8px;
   background: linear-gradient(#fbfbfb, #d9dde1);
   color: #2a2a2a;
   font: inherit;
   font-weight: 600;
-  font-size: clamp(15px, 2.2vh, 24px);
+  font-size: clamp(15px, 2.2vmin, 24px);
   text-align: center;
   text-decoration: none;
   cursor: var(--cursor-point);
@@ -1086,13 +1118,13 @@ summary,
   flex: none;
   align-self: center;
   max-width: min(90%, 760px);
-  margin: clamp(14px, 3vh, 34px) 0;
-  padding: clamp(10px, 2vh, 20px) clamp(20px, 4vw, 44px);
+  margin: clamp(14px, 3vmin, 34px) 0;
+  padding: clamp(10px, 2vmin, 20px) clamp(20px, 4vw, 44px);
   border-radius: 14px;
   background: rgba(6, 22, 60, 0.5);
   text-align: center;
   font-weight: 600;
-  font-size: clamp(18px, 3vh, 30px);
+  font-size: clamp(18px, 3vmin, 30px);
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -1116,7 +1148,7 @@ summary,
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: clamp(56px, 12vh, 96px);
+  min-height: clamp(56px, 12vmin, 96px);
   padding: 0 clamp(12px, 3vw, 30px);
   border: 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.22);
@@ -1126,7 +1158,7 @@ summary,
   color: #fff;
   font: inherit;
   font-weight: 600;
-  font-size: clamp(22px, 4vh, 40px);
+  font-size: clamp(22px, 4vmin, 40px);
   text-align: center;
   text-decoration: none;
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
@@ -1170,18 +1202,18 @@ summary,
 }
 
 .picker__notice {
-  padding: clamp(10px, 2vh, 18px) clamp(12px, 3vw, 30px);
+  padding: clamp(10px, 2vmin, 18px) clamp(12px, 3vw, 30px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.22);
   background: rgba(6, 22, 60, 0.45);
   text-align: center;
-  font-size: clamp(14px, 2.2vh, 20px);
+  font-size: clamp(14px, 2.2vmin, 20px);
   color: rgba(255, 255, 255, 0.92);
 }
 
 .picker__empty {
-  padding: clamp(24px, 6vh, 60px);
+  padding: clamp(24px, 6vmin, 60px);
   text-align: center;
-  font-size: clamp(16px, 2.6vh, 24px);
+  font-size: clamp(16px, 2.6vmin, 24px);
   color: rgba(255, 255, 255, 0.85);
 }
 
@@ -1202,7 +1234,7 @@ summary,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(30px, 7vh, 70px);
+  gap: clamp(30px, 7vmin, 70px);
   height: 100vh;
   height: 100dvh;
   /* Centred with no bars of its own, so it insets on every side. */
@@ -1217,12 +1249,12 @@ summary,
 /* The same panel as the picker's prompt, so the two screens read as siblings. */
 .splash__message {
   max-width: min(90%, 760px);
-  padding: clamp(10px, 2vh, 20px) clamp(20px, 4vw, 44px);
+  padding: clamp(10px, 2vmin, 20px) clamp(20px, 4vw, 44px);
   border-radius: 14px;
   background: rgba(6, 22, 60, 0.5);
   text-align: center;
   font-weight: 600;
-  font-size: clamp(18px, 3vh, 30px);
+  font-size: clamp(18px, 3vmin, 30px);
   text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -1243,8 +1275,10 @@ summary,
   animation-delay: calc(var(--i) * 0.2s);
 }
 
+/* The floor carries the phone: six of these and their gaps still only come to
+   about two thirds of a 390px screen, and this is the first thing anyone sees. */
 .splash__sun-icon {
-  width: clamp(30px, 5.4vh, 52px);
+  width: clamp(38px, 5.4vmin, 52px);
   height: auto;
   /* The warm halo around each sun in the original. */
   filter: drop-shadow(0 0 8px rgba(255, 210, 90, 0.85));

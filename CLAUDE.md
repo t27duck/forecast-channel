@@ -687,21 +687,38 @@ location's current conditions.
   each carry `height: 100vh` **followed by `100dvh`** — the pair, not one or the
   other, since the first is the fallback. `dvh` is safe precisely because
   nothing in them scrolls: the URL bar never retracts, so the value never moves.
-  Everything *else* stays on `vh` on purpose — `--chrome` and the dozens of
-  `clamp(…vh…)` sizes would otherwise reflow type and resize bars as a browser
-  animated its chrome. The layout asks for `viewport-fit=cover`, without which
-  `env(safe-area-inset-*)` is reported as 0; `:root` names the four insets as
-  `--safe-*`, and each bar grows by its own inset and pads that much away, so
-  the silver runs under the status bar and home indicator while the buttons stay
-  a full `--chrome` tall. `overscroll-behavior: none` is set on `html` (only the
-  root propagates it to the viewport), scoped by `:has()` so the admin CRUD
-  screens keep ordinary scrolling; `.picker__list`, the one thing that does
-  scroll, contains its own. `.wii` takes `touch-action: pinch-zoom` — claiming
-  the vertical gesture for the swipe controller while deliberately *keeping*
-  zoom, which `none` would remove from a screen sized entirely in `clamp()`s.
-  The globe's bars get `@media (hover: none) { opacity: 0.8 }`, since their
-  `:hover` rule never fires on a phone and the whole control surface would
-  otherwise sit at a fifth opacity forever.
+  - Every size *inside* them scales with **`vmin`**, not `vh`. Because the
+    frames never scroll, everything on them is sized against the viewport, and
+    `vh` looks right until the screen turns upright: on a landscape display the
+    height *is* the smaller dimension, but on a phone it's the larger one, and
+    type sized off an 844px height overflows a 390px width. It did — the
+    temperature ran off the left edge and the index panels' readings spilled out
+    of their boxes over the box beside them. `vmin` is the rule the design
+    actually wants ("scale with whichever dimension is tighter"), and on any
+    landscape viewport `vmin` **is** `vh`, so nothing about the desktop
+    rendering changed. `test/system/forecast_mobile_test.rb` measures every
+    panel at 390×844 and fails on anything past either edge or any text wider
+    than its own box — the failure mode here is silent clipping by
+    `overflow: hidden`, which no ordinary assertion would notice.
+  - `.wii-index__figure` overrides the fixed icon size `WeatherIconsHelper`
+    renders, because at 110px it took a third of a phone's width and left the
+    reading beside it nowhere to sit; the ceiling is the helper's own size, so
+    anything wider than a phone is unaffected.
+  - The layout asks for `viewport-fit=cover`, without which
+    `env(safe-area-inset-*)` is reported as 0; `:root` names the four insets as
+    `--safe-*`, and each bar grows by its own inset and pads that much away, so
+    the silver runs under the status bar and home indicator while the buttons
+    stay a full `--chrome` tall (floored at 44px, the smallest comfortable touch
+    target).
+  - `overscroll-behavior: none` is set on `html` (only the root propagates it to
+    the viewport), scoped by `:has()` so the admin CRUD screens keep ordinary
+    scrolling; `.picker__list`, the one thing that does scroll, contains its
+    own. `.wii` takes `touch-action: pinch-zoom` — claiming the vertical gesture
+    for the swipe controller while deliberately *keeping* zoom, which `none`
+    would remove from a screen sized entirely in `clamp()`s.
+  - The globe's bars get `@media (hover: none) { opacity: 0.8 }`, since their
+    `:hover` rule never fires on a phone and the whole control surface would
+    otherwise sit at a fifth opacity forever.
 
 ## Instructions
 
