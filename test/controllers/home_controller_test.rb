@@ -1,16 +1,64 @@
 require "test_helper"
 
 class HomeControllerTest < ActionDispatch::IntegrationTest
+  # An ordinary day, pinned: the splash dresses up on a handful of dates
+  # (SeasonalTheme), and a suite run on one of them would otherwise fail here.
+  ORDINARY_DAY = Time.utc(2026, 6, 15, 12)
+
   test "root plays the splash and points it at the visitor's own location" do
     write_signed_cookie(:current_location_id, locations(:tokyo).id)
 
-    get root_url
+    travel_to ORDINARY_DAY do
+      get root_url
 
-    assert_response :success
-    assert_select ".splash[data-splash-url-value=?]", location_path(locations(:tokyo))
-    assert_select ".splash__message", text: "One moment, please…"
-    assert_select ".splash__sun", 6
-    assert_select "nav", false, "the splash should hide the app nav"
+      assert_response :success
+      assert_select ".splash[data-splash-url-value=?]", location_path(locations(:tokyo))
+      assert_select ".splash__message", text: "One moment, please…"
+      assert_select ".splash__sun", 6
+      assert_select "nav", false, "the splash should hide the app nav"
+      assert_select ".splash[class*=?]", "splash--", false, "no occasion on an ordinary day"
+    end
+  end
+
+  test "Christmas snows on the splash" do
+    write_signed_cookie(:current_location_id, locations(:berlin).id)
+
+    travel_to Time.utc(2026, 12, 25, 12) do
+      get root_url
+
+      assert_select ".splash.splash--christmas"
+      assert_select ".splash__sun-icon[aria-label=?]", "Snowflake", 6
+      assert_select ".splash__message", text: "One moment, please…"
+    end
+  end
+
+  test "New Year says so instead of asking for a moment" do
+    write_signed_cookie(:current_location_id, locations(:berlin).id)
+
+    travel_to Time.utc(2027, 1, 1, 12) do
+      get root_url
+
+      assert_select ".splash.splash--new_year"
+      assert_select ".splash__message", text: "Happy New Year!"
+      # Only Christmas swaps the artwork; the turn of the year keeps its suns.
+      assert_select ".splash__sun-icon[aria-label=?]", "Clear sky", 6
+    end
+  end
+
+  # The occasion is the visitor's, not the server's: Tokyo is nine hours ahead
+  # of UTC, so it reaches Christmas Eve while Berlin is still on the 23rd.
+  test "the occasion follows the visitor's own timezone" do
+    late_on_the_23rd = Time.utc(2026, 12, 23, 16)
+
+    travel_to late_on_the_23rd do
+      write_signed_cookie(:current_location_id, locations(:tokyo).id)
+      get root_url
+      assert_select ".splash.splash--christmas"
+
+      write_signed_cookie(:current_location_id, locations(:berlin).id)
+      get root_url
+      assert_select ".splash.splash--christmas", false
+    end
   end
 
   test "the splash plays no music" do

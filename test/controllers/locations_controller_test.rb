@@ -50,12 +50,15 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "show renders the five forecast panels without the app nav" do
+  test "show renders the forecast panels without the app nav" do
     get location_url(@location)
     assert_response :success
     assert_select "nav", false, "detail view should hide the app nav"
     assert_select "[data-controller~=forecast]"
-    assert_select "[data-panel]", 7
+    # The seven navigable panels, plus the secret one that rides along in the
+    # track (ForecastsHelper::SECRET_PANEL).
+    assert_select "[data-panel]", 8
+    assert_select "[data-forecast-secret]", 1
     assert_select ".wii-header__location", text: @location.name
   end
 

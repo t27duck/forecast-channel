@@ -11,8 +11,15 @@
   stats strip drops blank tiles, so two renders of the same panel can differ in
   shape, and without an id to match on the morph is left guessing which sibling
   is which.
+
+  `secret:` marks a panel that's in the track but not yet in the stack — the
+  forecast controller stops one short of it until it's been found. An attribute
+  rather than a key the controller knows, so the secret stays a property of the
+  markup.
 %>
+<% secret = local_assigns.fetch(:secret, false) %>
 <div class="wii-panel-body" id="panel_<%= key %>"
-  data-panel="<%= key %>" data-title="<%= panel_title(key) %>" data-forecast-target="panel">
+  data-panel="<%= key %>" data-title="<%= panel_title(key) %>" data-forecast-target="panel"
+  <%= "data-forecast-secret" if secret %>>
   <%= yield %>
 </div>

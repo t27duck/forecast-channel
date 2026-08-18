@@ -36,3 +36,6 @@ application.register("press", PressController)
 
 import SplashController from "./splash_controller"
 application.register("splash", SplashController)
+
+import SequenceController from "./sequence_controller"
+application.register("sequence", SequenceController)

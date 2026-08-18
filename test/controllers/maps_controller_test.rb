@@ -13,8 +13,8 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
   test "renders the globe container pointing at the markers feed" do
     get map_url
     assert_response :success
-    assert_select "[data-controller=globe][data-globe-markers-url-value=?]", map_markers_path
-    assert_select "[data-controller=globe] [data-globe-target=map]"
+    assert_select "[data-controller~=globe][data-globe-markers-url-value=?]", map_markers_path
+    assert_select "[data-controller~=globe] [data-globe-target=map]"
   end
 
   # Without this the globe would sit on the markers it fetched when it opened,
@@ -28,7 +28,7 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     get map_url
     # test_helper clears MAPBOX_TOKEN to keep the suite off api.mapbox.com; the
     # globe controller falls back to its offline style.
-    assert_select "[data-controller=globe][data-globe-token-value=?]", ""
+    assert_select "[data-controller~=globe][data-globe-token-value=?]", ""
   end
 
   test "overlays a control bar with zoom/next buttons, a banner, and no app nav" do
@@ -74,7 +74,7 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
   test "centres the globe on the location passed from its forecast" do
     get map_url(location: locations(:berlin).slug)
     expected = [ locations(:berlin).longitude.to_f, locations(:berlin).latitude.to_f ].to_json
-    assert_select "[data-controller=globe][data-globe-center-value=?]", expected
+    assert_select "[data-controller~=globe][data-globe-center-value=?]", expected
   end
 
   test "omits the centre value when no location is given" do

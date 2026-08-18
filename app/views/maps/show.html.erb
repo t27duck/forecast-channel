@@ -15,13 +15,22 @@
     converted per-visitor client-side. %>
 <%= turbo_stream_from Location::WEATHER_STREAM %>
 
+<%# The `sequence` controller only reads keys and says when they spell
+    something; what the Konami code means is decided right here, by the action.
+    It lives in the main bundle and `globe` in its own, which is fine — Stimulus
+    resolves an action by identifier against the one application both register
+    against. %>
 <div
   class="relative map-view"
-  data-controller="globe"
+  data-controller="globe sequence"
+  data-action="sequence:matched->globe#toggleProjection"
+  data-sequence-keys-value="ArrowUp ArrowUp ArrowDown ArrowDown ArrowLeft ArrowRight ArrowLeft ArrowRight b a"
   data-globe-token-value="<%= mapbox_token %>"
   data-globe-markers-url-value="<%= map_markers_path %>"
   data-globe-temperature-unit-value="<%= current_setting.temperature_unit %>"
   data-globe-tour-value="<%= tour_stops_value(@tour_stops) %>"
+  <%# Only on the one day of the year it isn't the usual blue. %>
+  <% if (fog = globe_fog_value) %>data-globe-fog-value="<%= fog %>"<% end %>
   <% if @focus %>data-globe-center-value="<%= [ @focus.longitude.to_f, @focus.latitude.to_f ].to_json %>"<% end %>
 >
   <div data-globe-target="map" class="map-canvas bg-[#030a1b]"></div>

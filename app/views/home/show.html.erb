@@ -7,18 +7,28 @@
   <%= turbo_stream_from @location.weather_stream %>
 <% end %>
 
+<%# What the calendar says, in the visitor's own timezone where we know it —
+    Christmas morning in Auckland is still Christmas Eve here. Nil almost every
+    day of the year, which is the ordinary screen. %>
+<% theme = seasonal_theme(@location&.timezone) %>
+
 <%# With no location chosen there's nothing to load yet, so the same beat hands
     over to the picker instead of a forecast. %>
-<div class="splash" data-controller="splash"
+<div class="splash <%= "splash--#{theme.key}" if theme %>" data-controller="splash"
   data-splash-url-value="<%= @location ? location_path(@location) : settings_location_path %>"
   data-splash-refresh-value="<%= @refresh %>">
-  <p class="splash__message">One moment, please&hellip;</p>
+  <p class="splash__message"><%= theme&.splash_message || "One moment, please…" %></p>
 
-  <%# Six suns with a bright pulse sweeping left to right; --i phases each one. %>
+  <%# Six suns with a bright pulse sweeping left to right; --i phases each one.
+      At Christmas they're snowflakes instead, sweeping the same way. %>
   <div class="splash__suns" aria-hidden="true">
     <% 6.times do |i| %>
       <span class="splash__sun" style="--i: <%= i %>">
-        <%= weather_icon(0, size: 44, classes: "splash__sun-icon") %>
+        <% if theme&.key == "christmas" %>
+          <%= snowflake_icon(size: 44, classes: "splash__sun-icon") %>
+        <% else %>
+          <%= weather_icon(0, size: 44, classes: "splash__sun-icon") %>
+        <% end %>
       </span>
     <% end %>
   </div>

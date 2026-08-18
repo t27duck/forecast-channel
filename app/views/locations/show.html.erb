@@ -82,6 +82,10 @@
       <% forecast_panels.each do |panel| %>
         <%= render "locations/panels/#{panel[:key]}", location: @location %>
       <% end %>
+
+      <%# Always in the track, never in the stack until it's found — see
+          ForecastsHelper::SECRET_PANEL and forecast_controller.js. %>
+      <%= render "locations/panels/credits" %>
     </div>
   </div>
 

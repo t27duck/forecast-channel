@@ -11,11 +11,11 @@ class GlobeTest < ApplicationSystemTestCase
 
     # The globe controller sets data-map-ready once the style has loaded and the
     # symbol layer (which renders markers in WebGL, not the DOM) has been added.
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     layer_present = evaluate_script(<<~JS)
       (() => {
-        const el = document.querySelector('[data-controller=globe]')
+        const el = document.querySelector('[data-controller~=globe]')
         return !!(el && el.__map && el.__map.getLayer('location-markers'))
       })()
     JS
@@ -24,11 +24,11 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "the globe builds without a Mapbox token, reaching nothing on the network" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     # The test environment blanks the token (config/environments/test.rb), so
     # this is the same path CI takes: the controller's offline style.
-    assert_equal "", find("[data-controller=globe]")["data-globe-token-value"]
+    assert_equal "", find("[data-controller~=globe]")["data-globe-token-value"]
 
     fetched = evaluate_script(
       "performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.includes('mapbox.com'))"
@@ -38,7 +38,7 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "the zoom-in button zooms the globe in one unit" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     wake_chrome
     zoom = -> { evaluate_script("#{map_handle}.getZoom()") }
@@ -51,7 +51,7 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "the Next button cycles the marker view banner" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     wake_chrome
     assert_selector ".map-banner", text: "CURRENT WEATHER" # uppercased in CSS
@@ -65,7 +65,7 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "the tilt buttons pitch the globe and Restore resets it" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     wake_chrome
     pitch = -> { evaluate_script("#{map_handle}.getPitch()") }
@@ -81,7 +81,7 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "the map saves its camera view when it is moved" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 20
 
     wake_chrome
     find(".map-bar [aria-label='Zoom in']").click
@@ -98,9 +98,9 @@ class GlobeTest < ApplicationSystemTestCase
     execute_script("window.sessionStorage.removeItem('globeCamera')")
 
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 20
 
-    center = evaluate_script("document.querySelector('[data-controller=globe]').__map.getCenter()")
+    center = evaluate_script("document.querySelector('[data-controller~=globe]').__map.getCenter()")
     assert_in_delta(-74.00597, center["lng"], 0.01)
     assert_in_delta 40.71427, center["lat"], 0.01
   end
@@ -115,14 +115,14 @@ class GlobeTest < ApplicationSystemTestCase
     )
 
     visit map_path # no ?location focus, so it resumes the saved view
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
-    restored = evaluate_script("document.querySelector('[data-controller=globe]').__map.getZoom()")
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 20
+    restored = evaluate_script("document.querySelector('[data-controller~=globe]').__map.getZoom()")
     assert_in_delta 5.5, restored, 0.05
   end
 
   test "the globe shows the open hand, and a fist while it is dragged" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 20
 
     wake_chrome # an idle pointer hides the cursor entirely
     canvas_cursor = -> { style(".mapboxgl-canvas-container", "cursor") }
@@ -138,7 +138,7 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "the chrome gets out of the way while the mouse is idle" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     # Nothing has moved the pointer since the page opened, so it idles on its own.
     assert_selector ".map-view.is-idle", wait: 5
@@ -156,7 +156,7 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "moving the mouse brings the chrome back" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
     assert_selector ".map-view.is-idle", wait: 5
 
     page.driver.browser.action.move_to(find(".map-view").native).perform
@@ -169,7 +169,7 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "the idle globe turns on its own once it is zoomed right out" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     # Zoom 2 is the widest view; the drift only starts there.
     park_globe_at(zoom: 2)
@@ -190,7 +190,7 @@ class GlobeTest < ApplicationSystemTestCase
   # running for hours — so a refresh has to reach it without a reload.
   test "a weather broadcast makes the globe re-read its markers" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     watch_marker_data
     before = evaluate_script("#{map_handle}.getZoom()")
@@ -213,7 +213,7 @@ class GlobeTest < ApplicationSystemTestCase
   # A sweep runs in chunks, so it announces itself several times over.
   test "a burst of broadcasts costs one re-fetch" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     watch_marker_data
     3.times { |i| broadcast_weather_refreshed(version: i) }
@@ -227,7 +227,7 @@ class GlobeTest < ApplicationSystemTestCase
   # route is Berlin -> Tokyo -> Berlin.
   test "the Tour button flies the globe from one city to the next" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     wake_chrome
     find(".map-bar .wii-tour").click
@@ -248,7 +248,7 @@ class GlobeTest < ApplicationSystemTestCase
   # be reached without ending the tour on the way.
   test "moving the mouse leaves a running tour alone" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     wake_chrome
     find(".map-bar .wii-tour").click
@@ -262,7 +262,7 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "stopping the tour leaves the globe where the tour got to" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 20
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 20
 
     wake_chrome
     parked = saved_camera
@@ -288,7 +288,7 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "taking hold of the globe ends the tour" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     wake_chrome
     find(".map-bar .wii-tour").click
@@ -303,7 +303,7 @@ class GlobeTest < ApplicationSystemTestCase
 
   test "the idle globe stays put when it is zoomed in" do
     visit map_path
-    assert_selector "[data-controller=globe][data-map-ready=true]", wait: 15
+    assert_selector "[data-controller~=globe][data-map-ready=true]", wait: 15
 
     park_globe_at(zoom: 5)
     longitude = -> { evaluate_script("#{map_handle}.getCenter().lng") }
@@ -335,7 +335,7 @@ class GlobeTest < ApplicationSystemTestCase
   end
 
   def map_handle
-    "document.querySelector('[data-controller=globe]').__map"
+    "document.querySelector('[data-controller~=globe]').__map"
   end
 
   # The tour's next stop, given the one it is showing.

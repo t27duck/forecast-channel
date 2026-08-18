@@ -31,6 +31,16 @@ module WeatherIconsHelper
       role: "img", "aria-label": "Air quality", xmlns: "http://www.w3.org/2000/svg"
   end
 
+  # A six-armed snowflake, drawn in the same space as the sun so it can stand
+  # in for one — which is exactly what the splash asks it to do at Christmas.
+  def snowflake_icon(size: 96, classes: "weather-icon")
+    salt = SecureRandom.hex(3)
+
+    content_tag :svg, snowflake_body(salt).html_safe,
+      viewBox: "0 0 64 64", width: size, height: size, class: classes,
+      role: "img", "aria-label": "Snowflake", xmlns: "http://www.w3.org/2000/svg"
+  end
+
   # The Laundry Index panel's t-shirt-on-a-line graphic.
   def laundry_icon(size: 96, classes: "laundry-icon")
     salt = SecureRandom.hex(3)
@@ -160,6 +170,53 @@ module WeatherIconsHelper
                     : [ [ 22, 55 ], [ 32, 59 ], [ 42, 55 ] ]
     circles = centers.map { |cx, cy| %(<circle cx="#{cx}" cy="#{cy}" r="2.4"/>) }.join
     %(<g fill="#d6ecff">#{circles}</g>)
+  end
+
+  # Six arms at 60°, each with two pairs of branches, centred where `sun` puts
+  # its disc so the two icons sit identically on the page.
+  #
+  # Drawn twice — a soft wide stroke under a crisp narrow one — rather than
+  # with a gradient along the arms: a gradient's default object bounding box is
+  # per-element, so on strokes this thin each little line would get its own
+  # sweep and the flake would come out mottled.
+  def snowflake_body(salt, cx: 32, cy: 30, r: 17)
+    id = "flake-#{salt}"
+    arms = (0..300).step(60).map { |degrees| snowflake_arm(degrees, cx, cy, r) }.join
+
+    <<~SVG
+      <defs>
+        <radialGradient id="#{id}" cx="40%" cy="36%" r="70%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="60%" stop-color="#dcefff"/>
+          <stop offset="100%" stop-color="#9ccbf2"/>
+        </radialGradient>
+      </defs>
+      <g stroke="#a9cdec" stroke-width="4.6" stroke-linecap="round">#{arms}</g>
+      <g stroke="#f4faff" stroke-width="2.4" stroke-linecap="round">#{arms}</g>
+      <circle cx="#{cx}" cy="#{cy}" r="3.8" fill="url(##{id})"/>
+    SVG
+  end
+
+  # One arm: the spine out to the tip, and two Vs branching back off it.
+  def snowflake_arm(degrees, cx, cy, r)
+    radians = degrees * Math::PI / 180
+    tip = [ cx + Math.cos(radians) * r, cy + Math.sin(radians) * r ]
+
+    branches = { 0.5 => 0.30, 0.78 => 0.20 }.map { |along, length|
+      bx = cx + Math.cos(radians) * r * along
+      by = cy + Math.sin(radians) * r * along
+
+      [ -50, 50 ].map { |offset|
+        angle = (degrees + offset) * Math::PI / 180
+        line(bx, by, bx + Math.cos(angle) * r * length, by + Math.sin(angle) * r * length)
+      }.join
+    }.join
+
+    line(cx, cy, *tip) + branches
+  end
+
+  def line(x1, y1, x2, y2)
+    %(<line x1="#{x1.round(1)}" y1="#{y1.round(1)}" x2="#{x2.round(1)}" y2="#{y2.round(1)}"/>)
   end
 
   # Hailstones under a storm cloud (paired with a bolt).

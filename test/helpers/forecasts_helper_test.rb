@@ -15,6 +15,20 @@ class ForecastsHelperTest < ActionView::TestCase
     assert_equal "transform: translateY(-600%)", panel_track_style("five_day")
   end
 
+  test "the secret panel has a title but is not a neighbour of anything" do
+    # It rides along at the end of the track, so the frame partial needs a
+    # title for it — but the ▼ label on the last navigable panel has to stay
+    # blank, or the bottom bar gives the whole thing away.
+    assert_equal "Credits", panel_title("credits")
+    assert_nil panel_neighbour_title("five_day", 1)
+    assert_not_includes forecast_panels.map { |panel| panel[:key] }, "credits"
+  end
+
+  test "the secret panel sits past the last navigable one, so no offset moves" do
+    assert_equal ForecastsHelper::PANELS + [ ForecastsHelper::SECRET_PANEL ], ForecastsHelper::ALL_PANELS
+    assert_equal "transform: translateY(-600%)", panel_track_style("five_day")
+  end
+
   test "panel_neighbour_title stops at the ends instead of looping" do
     assert_equal "UV Index", panel_neighbour_title("current", -1)
     assert_equal "Today", panel_neighbour_title("current", 1)

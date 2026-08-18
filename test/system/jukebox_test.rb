@@ -14,7 +14,7 @@ class JukeboxTest < ApplicationSystemTestCase
 
     # Forecast → globe switches the zone...
     click_link "Globe"
-    assert_selector "[data-controller=globe]", wait: 10
+    assert_selector "[data-controller~=globe]", wait: 10
     assert_equal "globe", evaluate_script("document.body.dataset.musicZone")
 
     # ...and the data-turbo-permanent player is the same element (not recreated),
@@ -25,7 +25,7 @@ class JukeboxTest < ApplicationSystemTestCase
 
   test "leaving the map for a location switches zone without reloading the player" do
     visit map_path
-    assert_selector "[data-controller=globe]", wait: 10
+    assert_selector "[data-controller~=globe]", wait: 10
     assert_equal "globe", evaluate_script("document.body.dataset.musicZone")
     execute_script("document.getElementById('jukebox').dataset.marked = 'yes'")
     generation = evaluate_script("document.getElementById('jukebox').dataset.generation")

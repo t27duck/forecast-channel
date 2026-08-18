@@ -6,7 +6,9 @@ class SplashTest < ApplicationSystemTestCase
   test "the loading screen plays and hands over to the forecast" do
     visit root_path
 
-    assert_selector ".splash__message", text: "One moment, please…"
+    # Not the copy: the message changes at New Year (SeasonalTheme), and which
+    # words each occasion gets is pinned in home_controller_test.
+    assert_selector ".splash__message"
     assert_selector ".splash__sun", count: 6
 
     assert_selector ".wii-header__location", text: locations(:berlin).name, wait: 15
@@ -70,7 +72,7 @@ class SplashWithoutALocationTest < ApplicationSystemTestCase
   test "the loading screen plays and hands over to the picker" do
     visit root_path
 
-    assert_selector ".splash__message", text: "One moment, please…"
+    assert_selector ".splash__message"
     assert_selector ".picker__prompt", text: "Choose the country closest to where you live.", wait: 15
   end
 end

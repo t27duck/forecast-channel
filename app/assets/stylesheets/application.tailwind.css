@@ -140,6 +140,25 @@ summary,
   transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Pushing at the end of the stack gives a little and springs back, so a dead
+   end feels like one rather than like a broken button — and so the panel below
+   the last one has something to hint at (see forecast_controller.js).
+
+   `translate`, not `transform`: the track's position is an inline transform,
+   and an animation on that property would win the cascade and snap the track to
+   the top of the stack for the length of the animation. The independent
+   property composes with it instead. Percentages resolve against the track's
+   own height, which is exactly one panel. */
+@keyframes wii-nudge {
+  50% {
+    translate: 0 -2.5%;
+  }
+}
+
+.wii__track.is-nudged {
+  animation: wii-nudge 0.26s ease-out;
+}
+
 .wii-panel-body {
   height: 100%;
   display: flex;
@@ -993,6 +1012,85 @@ summary,
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+/* Credits — the eighth panel, the one you have to find ------------------ */
+.wii-credits {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 1.6vmin, 18px);
+  text-align: center;
+}
+
+/* The splash's six suns again, sweep and all — the screen this one thanks you
+   for getting past. `splash-sweep` is declared down in the splash block;
+   keyframes are global wherever they're written. */
+.wii-credits__suns {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 1vmin, 12px);
+}
+
+.wii-credits__sun {
+  display: flex;
+  animation: splash-sweep 1.2s linear infinite backwards;
+  animation-delay: calc(var(--i) * 0.2s);
+}
+
+.wii-credits__sun-icon {
+  width: clamp(22px, 4.2vmin, 40px);
+  height: auto;
+  filter: drop-shadow(0 0 6px rgba(255, 210, 90, 0.85));
+}
+
+.wii-credits__title {
+  font-weight: 700;
+  font-size: clamp(20px, 4.6vmin, 42px);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.35);
+}
+
+.wii-credits__blurb {
+  max-width: min(92%, 44ch);
+  font-size: clamp(12px, 2vmin, 19px);
+  line-height: 1.4;
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.wii-credits__list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 0.9vmin, 9px);
+  width: min(92%, 420px);
+}
+
+.wii-credits__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(8px, 2vmin, 20px);
+  padding: clamp(4px, 1vmin, 10px) clamp(10px, 2.4vmin, 20px);
+  border-radius: 10px;
+  background: rgba(6, 22, 60, 0.42);
+  font-size: clamp(12px, 2vmin, 19px);
+}
+
+.wii-credits__row dt {
+  opacity: 0.75;
+}
+
+.wii-credits__row dd {
+  font-weight: 600;
+  text-align: right;
+}
+
+.wii-credits__found {
+  font-size: clamp(11px, 1.8vmin, 16px);
+  opacity: 0.7;
+}
+
 /* ---------------------------------------------------------------------------
    Settings screen ("Change Settings")
 --------------------------------------------------------------------------- */
@@ -1305,10 +1403,26 @@ summary,
   }
 }
 
+/* Christmas: a colder sky, and the suns are snowflakes (see SeasonalTheme and
+   home/show — the icon itself is swapped server-side, this is the light it
+   throws). */
+.splash--christmas {
+  background: linear-gradient(90deg, #14407f, #05173f);
+}
+
+.splash--christmas .splash__sun-icon {
+  filter: drop-shadow(0 0 8px rgba(184, 226, 255, 0.9));
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .splash__sun {
+  .splash__sun,
+  .wii-credits__sun {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+
+  .wii__track.is-nudged {
+    animation: none;
   }
 }

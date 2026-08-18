@@ -18,6 +18,21 @@ module ForecastsHelper
   # The panel the detail view opens on.
   DEFAULT_PANEL = "current"
 
+  # The eighth panel. It's rendered at the end of the track like any other, but
+  # it isn't part of the navigable stack until it's found — the forecast
+  # controller stops one short of it and only lets it in after three deliberate
+  # shoves past the 5-Day dead end.
+  #
+  # Kept out of PANELS on purpose, and that's the whole trick: PANELS is what
+  # panel_neighbour_title walks, so the ▼ label on the 5-Day panel stays blank
+  # and the bottom bar gives nothing away. It's also what panel_track_style
+  # indexes, so appending here can't shift any panel's offset.
+  SECRET_PANEL = { key: "credits", title: "Credits" }.freeze
+
+  # Every panel that gets rendered, secret included — for looking a title up,
+  # never for working out order or neighbours.
+  ALL_PANELS = (PANELS + [ SECRET_PANEL ]).freeze
+
   # The four 6-hour windows of a day, with their display time ranges. Order is
   # fixed so the overlay always shows overnight → morning → afternoon → evening.
   SIX_HOUR_WINDOWS = [
@@ -37,9 +52,23 @@ module ForecastsHelper
     DEFAULT_PANEL
   end
 
-  # A panel's green-header title, e.g. "5-Day Forecast".
+  # The panel that has to be found before it can be visited.
+  def secret_panel
+    SECRET_PANEL
+  end
+
+  # How many cities are on the globe, for the credits panel. Cached because
+  # that panel sits in the track of every forecast page whether or not anyone
+  # has found it, and this shouldn't cost a COUNT on each one.
+  def globe_city_count
+    Rails.cache.fetch("credits/city_count", expires_in: 1.hour) { Location.count }
+  end
+
+  # A panel's green-header title, e.g. "5-Day Forecast". Looks through the
+  # secret panel too — it needs a title the moment it's unlocked, and the frame
+  # partial renders one for every panel in the track.
   def panel_title(key)
-    PANELS.find { |panel| panel[:key] == key }&.fetch(:title)
+    ALL_PANELS.find { |panel| panel[:key] == key }&.fetch(:title)
   end
 
   # The title of the panel above (-1) or below (+1) this one — the ▲/▼ bar

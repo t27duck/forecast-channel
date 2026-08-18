@@ -301,6 +301,8 @@ location's current conditions.
     alone) so air quality still comes along, and broadcasts whether or not the
     fetch succeeded, since the screen is waiting to stop waiting. `MAX_MS`
     remains the backstop if the signal is somehow missed.
+  - The message and the six suns both vary on a handful of dates — see
+    **Easter eggs**.
   - The globe's "End" and settings' "Back" therefore point at
     `location_path(current_location)`, **not** `root_path` — coming back from
     another screen isn't an arrival and shouldn't replay the splash. The admin
@@ -312,7 +314,8 @@ location's current conditions.
   swipe — see **Swipe** below). Panels
   are partials under `app/views/locations/panels/` wrapped in the shared
   `_frame` chrome; their order, titles and the default are one list
-  (`ForecastsHelper::PANELS` / `DEFAULT_PANEL`), which `show` also uses to
+  (`ForecastsHelper::PANELS` / `DEFAULT_PANEL` — plus one that isn't in either,
+  see **Easter eggs**), which `show` also uses to
   render the track **already scrolled** to the default panel
   (`panel_track_style`) — so the first paint is Current with no JavaScript and
   no flash of the panels above. `WeatherIconsHelper` draws the glossy icons;
@@ -403,6 +406,8 @@ location's current conditions.
     injects it in production), treating blank as none, and `test/test_helper.rb`
     clears the variable so the suite always takes the offline path even on a
     machine that has a token.
+  - The projection and the fog aren't quite fixed: both can be changed out from
+    under the controller's defaults — see **Easter eggs**.
   - **Markers**: served as GeoJSON from `MapsController#markers`
     (`/map/markers`, built by `LocationGeojson`) and drawn as a single **symbol
     layer**, so Mapbox's native collision (`icon/text-allow-overlap: false`)
@@ -534,6 +539,66 @@ location's current conditions.
   to `Location::INDEX_STREAM` and **morphs** each batch's rows in as they land
   — see **Live updates** for why it's a page refresh rather than streamed rows,
   and why the morph opt-in is scoped to this view.
+
+### Easter eggs
+
+Three things are hidden in the app, and one small shared piece drives the two
+that have to be found. **`sequence`** (`app/javascript/controllers/`) is a
+generic detector in the `swipe` mould: it reads `keydown` on `window`, compares
+a **rolling window** of the last few keys against `data-sequence-keys-value`,
+and dispatches `sequence:matched` — leaving what that *means* to the
+`data-action` wiring it. A rolling window rather than a cursor stepped forward
+and reset on a wrong key, because with a cursor a stray ↑ in front of ↑↑↓↓ puts
+the run permanently out of phase; here the stray key falls off the back
+instead. It neither `preventDefault`s nor `stopPropagation`s — every screen it
+can ride on has key handlers of its own. It ships in the main bundle and drives
+a method on `globe` in its own: Stimulus resolves an action by identifier
+against the one `window.Stimulus` application, so nothing imports across the
+split.
+
+- **Flat Earth Mode**: the Konami code on `/map` calls `map.setProjection` and
+  unrolls the globe into a Mercator map. It announces itself through
+  `#announce`, which borrows `.map-banner` for `ANNOUNCE_MS` and hands it back
+  to `#showModeTitle` — split out of `#applyMode` so restoring the banner
+  doesn't also drop an open popup and re-set the icon layer. Stored under
+  `globeProjection` in `localStorage` and read **before** the map is built, so
+  an unlocked visitor's globe opens flat rather than visibly unrolling on every
+  arrival; the code toggles it back. Nothing has to be torn down: fog and the
+  star field only draw under the globe projection, the saved camera is
+  projection-independent, and the idle drift eases longitude either way.
+- **The Credits panel**: an eighth forecast panel, in the track but not in the
+  stack. `ForecastsHelper::SECRET_PANEL` is deliberately **not** in `PANELS`,
+  and that's the whole trick — `PANELS` is what `panel_neighbour_title` walks,
+  so the ▼ label on 5-Day stays blank and the bottom bar gives nothing away.
+  (`panel_title` looks through `ALL_PANELS`, since the frame partial needs a
+  title for it the moment it's found; `panel_track_style` still indexes
+  `PANELS`, so appending can't shift any panel's offset.) The forecast
+  controller stops at `#lastIndex()` — one short of the panel marked
+  `data-forecast-secret` — until three shoves past the end **in a row**, counted
+  by `#shove` and reset by `prev()`. Every dead end `#nudge()`s the track
+  whether or not one hides something, so the give itself doesn't tell you.
+  The nudge animates **`translate`, not `transform`**: the track's position is
+  an inline transform, and an animation on that property wins the cascade and
+  would snap the track to the top of the stack for its duration. Because a
+  disabled button fires no click, the shove only arrives from ArrowDown and a
+  swipe — the ▼ at the end looks broken, and idly clicking it finds nothing.
+  Kept in `localStorage` under `forecastCredits`.
+- **Calendar dressing**: `SeasonalTheme` (`app/models/concerns/`) is a pure
+  calendar in the `WeatherCode`/`UvIndex` mould — it answers "what is today, if
+  it's anything?" with a key, and each surface decides what that key means to
+  it, so the decoration stays next to the thing being decorated.
+  `ApplicationHelper#seasonal_theme` takes a **timezone**, because the occasion
+  is the visitor's and not the server's: Tokyo reaches Christmas Eve while
+  Berlin is still on the 23rd. Today that's snowflakes and a colder sky on the
+  splash at Christmas (`WeatherIconsHelper#snowflake_icon`,
+  `.splash--christmas`), "Happy New Year!" in place of "One moment, please…" at
+  the turn of the year, and an orange-on-black atmosphere on the globe at
+  Halloween. That last one arrives as `MapsHelper#globe_fog_value` →
+  `data-globe-fog-value`, and is **nil on every ordinary day**, so the globe's
+  normal blue keeps exactly one home in the controller's `DEFAULT_FOG`.
+  Because the splash's copy now varies, `test/system/splash_test.rb` asserts the
+  element and not the words; which words each occasion gets is pinned in
+  `test/controllers/home_controller_test.rb` under `travel_to`.
 
 ### Media and assets
 

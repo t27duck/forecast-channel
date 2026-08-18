@@ -1,0 +1,38 @@
+<%# The panel you have to find. Rendered like any other — it's the forecast
+    controller that keeps it out of reach until three shoves past the 5-Day
+    dead end, and ForecastsHelper::SECRET_PANEL that keeps the ▼ label quiet
+    in the meantime. %>
+<%= render layout: "locations/panels/frame", locals: { key: secret_panel[:key], secret: true } do %>
+  <div class="wii-credits">
+    <div class="wii-credits__suns" aria-hidden="true">
+      <% 6.times do |i| %>
+        <span class="wii-credits__sun" style="--i: <%= i %>">
+          <%= weather_icon(0, size: 40, classes: "wii-credits__sun-icon") %>
+        </span>
+      <% end %>
+    </div>
+
+    <h2 class="wii-credits__title">Forecast Channel</h2>
+    <p class="wii-credits__blurb">
+      A love letter to the channel that told you the weather,
+      showed you the world, and played you a song about it.
+    </p>
+
+    <dl class="wii-credits__list">
+      <div class="wii-credits__row">
+        <dt>Weather</dt>
+        <dd>Open-Meteo</dd>
+      </div>
+      <div class="wii-credits__row">
+        <dt>Globe</dt>
+        <dd>Mapbox</dd>
+      </div>
+      <div class="wii-credits__row">
+        <dt>Cities on the globe</dt>
+        <dd><%= number_with_delimiter(globe_city_count) %></dd>
+      </div>
+    </dl>
+
+    <p class="wii-credits__found">You found this. Nicely done.</p>
+  </div>
+<% end %>

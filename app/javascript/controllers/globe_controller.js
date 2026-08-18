@@ -21,6 +21,30 @@ const HIDDEN_BASEMAP_FEATURES = [
 const SOURCE_ID = "locations"
 const LAYER_ID = "location-markers"
 
+// Space around the globe: the atmosphere ring, the colour beyond it, and the
+// stars. Named here rather than written into #dressBasemap because the server
+// can tint it for an occasion (SeasonalTheme — orange on black at Halloween),
+// which arrives as the `fog` value; this is what it falls back to.
+const DEFAULT_FOG = {
+  "color": "#20519f",
+  "high-color": "#1a3374",
+  "space-color": "#030a1b",
+  "star-intensity": 0.6,
+  "horizon-blend": 0.03
+}
+
+// The Konami code unrolls the globe into a flat map and back (see maps/show,
+// which wires the `sequence` controller to #toggleProjection). Remembered
+// across visits in localStorage the way the jukebox remembers being muted: once
+// found, found — and the code toggles it again to put the world back.
+const PROJECTION_KEY = "globeProjection"
+const ROUND_PROJECTION = "globe"
+const FLAT_PROJECTION = "mercator"
+
+// How long the banner holds an announcement before going back to naming the
+// marker view it normally names.
+const ANNOUNCE_MS = 2500
+
 // The satellite basemap, and the stand-in used when no Mapbox token is
 // configured. The fallback is a valid empty style with nothing in it, so the
 // globe still builds and everything of ours on top of it — markers, controls,
@@ -101,7 +125,8 @@ const REFETCH_DEBOUNCE = 3000
 // population is used as the priority so larger cities win a collision.
 export default class extends Controller {
   static values = {
-    token: String, markersUrl: String, center: Array, temperatureUnit: String, tour: Array
+    token: String, markersUrl: String, center: Array, temperatureUnit: String, tour: Array,
+    fog: Object
   }
   static targets = ["map", "zoomIn", "zoomOut", "banner", "pitchUp", "pitchDown", "tourButton"]
 
@@ -123,7 +148,7 @@ export default class extends Controller {
       container: this.mapTarget,
       style: this.offline ? OFFLINE_STYLE : SATELLITE_STYLE,
       testMode: this.offline,
-      projection: "globe",
+      projection: this.#storedProjection(),
       center: camera.center,
       zoom: camera.zoom,
       pitch: camera.pitch,
@@ -142,6 +167,7 @@ export default class extends Controller {
   }
 
   disconnect() {
+    clearTimeout(this.announceTimer)
     this.#unwatchIdle()
     this.#unwatchWeather()
     this.#unwatchTour()
@@ -190,6 +216,25 @@ export default class extends Controller {
   toggleTour() {
     if (this.touring) this.#stopTour()
     else this.#startTour()
+  }
+
+  // No button anywhere reaches this — it is the Konami code's, wired in
+  // maps/show. Flattening a globe is the one joke an app like this owes its
+  // visitors, and the flat map is genuinely usable, so it is left switched on
+  // until the code is typed again.
+  //
+  // Fog and the star field only draw under the globe projection, so flattening
+  // simply hides them; nothing has to be torn down. The saved camera doesn't
+  // care either way, and the idle drift eases longitude, so that still works.
+  toggleProjection() {
+    if (!this.map) return
+
+    const flat = this.map.getProjection().name !== FLAT_PROJECTION
+    const projection = flat ? FLAT_PROJECTION : ROUND_PROJECTION
+
+    this.map.setProjection(projection)
+    this.#storeProjection(projection)
+    this.#announce(flat ? "Flat Earth Mode" : "Round Earth Restored")
   }
 
   // Idle chrome ---------------------------------------------------------
@@ -450,9 +495,47 @@ export default class extends Controller {
     }
   }
 
+  // The banner's resting text: whichever of Current/Today/Tomorrow is showing.
+  #showModeTitle() {
+    if (this.hasBannerTarget) this.bannerTarget.textContent = WEATHER_MODES[this.modeIndex].title
+  }
+
+  // Borrow the banner to say something for a moment, then give it back to
+  // whichever marker view is on screen. Its own method because #applyMode owns
+  // that text, and this is the second thing that wants to speak through it.
+  #announce(text) {
+    if (!this.hasBannerTarget) return
+
+    clearTimeout(this.announceTimer)
+    this.bannerTarget.textContent = text
+    this.announceTimer = setTimeout(() => this.#showModeTitle(), ANNOUNCE_MS)
+  }
+
+  // Read before the map is built rather than set afterwards, so an unlocked
+  // visitor's globe opens flat instead of visibly unrolling on every arrival.
+  #storedProjection() {
+    try {
+      return window.localStorage.getItem(PROJECTION_KEY) === FLAT_PROJECTION
+        ? FLAT_PROJECTION
+        : ROUND_PROJECTION
+    } catch {
+      return ROUND_PROJECTION
+    }
+  }
+
+  #storeProjection(projection) {
+    try {
+      window.localStorage.setItem(PROJECTION_KEY, projection)
+    } catch {
+      // Private browsing with storage denied: the flat map still works, it
+      // just won't survive the reload. Not worth failing the toggle over.
+    }
+  }
+
   #applyMode() {
     const mode = WEATHER_MODES[this.modeIndex]
-    if (this.hasBannerTarget) this.bannerTarget.textContent = mode.title
+    clearTimeout(this.announceTimer) // don't let a pending restore land later
+    this.#showModeTitle()
     this.popup?.remove() // a stale popup would show the previous view's weather
     if (this.map?.getLayer(LAYER_ID)) {
       this.map.setLayoutProperty(LAYER_ID, "icon-image", ["get", mode.icon])
@@ -537,16 +620,10 @@ export default class extends Controller {
     this.element.dataset.mapReady = "true"
   }
 
-  // Space around the globe, and a basemap stripped of roads, transit and labels
-  // so the weather markers are what you look at.
+  // The space around the globe (see DEFAULT_FOG), and a basemap stripped of
+  // roads, transit and labels so the weather markers are what you look at.
   #dressBasemap() {
-    this.map.setFog({
-      "color": "#20519f",
-      "high-color": "#1a3374",
-      "space-color": "#030a1b",
-      "star-intensity": 0.6,
-      "horizon-blend": 0.03
-    })
+    this.map.setFog(this.hasFogValue ? this.fogValue : DEFAULT_FOG)
 
     HIDDEN_BASEMAP_FEATURES.forEach((feature) => {
       this.map.setConfigProperty("basemap", feature, false)

@@ -137,6 +137,12 @@ bin/jobs
 dashboard at **`/jobs`** for queues, workers, and failed jobs (with retry and
 discard). It's admin-only, behind the same sign-in as location management.
 
+## Easter eggs
+
+There are three, and they're for finding rather than for reading about. One is
+on the globe and wants a code you already know, one is a panel on the forecast
+that isn't offered to you, and one only turns up on a few days of the year.
+
 ## Testing
 
 ```bash
