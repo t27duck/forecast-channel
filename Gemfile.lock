@@ -412,6 +412,7 @@ DEPENDENCIES
   image_processing (~> 2.0)
   jbuilder
   jsbundling-rails
+  json (< 3)
   kamal
   mission_control-jobs
   propshaft
